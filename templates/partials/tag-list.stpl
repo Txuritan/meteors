@@ -1,0 +1,5 @@
+<% if !&tags.is_empty() {%>
+    <div class="tags <%= &kind %>">
+        <span role="list">[<% for (i, tag) in tags.iter().enumerate() { %><wbr />;<a class="tag"><%= &tag.text %></a>;<wbr /><% if i != (&tags.len() - 1) { %> <% } %><% } %>]</span>
+    </div>
+<% } %>

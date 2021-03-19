@@ -1,0 +1,26 @@
+<% let len = card.chapters.len(); %>
+<% let id = card.id.as_string(); %>
+<%- card.render_once()? %>
+<hr />
+<%- chapter %>
+<hr />
+<% if len != 1 { %>
+    <footer>
+        <nav>
+            <a href="/story/<%= id  %>/1" class="item")>first</a>
+            <div class="spacer"></div>
+            <% if index.saturating_sub(1) != 0 { %>
+                <a href="/story/<%= id  %>/<%= index - 1 %>" class="item")>prev</a>
+            <% } else { %>
+                <a href="/story/<%= id  %>/1" class="item")>prev</a>
+            <% } %>
+            <% if index + 1 != len { %>
+                <a href="/story/<%= id  %>/<%= index + 1 %>" class="item")>next</a>
+            <% } else { %>
+                <a href="/story/<%= id  %>/<%= len %>" class="item")>next</a>
+            <% } %>
+            <div class="spacer"></div>
+            <a href="/story/<%= id  %>/<%= len %>" class="item")>last</a>
+        </nav>
+    </footer>
+<% } %>

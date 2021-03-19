@@ -1,0 +1,196 @@
+use {
+    crate::{
+        database::{Database, Id},
+        models::{Entity, Rating, Story, StoryInfo, StoryMetaFull},
+        prelude::*,
+        router::{Context, Response},
+    },
+    sailfish::TemplateOnce,
+    std::ops::Range,
+    tiny_http::Header,
+};
+
+static CSS: &str = include_str!("../assets/style.css");
+
+macro_rules! res {
+    (200; $body:expr) => {
+        Response::from_string(Res::response($body))
+            .with_header(
+                Header::from_bytes(&b"Content-Type"[..], &b"text/html; charset=utf-8"[..]).unwrap(),
+            )
+            .with_status_code(200)
+    };
+}
+
+pub fn index(ctx: Context<Database>) -> Result<Response> {
+    let db = ctx.state();
+
+    let stories = db
+        .stories
+        .keys()
+        .map(|id| {
+            db.get_story_full(id)
+                .map(|(id, story)| StoryCard::new(&id, story))
+        })
+        .collect::<Result<Vec<StoryCard>>>()?;
+
+    let body = Layout::new("home", IndexPage { stories });
+
+    Ok(res!(200; body))
+}
+
+pub fn story(ctx: Context<Database>) -> Result<Response> {
+    let db = ctx.state();
+
+    let id = ctx
+        .param("id")
+        .map(Id::from_str)
+        .ok_or_else(|| eyre!("no story id was found is the request uri"))?;
+    let chapter: usize = ctx
+        .param("chapter")
+        .ok_or_else(|| eyre!("no story id was found is the request uri"))
+        .and_then(|s| s.parse().map_err(eyre::Error::from))?;
+
+    let (_, story) = db.get_story_full(&id)?;
+    let story_body = db.get_chapter_body(&id, chapter)?;
+
+    let body = Layout::new(
+        story.info.title.clone(),
+        ChapterPage {
+            card: StoryCard::new(&id, story),
+            chapter: &story_body,
+            index: chapter,
+        },
+    );
+
+    Ok(res!(200; body))
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "pages/index.stpl")]
+struct IndexPage<'s> {
+    stories: Vec<StoryCard<'s>>,
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "pages/chapter.stpl")]
+struct ChapterPage<'s> {
+    card: StoryCard<'s>,
+    chapter: &'s str,
+    index: usize,
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "layout.stpl")]
+struct Layout<B>
+where
+    B: TemplateOnce,
+{
+    css: &'static str,
+    title: String,
+    body: B,
+}
+
+impl<B> Layout<B>
+where
+    B: TemplateOnce,
+{
+    fn new<S>(title: S, body: B) -> Self
+    where
+        S: ToString,
+    {
+        Self {
+            css: CSS,
+            title: title.to_string(),
+            body,
+        }
+    }
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "partials/story.stpl")]
+struct StoryCard<'s> {
+    id: &'s Id,
+
+    file_name: String,
+    length: usize,
+    chapters: Vec<Range<usize>>,
+
+    info: StoryInfo,
+
+    rating: Rating,
+
+    authors: Vec<Entity>,
+
+    warnings: TagList<'s>,
+    pairings: TagList<'s>,
+    characters: TagList<'s>,
+    generals: TagList<'s>,
+}
+
+impl<'s> StoryCard<'s> {
+    pub fn new(id: &'s Id, story: Story<StoryMetaFull>) -> Self {
+        StoryCard {
+            id,
+
+            file_name: story.file_name,
+            length: story.length,
+            chapters: story.chapters,
+
+            info: story.info,
+
+            rating: story.meta.rating,
+
+            authors: story.meta.authors,
+
+            warnings: TagList {
+                kind: "warnings",
+                tags: story.meta.warnings,
+            },
+            pairings: TagList {
+                kind: "pairings",
+                tags: story.meta.pairings,
+            },
+            characters: TagList {
+                kind: "characters",
+                tags: story.meta.characters,
+            },
+            generals: TagList {
+                kind: "generals",
+                tags: story.meta.generals,
+            },
+        }
+    }
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "partials/tag-list.stpl")]
+struct TagList<'s> {
+    kind: &'s str,
+    tags: Vec<Entity>,
+}
+
+trait Res {
+    fn response(self) -> String;
+}
+
+impl<'s> Res for &'s str {
+    fn response(self) -> String {
+        self.to_string()
+    }
+}
+
+impl Res for String {
+    fn response(self) -> String {
+        self
+    }
+}
+
+impl<I> Res for Layout<I>
+where
+    I: TemplateOnce,
+{
+    fn response(self) -> String {
+        self.render_once().unwrap()
+    }
+}

@@ -1,0 +1,206 @@
+// Cool Colors
+$navy:  #001F3F;
+$blue:  #0074D9;
+$aqua:  #7FDBFF;
+$teal:  #39CCCC;
+$olive: #3D9970;
+$green: #2ECC40;
+$lime:  #01FF70;
+
+// Warm Colors
+$yellow:  #FFDC00;
+$orange:  #FF851B;
+$red:     #FF4136;
+$maroon:  #85144B;
+$fuchsia: #F012BE;
+$purple:  #B10DC9;
+
+// Gray Colors
+$black:  #111111;
+$gray:   #444444;
+$silver: #DDDDDD;
+$white:  #FFFFFF;
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    font-family: Consolas, Menlo, Monaco, monospace, serif;
+    margin: 0 auto;
+    max-width: 960px;
+}
+html.light {
+    html, body {
+        background-color: $white;
+        color: $black;
+    }
+}
+
+body {
+    overflow-y: scroll;
+}
+
+a {
+    text-decoration: none;
+    &:hover {
+        text-decoration: line-through;
+    }
+}
+html.light {
+    a {
+        color: $blue;
+    }
+}
+
+hr {
+    border: none;
+    height: 1px;
+}
+html.light {
+    hr {
+        background-color: $black;
+    }
+}
+
+ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+button {
+    background-color: transparent;
+    font-family: Consolas, Menlo, Monaco, monospace, serif;
+    font-size: 12px;
+    margin-top: 5px;
+    &:hover {
+        cursor: pointer;
+        text-decoration: line-through;
+    }
+}
+html.light {
+    button {
+        border: 1px solid $black;
+    }
+}
+
+textarea,
+input[type="number"],
+input[type="password"],
+input[type="text"]  {
+    border-width: 0px;
+    font-family: Consolas, Menlo, Monaco, monospace, serif;
+    font-size: 1rem;
+    margin-left: 5px;
+    &:disabled {
+        &::placeholder {
+            font-family: Consolas, Menlo, Monaco, monospace, serif;
+            font-size: 1rem;
+            text-decoration: line-through;
+        }
+    }
+    &::placeholder {
+        font-family: Consolas, Menlo, Monaco, monospace, serif;
+        font-size: 1rem;
+    }
+}
+html.light {
+    textarea,
+    input[type="number"],
+    input[type="password"],
+    input[type="text"]  {
+        border-bottom: 1px solid $black;
+        color: $black;
+        &:disabled {
+            background-color: $white;
+            color: $gray;
+        }
+        &::placeholder {
+            color: $black;
+        }
+    }
+}
+
+nav {
+    display: flex;
+    line-height: 24px;
+    width: 100%;
+    .brand {
+        font-weight: bold;
+        margin-right: 15px;
+    }
+    .item {
+        margin-right: 10px;
+    }
+    .spacer {
+        flex: 1 auto;
+    }
+}
+html.light {
+    nav {
+        .brand {
+            color: $black;
+        }
+    }
+}
+
+html.light article.story {
+    line-height: 24px;
+    p {
+        margin: 0;
+    }
+    .tags {
+        display: block;
+    }
+    .summary {
+        color: $gray;
+    }
+}
+html.light {
+    article.story {
+        .title {
+            color: $purple;
+        }
+        .meta {
+            color: $green;
+        }
+        .tags {
+            &.warnings .tag {
+                color: $red;
+            }
+            &.pairings .tag {
+                color: $orange;
+            }
+            &.characters .tag {
+                color: $yellow;
+            }
+            &.generals .tag {
+                color: $olive;
+            }
+            // .tag {
+            //     color: $black;
+            // }
+        }
+        .info {
+            color: $blue;
+        }
+        .count {
+            color: $black;
+        }
+        .rating {
+            &.explicit {
+                color: $red;
+            }
+            &.mature {
+                color: $orange;
+            }
+            &.rot-rated {
+                color: $silver;
+            }
+            &.unknown {
+                color: $gray;
+            }
+        }
+    }
+}

@@ -1,0 +1,13 @@
+<article class="story">
+    <header>
+        <span class="rating <%= &rating.class() %>"><%= &rating.symbol() %></span> <a href="/story/<%= id.as_string() %>/1" class="title"><%= &info.title %></a> by
+        <% for (i, author) in authors.iter().enumerate() { %>
+            <a><%= &author.text %></a><% if i != (&authors.len() - 1) { %>,<% } %>
+        <% } %>
+    </header>
+    <%- warnings.render_once()? %>
+    <%- pairings.render_once()? %>
+    <%- characters.render_once()? %>
+    <%- generals.render_once()? %>
+    <p class="summary"># <%= &info.summary %></p>
+</article>
