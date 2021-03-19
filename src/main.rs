@@ -10,6 +10,7 @@ mod models;
 mod reader;
 mod router;
 mod search;
+mod utils;
 
 use {
     crate::{
@@ -31,6 +32,7 @@ use {
 
 mod prelude {
     pub use {
+        crate::utils::new_id,
         color_eyre::{
             eyre::{self, eyre, Context as _},
             Help as _, Result,

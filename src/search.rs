@@ -1,20 +1,22 @@
 use {
     crate::{
-        database::{Database, Id},
-        models::{Entity, Story, StoryMetaRef},
+        database::Database,
+        models::proto::{Entity, Story},
     },
     std::collections::BTreeMap,
 };
 
 macro_rules! help {
     (bound; $db:ident, $iter:ident, $text:ident, $var:ident, $mem:ident) => {{
-        BoundIter::$var($iter.filter(move |(_, s)| any_by_text(&$db.$mem, &s.meta.$mem, &$text)))
+        BoundIter::$var(
+            $iter.filter(move |(_, s)| any_by_text(&$db.index.$mem, &s.meta.$mem, &$text)),
+        )
     }};
     (retain; $db:ident, $stories:ident, $include:ident, $text:ident, $mem:ident) => {{
         $stories.retain(|id| {
-            let story = $db.stories.get(id).unwrap();
+            let story = $db.index.stories.get(id).unwrap();
 
-            !(&$include ^ any_by_text(&$db.$mem, &story.meta.$mem, &$text))
+            !(&$include ^ any_by_text(&$db.index.$mem, &story.meta.$mem, &$text))
         });
     }};
 }
@@ -59,7 +61,10 @@ pub fn parse(text: &str) -> Vec<Bound> {
                 part.push('/');
             }
 
-            bounds.push(Bound::Pairing { include: included, text: part.to_owned() });
+            bounds.push(Bound::Pairing {
+                include: included,
+                text: part.to_owned(),
+            });
 
             continue;
         }
@@ -82,49 +87,73 @@ pub fn parse(text: &str) -> Vec<Bound> {
                 part.push_str(" & ");
             }
 
-            bounds.push(Bound::Pairing { include: included, text: part.to_owned() });
+            bounds.push(Bound::Pairing {
+                include: included,
+                text: part.to_owned(),
+            });
 
             continue;
         }
 
         if part.starts_with("a:") || part.starts_with("author:") {
-            let part = part.trim_start_matches("a:").trim_start_matches("author:").to_string();
+            let part = part
+                .trim_start_matches("a:")
+                .trim_start_matches("author:")
+                .to_string();
 
-            bounds.push(Bound::Author { include: included, text: part.to_owned() });
+            bounds.push(Bound::Author {
+                include: included,
+                text: part.to_owned(),
+            });
 
             continue;
         }
 
         if part.starts_with("o:") || part.starts_with("origin:") {
-            let part = part.trim_start_matches("o:").trim_start_matches("origin:").to_string();
+            let part = part
+                .trim_start_matches("o:")
+                .trim_start_matches("origin:")
+                .to_string();
 
-            bounds.push(Bound::Origin { include: included, text: part.to_owned() });
+            bounds.push(Bound::Origin {
+                include: included,
+                text: part.to_owned(),
+            });
 
             continue;
         }
 
         if part.starts_with("c:") || part.starts_with("character:") {
-            let part = part.trim_start_matches("c:").trim_start_matches("character:").to_string();
+            let part = part
+                .trim_start_matches("c:")
+                .trim_start_matches("character:")
+                .to_string();
 
-            bounds.push(Bound::Character { include: included, text: part.to_owned() });
+            bounds.push(Bound::Character {
+                include: included,
+                text: part.to_owned(),
+            });
 
             continue;
         }
 
-        bounds.push(Bound::General { include: included, text: part.to_owned() });
+        bounds.push(Bound::General {
+            include: included,
+            text: part.to_owned(),
+        });
     }
 
     bounds
 }
 
 #[allow(dead_code)]
-pub fn search(database: &Database, bounds: Vec<Bound>) -> Vec<Id> {
+pub fn search(database: &Database, bounds: Vec<Bound>) -> Vec<String> {
     let mut stories = Vec::new();
 
     let mut bounds_iter = bounds.into_iter();
 
     if let Some(bound) = bounds_iter.next() {
-        let story_iter = database.stories.iter();
+        let story_iter = database.index.stories.iter();
 
         let (include, iter) = match bound {
             Bound::Author { include, text } => (
@@ -175,9 +204,9 @@ pub fn search(database: &Database, bounds: Vec<Bound>) -> Vec<Id> {
     stories
 }
 
-fn first_push<'d, I>(include: bool, database: &Database, stories: &mut Vec<Id>, ids: I)
+fn first_push<'d, I>(include: bool, database: &Database, stories: &mut Vec<String>, ids: I)
 where
-    I: Iterator<Item = (&'d Id, &'d Story<StoryMetaRef>)>,
+    I: Iterator<Item = (&'d String, &'d Story)>,
 {
     if include {
         for id in ids.map(|(id, _)| id) {
@@ -188,7 +217,7 @@ where
     } else {
         let ids = ids.map(|(id, _)| id).collect::<Vec<_>>();
 
-        for id in database.stories.iter().map(|(id, _)| id) {
+        for id in database.index.stories.iter().map(|(id, _)| id) {
             if !ids.contains(&id) {
                 stories.push(id.clone());
             }
@@ -196,7 +225,7 @@ where
     }
 }
 
-fn any_by_text(full: &BTreeMap<Id, Entity>, refs: &[Id], text: &str) -> bool {
+fn any_by_text(full: &BTreeMap<String, Entity>, refs: &[String], text: &str) -> bool {
     refs.iter().map(|id| full.get(id)).any(|a| match a {
         Some(entity) => entity.text == text,
         None => false,

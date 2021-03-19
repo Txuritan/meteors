@@ -1,12 +1,14 @@
 use {
     crate::{
-        database::{Database, Id},
-        models::{Entity, Rating, Story, StoryInfo, StoryMetaFull},
+        database::Database,
+        models::{
+            proto::{Entity, Rating, StoryInfo},
+            StoryFull,
+        },
         prelude::*,
         router::{Context, Response},
     },
     sailfish::TemplateOnce,
-    std::ops::Range,
     tiny_http::Header,
 };
 
@@ -26,6 +28,7 @@ pub fn index(ctx: Context<Database>) -> Result<Response> {
     let db = ctx.state();
 
     let stories = db
+        .index
         .stories
         .keys()
         .map(|id| {
@@ -44,7 +47,7 @@ pub fn story(ctx: Context<Database>) -> Result<Response> {
 
     let id = ctx
         .param("id")
-        .map(Id::from_str)
+        .map(String::from)
         .ok_or_else(|| eyre!("no story id was found is the request uri"))?;
     let chapter: usize = ctx
         .param("chapter")
@@ -110,11 +113,11 @@ where
 #[derive(TemplateOnce)]
 #[template(path = "partials/story.stpl")]
 struct StoryCard<'s> {
-    id: &'s Id,
+    id: &'s str,
 
     file_name: String,
     length: usize,
-    chapters: Vec<Range<usize>>,
+    chapters: usize,
 
     info: StoryInfo,
 
@@ -129,13 +132,13 @@ struct StoryCard<'s> {
 }
 
 impl<'s> StoryCard<'s> {
-    pub fn new(id: &'s Id, story: Story<StoryMetaFull>) -> Self {
+    pub fn new(id: &'s str, story: StoryFull) -> Self {
         StoryCard {
             id,
 
             file_name: story.file_name,
-            length: story.length,
-            chapters: story.chapters,
+            length: story.length as usize,
+            chapters: story.chapters.len(),
 
             info: story.info,
 

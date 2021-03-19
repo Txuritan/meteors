@@ -1,5 +1,5 @@
-<% let len = card.chapters.len(); %>
-<% let id = card.id.as_string(); %>
+<% let len = card.chapters; %>
+<% let id = card.id; %>
 <%- card.render_once()? %>
 <hr />
 <%- chapter %>

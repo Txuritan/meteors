@@ -2,14 +2,17 @@ use std::io::Seek;
 
 use {
     crate::{
-        models::{Entity, Story, StoryMetaFull, StoryMetaRef},
+        models::{
+            proto::{Entity, Index, Range, Rating},
+            StoryFull, StoryFullMeta,
+        },
         prelude::*,
         reader,
         regex::REGEX,
         Config,
     },
     flate2::{read::GzDecoder, write::GzEncoder, Compression},
-    rand::{rngs::StdRng, Rng as _, SeedableRng as _},
+    prost::Message,
     std::{
         collections::BTreeMap,
         env,
@@ -21,84 +24,13 @@ use {
 };
 
 #[rustfmt::skip]
-#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
-#[derive(serde::Deserialize, serde::Serialize)]
-pub struct Id(String);
-
-impl Id {
-    pub fn from_str(id: &str) -> Self {
-        Id(id.to_string())
-    }
-
-    pub const SIZE: usize = 8;
-
-    const LEN: usize = 54;
-    const MASK: usize = Self::LEN.next_power_of_two() - 1;
-    const STEP: usize = 8 * Self::SIZE / 5;
-
-    pub fn new_rand() -> Self {
-        static ALPHABET: [char; Id::LEN] = [
-            '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i',
-            'j', 'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D',
-            'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
-            'X', 'Y', 'Z',
-        ];
-
-        let mut id = String::new();
-
-        loop {
-            let mut rng = StdRng::from_entropy();
-            let mut bytes = [0u8; Self::STEP];
-
-            rng.fill(&mut bytes[..]);
-
-            for &byte in &bytes {
-                let byte = byte as usize & Self::MASK;
-
-                if ALPHABET.len() > byte {
-                    id.push(ALPHABET[byte]);
-
-                    if id.len() == Self::SIZE {
-                        return Id(id);
-                    }
-                }
-            }
-        }
-    }
-
-    pub fn as_string(&self) -> String {
-        self.to_string()
-    }
-}
-
-impl std::fmt::Display for Id {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-#[rustfmt::skip]
-#[derive(Clone, Debug, PartialEq, Eq)]
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Database {
-    pub stories: BTreeMap<Id, Story<StoryMetaRef>>,
+    pub index: Index,
 
-    pub categories: BTreeMap<Id, Entity>,
+    pub data_path: PathBuf,
 
-    pub authors: BTreeMap<Id, Entity>,
-
-    pub origins: BTreeMap<Id, Entity>,
-
-    pub warnings: BTreeMap<Id, Entity>,
-    pub pairings: BTreeMap<Id, Entity>,
-    pub characters: BTreeMap<Id, Entity>,
-    pub generals: BTreeMap<Id, Entity>,
-
-    #[serde(skip)]
-    pub data: PathBuf,
-
-    #[serde(skip)]
-    pub index: PathBuf,
+    pub index_path: PathBuf,
 }
 
 impl Database {
@@ -108,38 +40,38 @@ impl Database {
         let cur = env::current_dir()?.canonicalize()?;
 
         let data_path = cur.join("data");
-        let index_path = cur.join("index.bc");
+        let index_path = cur.join("index.pb");
 
         let mut database = if index_path.exists() {
             debug!("{} found existing", "|".bright_black());
 
-            let file = File::open(&index_path)?;
+            let bytes = fs::read(&index_path)?;
 
-            let mut database: Database = bincode::deserialize_from(file)?;
+            let index = <Index as Message>::decode(&bytes[..])?;
 
-            database.data = data_path.clone();
-            database.index = index_path.clone();
+            Self {
+                index,
 
-            database
+                data_path: data_path.clone(),
+                index_path,
+            }
         } else {
             debug!("{} not found, creating", "|".bright_black());
 
             Self {
-                stories: BTreeMap::new(),
+                index: Index {
+                    stories: BTreeMap::new(),
+                    categories: BTreeMap::new(),
+                    authors: BTreeMap::new(),
+                    origins: BTreeMap::new(),
+                    warnings: BTreeMap::new(),
+                    pairings: BTreeMap::new(),
+                    characters: BTreeMap::new(),
+                    generals: BTreeMap::new(),
+                },
 
-                categories: BTreeMap::new(),
-
-                authors: BTreeMap::new(),
-
-                origins: BTreeMap::new(),
-
-                warnings: BTreeMap::new(),
-                pairings: BTreeMap::new(),
-                characters: BTreeMap::new(),
-                generals: BTreeMap::new(),
-
-                data: data_path.clone(),
-                index: index_path.clone(),
+                data_path: data_path.clone(),
+                index_path,
             }
         };
 
@@ -160,11 +92,13 @@ impl Database {
 
         debug!("{} {} done", "+".bright_black(), "+".bright_black(),);
 
-        let file = File::create(&index_path)?;
-
         debug!("{} writing database", "+".bright_black());
 
-        bincode::serialize_into(file, &database)?;
+        let mut buf = Vec::new();
+
+        <Index as Message>::encode(&database.index, &mut buf)?;
+
+        fs::write(&database.index_path, &buf)?;
 
         Ok(database)
     }
@@ -281,17 +215,18 @@ impl Database {
         Ok(count)
     }
 
-    pub fn get_chapter_body(&self, id: &Id, chapter: usize) -> Result<String> {
+    pub fn get_chapter_body(&self, id: &str, chapter: usize) -> Result<String> {
         let story = self
+            .index
             .stories
             .get(id)
             .ok_or_else(|| eyre!("unable to find story in index"))?;
 
-        let path = self.data.join(&story.file_name);
+        let path = self.data_path.join(&story.file_name);
 
         let mut reader = GzDecoder::new(BufReader::new(File::open(path)?));
 
-        let mut contents = String::with_capacity(story.length);
+        let mut contents = String::with_capacity(story.length as usize);
 
         let _ = reader.read_to_string(&mut contents)?;
 
@@ -303,51 +238,61 @@ impl Database {
             )
         })?;
 
-        Ok(contents[range.clone()].to_string())
+        Ok(contents[(range.start as usize)..(range.end as usize)].to_string())
     }
 
-    pub fn get_story_full<'i>(&self, id: &'i Id) -> Result<(&'i Id, Story<StoryMetaFull>)> {
+    #[allow(clippy::ptr_arg)]
+    pub fn get_story_full<'i>(&self, id: &'i String) -> Result<(&'i String, StoryFull)> {
         let story_ref = self
+            .index
             .stories
             .get(id)
             .ok_or_else(|| eyre!("story with id `{}` does not exist", id))?;
 
         Ok((
             id,
-            Story {
+            StoryFull {
                 file_name: story_ref.file_name.clone(),
-                length: story_ref.length,
-                chapters: story_ref.chapters.clone(),
+                length: story_ref.length as usize,
+                chapters: story_ref
+                    .chapters
+                    .iter()
+                    .map(Range::to_std)
+                    .collect::<Vec<_>>(),
                 info: story_ref.info.clone(),
-                meta: StoryMetaFull {
-                    rating: story_ref.meta.rating,
+                meta: StoryFullMeta {
+                    rating: Rating::from(story_ref.meta.rating),
                     categories: self
-                        .get_all_values(&self.categories, &story_ref.meta.categories)
+                        .get_all_values(&self.index.categories, &story_ref.meta.categories)
                         .context("categories")?,
                     authors: self
-                        .get_all_values(&self.authors, &story_ref.meta.authors)
+                        .get_all_values(&self.index.authors, &story_ref.meta.authors)
                         .context("authors")?,
                     origins: self
-                        .get_all_values(&self.origins, &story_ref.meta.origins)
+                        .get_all_values(&self.index.origins, &story_ref.meta.origins)
                         .context("origins")?,
                     warnings: self
-                        .get_all_values(&self.warnings, &story_ref.meta.warnings)
+                        .get_all_values(&self.index.warnings, &story_ref.meta.warnings)
                         .context("warnings")?,
                     pairings: self
-                        .get_all_values(&self.pairings, &story_ref.meta.pairings)
+                        .get_all_values(&self.index.pairings, &story_ref.meta.pairings)
                         .context("pairings")?,
                     characters: self
-                        .get_all_values(&self.characters, &story_ref.meta.characters)
+                        .get_all_values(&self.index.characters, &story_ref.meta.characters)
                         .context("characters")?,
                     generals: self
-                        .get_all_values(&self.generals, &story_ref.meta.generals)
+                        .get_all_values(&self.index.generals, &story_ref.meta.generals)
                         .context("generals")?,
                 },
             },
         ))
     }
 
-    fn get_all_values(&self, map: &BTreeMap<Id, Entity>, keys: &[Id]) -> Result<Vec<Entity>> {
+    fn get_all_values(
+        &self,
+        map: &BTreeMap<String, Entity>,
+        keys: &[String],
+    ) -> Result<Vec<Entity>> {
         keys.iter()
             .map(|id| {
                 map.get(id)

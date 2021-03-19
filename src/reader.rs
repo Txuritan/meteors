@@ -1,11 +1,11 @@
 use {
     crate::{
-        database::{Database, Id},
-        models::{Entity, Rating, Story, StoryInfo, StoryMetaRef},
+        database::Database,
+        models::proto::{Entity, Range, Rating, Story, StoryInfo, StoryMeta},
         prelude::*,
     },
     roxmltree::{Document, Node},
-    std::{collections::BTreeMap, io::Read, ops::Range},
+    std::{collections::BTreeMap, io::Read},
 };
 
 pub fn read_story<R>(database: &mut Database, name: &str, reader: &mut R) -> Result<()>
@@ -26,7 +26,7 @@ where
     let preface = body.get_child_by_id("preface")?;
     let preface_meta = preface.get_child_by_class("meta")?;
 
-    let (authors, story_info) = read_info(&mut database.authors, &preface_meta)?;
+    let (authors, story_info) = read_info(&mut database.index.authors, &preface_meta)?;
 
     let preface_tags = preface_meta.get_child_by_class("tags")?;
     let story_meta = read_meta(authors, database, &preface_tags)?;
@@ -41,17 +41,17 @@ where
     if chapter_sections.is_empty() {
         let range = chapters.range();
 
-        chapter_sections.push(
+        chapter_sections.push(Range::from_std(
             (range.start + "<div id=\"chapters\" class=\"userstuff\">".len())
                 ..(range.end - "</div>".len()),
-        );
+        ));
     }
 
-    database.stories.insert(
+    database.index.stories.insert(
         story_id,
         Story {
             file_name: name.to_string(),
-            length,
+            length: length as u32,
             chapters: chapter_sections,
             info: story_info,
             meta: story_meta,
@@ -62,10 +62,10 @@ where
 }
 
 fn read_meta(
-    authors: Vec<Id>,
+    authors: Vec<String>,
     database: &mut Database,
     node: &Node<'_, '_>,
-) -> Result<StoryMetaRef> {
+) -> Result<StoryMeta> {
     let dts = node
         .children()
         .filter(|n| n.is_element())
@@ -100,12 +100,12 @@ fn read_meta(
 
                 None
             }
-            "Archive Warning:" => Some((&mut database.warnings, &mut warnings, &dd)),
-            "Category:" => Some((&mut database.categories, &mut categories, &dd)),
-            "Fandom:" => Some((&mut database.origins, &mut origins, &dd)),
-            "Relationship:" => Some((&mut database.pairings, &mut pairings, &dd)),
-            "Characters:" => Some((&mut database.characters, &mut characters, &dd)),
-            "Additional Tags:" => Some((&mut database.generals, &mut generals, &dd)),
+            "Archive Warning:" => Some((&mut database.index.warnings, &mut warnings, &dd)),
+            "Category:" => Some((&mut database.index.categories, &mut categories, &dd)),
+            "Fandom:" => Some((&mut database.index.origins, &mut origins, &dd)),
+            "Relationship:" => Some((&mut database.index.pairings, &mut pairings, &dd)),
+            "Characters:" => Some((&mut database.index.characters, &mut characters, &dd)),
+            "Additional Tags:" => Some((&mut database.index.generals, &mut generals, &dd)),
             _ => None,
         };
 
@@ -114,8 +114,8 @@ fn read_meta(
         }
     }
 
-    Ok(StoryMetaRef {
-        rating,
+    Ok(StoryMeta {
+        rating: Rating::to(&rating),
         categories,
         authors,
         origins,
@@ -127,9 +127,9 @@ fn read_meta(
 }
 
 fn read_info(
-    database_map: &mut BTreeMap<Id, Entity>,
+    database_map: &mut BTreeMap<String, Entity>,
     node: &Node<'_, '_>,
-) -> Result<(Vec<Id>, StoryInfo)> {
+) -> Result<(Vec<String>, StoryInfo)> {
     let title_node = node.get_child("h1")?;
     let authors_node = node.get_child_by_class("byline")?;
     let summary = node
@@ -155,8 +155,8 @@ fn read_info(
 }
 
 fn add_children_to_list(
-    database_map: &mut BTreeMap<Id, Entity>,
-    list: &mut Vec<Id>,
+    database_map: &mut BTreeMap<String, Entity>,
+    list: &mut Vec<String>,
     node: &Node<'_, '_>,
 ) {
     for child in children_elements(node) {
@@ -167,8 +167,8 @@ fn add_children_to_list(
 }
 
 fn add_to_if_exists_or_create(
-    database_map: &mut BTreeMap<Id, Entity>,
-    list: &mut Vec<Id>,
+    database_map: &mut BTreeMap<String, Entity>,
+    list: &mut Vec<String>,
     text: &str,
 ) {
     let entry = database_map.iter().find(|(_, v)| v.text == text);
@@ -178,7 +178,7 @@ fn add_to_if_exists_or_create(
             list.push(id.clone());
         }
         None => {
-            let id = Id::new_rand();
+            let id = new_id();
 
             database_map.insert(
                 id.clone(),
@@ -192,7 +192,7 @@ fn add_to_if_exists_or_create(
     }
 }
 
-fn read_id(node: &Node<'_, '_>) -> Result<Id> {
+fn read_id(node: &Node<'_, '_>) -> Result<String> {
     let anchor = children_elements(node)
         .filter(|n| n.tag_name().name() == "a")
         .last();
@@ -201,14 +201,14 @@ fn read_id(node: &Node<'_, '_>) -> Result<Id> {
         let text = anchor.get_attribute("href")?;
         let id = text.split('/').filter(|s| !s.is_empty()).last();
 
-        id.map(Id::from_str)
+        id.map(String::from)
             .ok_or_else(|| eyre!("could not find story id"))
     } else {
         Err(eyre!("could not find original link"))
     }
 }
 
-fn read_chapters(node: &Node<'_, '_>) -> Vec<Range<usize>> {
+fn read_chapters(node: &Node<'_, '_>) -> Vec<Range> {
     let meta_groups =
         children_elements(node).filter(|n| n.attribute("class") == Some("meta group"));
 
@@ -222,6 +222,7 @@ fn read_chapters(node: &Node<'_, '_>) -> Vec<Range<usize>> {
 
             start..end
         })
+        .map(Range::from_std)
         .collect::<Vec<_>>()
 }
 

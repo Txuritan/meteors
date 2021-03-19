@@ -1,6 +1,6 @@
 <article class="story">
     <header>
-        <span class="rating <%= &rating.class() %>"><%= &rating.symbol() %></span> <a href="/story/<%= id.as_string() %>/1" class="title"><%= &info.title %></a> by
+        <span class="rating <%= &rating.class() %>"><%= &rating.symbol() %></span> <a href="/story/<%= id %>/1" class="title"><%= &info.title %></a> by
         <% for (i, author) in authors.iter().enumerate() { %>
             <a><%= &author.text %></a><% if i != (&authors.len() - 1) { %>,<% } %>
         <% } %>
