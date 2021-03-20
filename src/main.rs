@@ -1,20 +1,18 @@
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
+mod data;
+mod models;
 mod regex;
 
-mod database;
 mod handlers;
 mod logger;
-mod models;
-mod reader;
 mod router;
-mod search;
 mod utils;
 
 use {
     crate::{
-        database::Database,
+        data::Database,
         prelude::*,
         router::{get, Router},
     },

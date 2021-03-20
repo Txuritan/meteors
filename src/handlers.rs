@@ -1,6 +1,6 @@
 use {
     crate::{
-        database::Database,
+        data::Database,
         models::{
             proto::{Entity, Rating, StoryInfo},
             StoryFull,
