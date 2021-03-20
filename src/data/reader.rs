@@ -202,9 +202,9 @@ fn read_id(node: &Node<'_, '_>) -> Result<String> {
         let id = text.split('/').filter(|s| !s.is_empty()).last();
 
         id.map(String::from)
-            .ok_or_else(|| eyre!("could not find story id"))
+            .ok_or_else(|| anyhow!("could not find story id"))
     } else {
-        Err(eyre!("could not find original link"))
+        Err(anyhow!("could not find original link"))
     }
 }
 
@@ -243,7 +243,7 @@ trait NodeExt<'doc, 'input> {
 impl<'doc, 'input> NodeExt<'doc, 'input> for Node<'doc, 'input> {
     fn get_attribute(&self, name: &str) -> Result<&'doc str> {
         self.attribute(name).ok_or_else(|| {
-            eyre!(
+            anyhow!(
                 "`{}` is missing the `{}` attribute",
                 self.tag_name().name(),
                 name,
@@ -255,7 +255,7 @@ impl<'doc, 'input> NodeExt<'doc, 'input> for Node<'doc, 'input> {
         children_elements(self)
             .find(|n| n.tag_name().name() == name)
             .ok_or_else(|| {
-                eyre!(
+                anyhow!(
                     "`{}` is missing the `{}` element",
                     self.tag_name().name(),
                     name,
@@ -266,17 +266,17 @@ impl<'doc, 'input> NodeExt<'doc, 'input> for Node<'doc, 'input> {
     fn get_child_by_class(&self, id: &str) -> Result<Node<'doc, 'input>> {
         children_elements(self)
             .find(|node| node.attribute("class") == Some(id))
-            .ok_or_else(|| eyre!("missing child with id `{}`", id))
+            .ok_or_else(|| anyhow!("missing child with id `{}`", id))
     }
 
     fn get_child_by_id(&self, id: &str) -> Result<Node<'doc, 'input>> {
         children_elements(self)
             .find(|node| node.attribute("id") == Some(id))
-            .ok_or_else(|| eyre!("missing child with id `{}`", id))
+            .ok_or_else(|| anyhow!("missing child with id `{}`", id))
     }
 
     fn get_text(&self) -> Result<&'doc str> {
         self.text()
-            .ok_or_else(|| eyre!("`{}` is missing body text", self.tag_name().name(),))
+            .ok_or_else(|| anyhow!("`{}` is missing body text", self.tag_name().name(),))
     }
 }

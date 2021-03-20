@@ -112,7 +112,7 @@ impl Database {
         let name = path
             .file_name()
             .and_then(OsStr::to_str)
-            .ok_or_else(|| eyre!("File `{}` does not have a file name", path.display()))?;
+            .ok_or_else(|| anyhow!("File `{}` does not have a file name", path.display()))?;
 
         match ext {
             Some("html") => {
@@ -222,7 +222,7 @@ impl Database {
             .index
             .stories
             .get(id)
-            .ok_or_else(|| eyre!("unable to find story in index"))?;
+            .ok_or_else(|| anyhow!("unable to find story in index"))?;
 
         let path = self.data_path.join(&story.file_name);
 
@@ -233,7 +233,7 @@ impl Database {
         let _ = reader.read_to_string(&mut contents)?;
 
         let range = story.chapters.get(chapter - 1).ok_or_else(|| {
-            eyre!(
+            anyhow!(
                 "chapter `{}` not found, chapters: {}",
                 chapter,
                 story.chapters.len()
@@ -249,7 +249,7 @@ impl Database {
             .index
             .stories
             .get(id)
-            .ok_or_else(|| eyre!("story with id `{}` does not exist", id))?;
+            .ok_or_else(|| anyhow!("story with id `{}` does not exist", id))?;
 
         Ok((
             id,
@@ -299,7 +299,7 @@ impl Database {
             .map(|id| {
                 map.get(id)
                     .cloned()
-                    .ok_or_else(|| eyre!("entity with id `{}` does not exist", id))
+                    .ok_or_else(|| anyhow!("entity with id `{}` does not exist", id))
             })
             .collect::<Result<Vec<_>>>()
     }

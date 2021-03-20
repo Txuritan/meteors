@@ -31,9 +31,9 @@ use {
 mod prelude {
     pub use {
         crate::utils::new_id,
-        color_eyre::{
-            eyre::{self, eyre, Context as _},
-            Help as _, Result,
+        ::anyhow::{
+            self, anyhow, Context as _,
+            Result,
         },
         log::{debug, error, info, trace, warn},
         owo_colors::OwoColorize as _,
@@ -41,7 +41,6 @@ mod prelude {
 }
 
 fn main() -> Result<()> {
-    color_eyre::install()?;
     logger::init()?;
 
     let cfg = env::args().skip(1).fold(Ok(Config::new()), |cfg: Result<Config>, arg| {
@@ -106,7 +105,7 @@ fn main() -> Result<()> {
         .on("/", get(handlers::index))
         .on("/story/:id/:chapter", get(handlers::story));
 
-    let server = Server::http(addr).map_err(|err| eyre!("unable to start server: {}", err))?;
+    let server = Server::http(addr).map_err(|err| anyhow!("unable to start server: {}", err))?;
 
     info!(
         "{} sever listening on: {}",

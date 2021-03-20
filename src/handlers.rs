@@ -48,11 +48,11 @@ pub fn story(ctx: Context<Database>) -> Result<Response> {
     let id = ctx
         .param("id")
         .map(String::from)
-        .ok_or_else(|| eyre!("no story id was found is the request uri"))?;
+        .ok_or_else(|| anyhow!("no story id was found is the request uri"))?;
     let chapter: usize = ctx
         .param("chapter")
-        .ok_or_else(|| eyre!("no story id was found is the request uri"))
-        .and_then(|s| s.parse().map_err(eyre::Error::from))?;
+        .ok_or_else(|| anyhow!("no story id was found is the request uri"))
+        .and_then(|s| s.parse().map_err(anyhow::Error::from))?;
 
     let (_, story) = db.get_story_full(&id)?;
     let story_body = db.get_chapter_body(&id, chapter)?;
