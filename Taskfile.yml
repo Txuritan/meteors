@@ -3,4 +3,4 @@ version: '3'
 tasks:
   build-windows:
     cmds:
-      - cargo +nightly build -Z build-std --release --target x86_64-pc-windows-msvc
+      - cargo +nightly build -Z build-std=panic_abort,std --release --target x86_64-pc-windows-msvc
