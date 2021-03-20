@@ -29,6 +29,20 @@ pub enum Bound {
     General { include: bool, text: String },
 }
 
+impl Bound {
+    const fn author(include: bool, text: String) -> Bound {
+        Bound::Author { include, text }
+    }
+
+    const fn origin(include: bool, text: String) -> Bound {
+        Bound::Origin { include, text }
+    }
+
+    const fn character(include: bool, text: String) -> Bound {
+        Bound::Character { include, text }
+    }
+}
+
 #[allow(dead_code)]
 #[allow(clippy::while_let_on_iterator)]
 pub fn parse(text: &str) -> Vec<Bound> {
@@ -43,97 +57,53 @@ pub fn parse(text: &str) -> Vec<Bound> {
             part = part.trim_start_matches('-');
         }
 
-        if part.starts_with('[') {
-            let mut part = part.trim_start_matches('[').to_string();
-
-            part.push('/');
-
-            's_inner: while let Some(mut inner) = parts.next() {
-                if inner.ends_with(']') {
-                    inner = inner.trim_end_matches(']');
-
-                    part.push_str(inner);
-
-                    break 's_inner;
-                }
-
-                part.push_str(inner);
-                part.push('/');
-            }
-
-            bounds.push(Bound::Pairing {
-                include: included,
-                text: part.to_owned(),
-            });
-
+        if parse_group(
+            ["[", "]", "/"],
+            &mut bounds,
+            &mut parts,
+            included,
+            &mut part,
+        ) {
             continue;
         }
 
-        if part.starts_with('(') {
-            let mut part = part.trim_start_matches('(').to_string();
-
-            part.push_str(" & ");
-
-            'p_inner: while let Some(mut inner) = parts.next() {
-                if inner.ends_with(')') {
-                    inner = inner.trim_end_matches(')');
-
-                    part.push_str(inner);
-
-                    break 'p_inner;
-                }
-
-                part.push_str(inner);
-                part.push_str(" & ");
-            }
-
-            bounds.push(Bound::Pairing {
-                include: included,
-                text: part.to_owned(),
-            });
-
+        if parse_group(
+            ["(", ")", " & "],
+            &mut bounds,
+            &mut parts,
+            included,
+            &mut part,
+        ) {
             continue;
         }
 
-        if part.starts_with("a:") || part.starts_with("author:") {
-            let part = part
-                .trim_start_matches("a:")
-                .trim_start_matches("author:")
-                .to_string();
-
-            bounds.push(Bound::Author {
-                include: included,
-                text: part.to_owned(),
-            });
-
+        if parse_prefixed(
+            ["a:", "author:"],
+            Bound::author,
+            &mut bounds,
+            included,
+            &mut part,
+        ) {
             continue;
         }
 
-        if part.starts_with("o:") || part.starts_with("origin:") {
-            let part = part
-                .trim_start_matches("o:")
-                .trim_start_matches("origin:")
-                .to_string();
-
-            bounds.push(Bound::Origin {
-                include: included,
-                text: part.to_owned(),
-            });
-
+        if parse_prefixed(
+            ["c:", "origin:"],
+            Bound::origin,
+            &mut bounds,
+            included,
+            &mut part,
+        ) {
             continue;
         }
 
-        if part.starts_with("c:") || part.starts_with("character:") {
-            let part = part
-                .trim_start_matches("c:")
-                .trim_start_matches("character:")
-                .to_string();
-
-            bounds.push(Bound::Character {
-                include: included,
-                text: part.to_owned(),
-            });
-
+        if parse_prefixed(
+            ["c:", "character:"],
+            Bound::character,
+            &mut bounds,
+            included,
+            &mut part,
+        ) {
             continue;
         }
 
@@ -144,6 +114,73 @@ pub fn parse(text: &str) -> Vec<Bound> {
     }
 
     bounds
+}
+
+fn parse_prefixed<B>(
+    prefixes: [&str; 2],
+    builder: B,
+    bounds: &mut Vec<Bound>,
+    included: bool,
+    part: &mut &str,
+) -> bool
+where
+    B: FnOnce(bool, String) -> Bound,
+{
+    let [short, long] = prefixes;
+
+    if part.starts_with(short) || part.starts_with(long) {
+        let part = part
+            .trim_start_matches(short)
+            .trim_start_matches(long)
+            .to_string();
+
+        bounds.push(builder(included, part));
+
+        true
+    } else {
+        false
+    }
+}
+
+fn parse_group<'i, I>(
+    symbols: [&str; 3],
+    bounds: &mut Vec<Bound>,
+    parts: &mut I,
+    included: bool,
+    part: &mut &str,
+) -> bool
+where
+    I: Iterator<Item = &'i str>,
+{
+    let [open, close, sep] = symbols;
+
+    if part.starts_with(open) {
+        let mut part = part.trim_start_matches(open).to_string();
+
+        part.push_str(sep);
+
+        for mut inner in parts {
+            if inner.ends_with(close) {
+                inner = inner.trim_end_matches(close);
+
+                part.push_str(inner);
+
+                break;
+            }
+
+            part.push_str(inner);
+            part.push_str(sep);
+        }
+
+        bounds.push(Bound::Pairing {
+            include: included,
+            text: part,
+        });
+
+        true
+    } else {
+        false
+    }
 }
 
 #[allow(dead_code)]
