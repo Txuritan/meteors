@@ -31,10 +31,7 @@ use {
 mod prelude {
     pub use {
         crate::utils::new_id,
-        ::anyhow::{
-            self, anyhow, Context as _,
-            Result,
-        },
+        ::anyhow::{self, anyhow, Context as _, Result},
         log::{debug, error, info, trace, warn},
         owo_colors::OwoColorize as _,
     };
@@ -43,32 +40,34 @@ mod prelude {
 fn main() -> Result<()> {
     logger::init()?;
 
-    let cfg = env::args().skip(1).fold(Ok(Config::new()), |cfg: Result<Config>, arg| {
-        cfg.and_then(|mut cfg| {
-            match arg.as_str() {
-                "-ct" | "--tc" => {
-                    cfg.compress = true;
-                    cfg.trackers = true;
+    let cfg = env::args()
+        .skip(1)
+        .fold(Ok(Config::new()), |cfg: Result<Config>, arg| {
+            cfg.and_then(|mut cfg| {
+                match arg.as_str() {
+                    "-ct" | "--tc" => {
+                        cfg.compress = true;
+                        cfg.trackers = true;
+                    }
+                    "-c" | "--compress" => cfg.compress = true,
+                    "-t" | "--trackers" => cfg.trackers = true,
+                    "-h" | "--help" => cfg.help = true,
+                    "--host" => cfg.host_take = true,
+                    "--port" => cfg.port_take = true,
+                    _ if cfg.host_take => {
+                        cfg.host = arg.parse()?;
+                        cfg.host_take = false;
+                    }
+                    _ if cfg.port_take => {
+                        cfg.port = arg.parse()?;
+                        cfg.port_take = false;
+                    }
+                    _ => {}
                 }
-                "-c" | "--compress" => cfg.compress = true,
-                "-t" | "--trackers" => cfg.trackers = true,
-                "-h" | "--help" => cfg.help = true,
-                "--host" => cfg.host_take = true,
-                "--port" => cfg.port_take = true,
-                _ if cfg.host_take => {
-                    cfg.host = arg.parse()?;
-                    cfg.host_take = false;
-                }
-                _ if cfg.port_take => {
-                    cfg.port = arg.parse()?;
-                    cfg.port_take = false;
-                }
-                _ => {}
-            }
 
-            Ok(cfg)
-        })
-    })?;
+                Ok(cfg)
+            })
+        })?;
 
     if cfg.help {
         println!("meteors {}", env!("CARGO_PKG_VERSION"));
