@@ -28,5 +28,5 @@ embed-resource = "1.3"
 [profile.release]
 codegen-units = 1
 lto = true
-opt-level = "s"
+opt-level = "z"
 panic = "abort"
