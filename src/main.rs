@@ -16,8 +16,8 @@ use {
         prelude::*,
         router::{get, Router},
     },
-    pico_args::Arguments,
     std::{
+        env,
         net::{Ipv4Addr, SocketAddr},
         sync::{
             atomic::{AtomicBool, Ordering},
@@ -44,54 +44,50 @@ fn main() -> Result<()> {
     color_eyre::install()?;
     logger::init()?;
 
-    let mut args = Arguments::from_env();
+    let cfg = env::args().skip(1).fold(Ok(Config::new()), |cfg: Result<Config>, arg| {
+        cfg.and_then(|mut cfg| {
+            match arg.as_str() {
+                "-ct" | "--tc" => {
+                    cfg.compress = true;
+                    cfg.trackers = true;
+                }
+                "-c" | "--compress" => cfg.compress = true,
+                "-t" | "--trackers" => cfg.trackers = true,
+                "-h" | "--help" => cfg.help = true,
+                "--host" => cfg.host_take = true,
+                "--port" => cfg.port_take = true,
+                _ if cfg.host_take => {
+                    cfg.host = arg.parse()?;
+                    cfg.host_take = false;
+                }
+                _ if cfg.port_take => {
+                    cfg.port = arg.parse()?;
+                    cfg.port_take = false;
+                }
+                _ => {}
+            }
 
-    if args.contains(["-h", "--help"]) {
-        println!(
-            "{} {}",
-            "meteors".green(),
-            env!("CARGO_PKG_VERSION").bright_purple()
-        );
+            Ok(cfg)
+        })
+    })?;
+
+    if cfg.help {
+        println!("meteors {}", env!("CARGO_PKG_VERSION"));
         println!();
-        println!("{}:", "USAGE".bright_yellow());
-        println!("    {} [{}]", "meteors".green(), "OPTIONS".bright_yellow());
+        println!("USAGE:");
+        println!("    meteors [FLAGS] [OPTIONS]");
         println!();
-        println!("{}:", "FLAGS".bright_yellow());
-        println!(
-            "    {}, {}               Prints help information",
-            "-h".bright_black(),
-            "--help".bright_black()
-        );
+        println!("FLAGS:");
+        println!("    -h, --help            Prints help information");
+        println!("    -c, --compress        Enables the auto compression of data files");
+        println!("    -t, --trackers        Enables the removal of trackers from data files");
         println!();
-        println!("{}:", "OPTIONS".bright_yellow());
-        println!(
-            "    {} <IPV4_ADDRESS>    Sets the server's bound IP address [default: {}]",
-            "--host".bright_black(),
-            "0.0.0.0".bright_blue()
-        );
-        println!("    {} <NUMBER>          Sets the port that the server will listen to requests on [default: {}]", "--port".bright_black(), "8723".bright_purple());
-        println!(
-            "    {}               Enables the auto compression of data files",
-            "--compress".bright_black()
-        );
-        println!(
-            "    {}               Enables the removal of trackers from data files",
-            "--trackers".bright_black()
-        );
+        println!("OPTIONS:");
+        println!("    --host <ADDRESS>      Sets the server's bound IP address [default: 0.0.0.0]");
+        println!("    --port <NUMBER>       Sets the port that the server will listen to requests on [default: 8723]");
 
         return Ok(());
     }
-
-    let cfg = Config {
-        host: args
-            .opt_value_from_str("--host")?
-            .unwrap_or_else(|| Ipv4Addr::new(0, 0, 0, 0)),
-        port: args.opt_value_from_str("--port")?.unwrap_or(8723),
-
-        compress: args.contains("--compress"),
-        trackers: args.contains("--trackers"),
-    };
-
     let stop = Arc::new(AtomicBool::new(false));
 
     ctrlc::set_handler({
@@ -138,6 +134,28 @@ pub struct Config {
     pub host: Ipv4Addr,
     pub port: u16,
 
+    pub help: bool,
+
     pub compress: bool,
     pub trackers: bool,
+
+    host_take: bool,
+    port_take: bool,
+}
+
+impl Config {
+    const fn new() -> Self {
+        Self {
+            host: Ipv4Addr::new(0, 0, 0, 0),
+            port: 8723,
+
+            help: false,
+
+            compress: false,
+            trackers: false,
+
+            host_take: false,
+            port_take: false,
+        }
+    }
 }
