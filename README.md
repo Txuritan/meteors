@@ -18,4 +18,4 @@ The `trackers` flag may need to be activated just to read a download, this is du
 ## Releases
 
 Meteors is developed using the latest Rust stable, but is built using nightly.
-This is so it can use `-Z build-std` to try can trim down the resulting binary.
+This is so it can use `-Z build-std` to try and trim down the resulting binary.
