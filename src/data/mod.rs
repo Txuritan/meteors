@@ -6,7 +6,7 @@ use std::io::Seek;
 use {
     crate::{
         models::{
-            proto::{Entity, Index, Range, Rating},
+            proto::{Entity, Index, Range, Rating, StoryMeta},
             StoryFull, StoryFullMeta,
         },
         prelude::*,
@@ -245,11 +245,44 @@ impl Database {
 
     #[allow(clippy::ptr_arg)]
     pub fn get_story_full<'i>(&self, id: &'i String) -> Result<(&'i String, StoryFull)> {
+        enum Kind {
+            Categories,
+            Authors,
+            Origins,
+            Warnings,
+            Pairings,
+            Characters,
+            Generals,
+        }
+
+        fn values(index: &Index, meta: &StoryMeta, kind: Kind) -> Result<Vec<Entity>> {
+            let (map, keys) = match kind {
+                Kind::Categories => (&index.categories, &meta.categories),
+                Kind::Authors => (&index.authors, &meta.authors),
+                Kind::Origins => (&index.origins, &meta.origins),
+                Kind::Warnings => (&index.warnings, &meta.warnings),
+                Kind::Pairings => (&index.pairings, &meta.pairings),
+                Kind::Characters => (&index.characters, &meta.characters),
+                Kind::Generals => (&index.generals, &meta.generals),
+            };
+
+            keys.iter()
+                .map(|id| {
+                    map.get(id)
+                        .cloned()
+                        .ok_or_else(|| anyhow!("entity with id `{}` does not exist", id))
+                })
+                .collect::<Result<Vec<_>>>()
+        }
+
         let story_ref = self
             .index
             .stories
             .get(id)
             .ok_or_else(|| anyhow!("story with id `{}` does not exist", id))?;
+
+        let index = &self.index;
+        let meta = &story_ref.meta;
 
         Ok((
             id,
@@ -264,43 +297,15 @@ impl Database {
                 info: story_ref.info.clone(),
                 meta: StoryFullMeta {
                     rating: Rating::from(story_ref.meta.rating),
-                    categories: self
-                        .get_all_values(&self.index.categories, &story_ref.meta.categories)
-                        .context("categories")?,
-                    authors: self
-                        .get_all_values(&self.index.authors, &story_ref.meta.authors)
-                        .context("authors")?,
-                    origins: self
-                        .get_all_values(&self.index.origins, &story_ref.meta.origins)
-                        .context("origins")?,
-                    warnings: self
-                        .get_all_values(&self.index.warnings, &story_ref.meta.warnings)
-                        .context("warnings")?,
-                    pairings: self
-                        .get_all_values(&self.index.pairings, &story_ref.meta.pairings)
-                        .context("pairings")?,
-                    characters: self
-                        .get_all_values(&self.index.characters, &story_ref.meta.characters)
-                        .context("characters")?,
-                    generals: self
-                        .get_all_values(&self.index.generals, &story_ref.meta.generals)
-                        .context("generals")?,
+                    categories: values(&index, &meta, Kind::Categories).context("categories")?,
+                    authors: values(&index, &meta, Kind::Authors).context("authors")?,
+                    origins: values(&index, &meta, Kind::Origins).context("origins")?,
+                    warnings: values(&index, &meta, Kind::Warnings).context("warnings")?,
+                    pairings: values(&index, &meta, Kind::Pairings).context("pairings")?,
+                    characters: values(&index, &meta, Kind::Characters).context("characters")?,
+                    generals: values(&index, &meta, Kind::Generals).context("generals")?,
                 },
             },
         ))
-    }
-
-    fn get_all_values(
-        &self,
-        map: &BTreeMap<String, Entity>,
-        keys: &[String],
-    ) -> Result<Vec<Entity>> {
-        keys.iter()
-            .map(|id| {
-                map.get(id)
-                    .cloned()
-                    .ok_or_else(|| anyhow!("entity with id `{}` does not exist", id))
-            })
-            .collect::<Result<Vec<_>>>()
     }
 }
