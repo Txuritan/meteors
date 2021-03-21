@@ -7,6 +7,7 @@ use {
         },
         prelude::*,
         router::{Context, Response},
+        utils,
     },
     sailfish::TemplateOnce,
     tiny_http::Header,
@@ -27,6 +28,17 @@ macro_rules! res {
 pub fn index(ctx: Context<Database>) -> Result<Response> {
     let db = ctx.state();
 
+    let theme = ctx
+        .query()
+        .map(|query| utils::parse_queries(query))
+        .and_then(|queries| {
+            queries
+                .into_iter()
+                .find(|(key, _)| *key == "theme")
+                .and_then(|(_, value)| value)
+        })
+        .unwrap_or("light");
+
     let stories = db
         .index
         .stories
@@ -37,13 +49,24 @@ pub fn index(ctx: Context<Database>) -> Result<Response> {
         })
         .collect::<Result<Vec<StoryCard>>>()?;
 
-    let body = Layout::new("home", IndexPage { stories });
+    let body = Layout::new("home", theme, IndexPage { stories });
 
     Ok(res!(200; body))
 }
 
 pub fn story(ctx: Context<Database>) -> Result<Response> {
     let db = ctx.state();
+
+    let theme = ctx
+        .query()
+        .map(|query| utils::parse_queries(query))
+        .and_then(|queries| {
+            queries
+                .into_iter()
+                .find(|(key, _)| *key == "theme")
+                .and_then(|(_, value)| value)
+        })
+        .unwrap_or("light");
 
     let id = ctx
         .param("id")
@@ -59,6 +82,7 @@ pub fn story(ctx: Context<Database>) -> Result<Response> {
 
     let body = Layout::new(
         story.info.title.clone(),
+        theme,
         ChapterPage {
             card: StoryCard::new(&id, story),
             chapter: &story_body,
@@ -72,33 +96,22 @@ pub fn story(ctx: Context<Database>) -> Result<Response> {
 pub fn search(ctx: Context<Database>) -> Result<Response> {
     let db = ctx.state();
 
-    // path?query ? ( query = key=value[&key=value] ) => Vec{(key, value) [, (key, value)]}
     let queries = ctx
         .query()
-        .map(|query| {
-            query
-                .split('&')
-                .map(|param| {
-                    param
-                        .contains('=')
-                        .then(|| {
-                            param.find('=').map(|index| {
-                                let (key, value) = param.split_at(index);
-
-                                (key, Some(value))
-                            })
-                        })
-                        .flatten()
-                        .unwrap_or((param, None))
-                })
-                .collect::<Vec<_>>()
-        })
+        .map(|query| utils::parse_queries(query))
         .ok_or_else(|| anyhow!("no query parameters found in url"))?;
 
+    let theme = queries
+        .iter()
+        .find(|(key, _)| *key == "theme")
+        .and_then(|(_, value)| value.as_ref())
+        .copied()
+        .unwrap_or("light");
+
     let query = queries
-        .into_iter()
+        .iter()
         .find(|(key, _)| *key == "search")
-        .and_then(|(_, value)| value)
+        .and_then(|(_, value)| value.as_ref())
         .ok_or_else(|| anyhow!("search query string not found in url"))?;
 
     let ids = search::search(db, query);
@@ -111,7 +124,7 @@ pub fn search(ctx: Context<Database>) -> Result<Response> {
         })
         .collect::<Result<Vec<_>>>()?;
 
-    let body = Layout::new("search", IndexPage { stories });
+    let body = Layout::new("search", theme, IndexPage { stories });
 
     Ok(res!(200; body))
 }
@@ -138,6 +151,7 @@ where
 {
     css: &'static str,
     title: String,
+    theme: String,
     body: B,
 }
 
@@ -145,13 +159,15 @@ impl<B> Layout<B>
 where
     B: TemplateOnce,
 {
-    fn new<S>(title: S, body: B) -> Self
+    fn new<S, T>(title: S, theme: T, body: B) -> Self
     where
         S: ToString,
+        T: ToString,
     {
         Self {
             css: CSS,
             title: title.to_string(),
+            theme: theme.to_string(),
             body,
         }
     }

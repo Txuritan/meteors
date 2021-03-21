@@ -86,6 +86,7 @@ fn main() -> Result<()> {
 
         return Ok(());
     }
+
     let stop = Arc::new(AtomicBool::new(false));
 
     ctrlc::set_handler({
