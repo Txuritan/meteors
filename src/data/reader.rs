@@ -66,11 +66,9 @@ fn read_meta(
     database: &mut Database,
     node: &Node<'_, '_>,
 ) -> Result<StoryMeta> {
-    let dts = children_elements(node)
-        .filter(|n| n.tag_name().name() == "dt");
+    let dts = children_elements(node).filter(|n| n.tag_name().name() == "dt");
 
-    let dds = children_elements(node)
-        .filter(|n| n.tag_name().name() == "dd");
+    let dds = children_elements(node).filter(|n| n.tag_name().name() == "dd");
 
     let mut rating = Rating::Unknown;
 

@@ -1,6 +1,6 @@
 mod file;
 mod reader;
-mod search;
+pub mod search;
 
 use {
     crate::{

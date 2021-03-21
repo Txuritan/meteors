@@ -1,6 +1,6 @@
 use {
     crate::{
-        data::Database,
+        data::{search, Database},
         models::{
             proto::{Entity, Rating, StoryInfo},
             StoryFull,
@@ -65,6 +65,53 @@ pub fn story(ctx: Context<Database>) -> Result<Response> {
             index: chapter,
         },
     );
+
+    Ok(res!(200; body))
+}
+
+pub fn search(ctx: Context<Database>) -> Result<Response> {
+    let db = ctx.state();
+
+    // path?query ? ( query = key=value[&key=value] ) => Vec{(key, value) [, (key, value)]}
+    let queries = ctx
+        .query()
+        .map(|query| {
+            query
+                .split('&')
+                .map(|param| {
+                    param
+                        .contains('=')
+                        .then(|| {
+                            param.find('=').map(|index| {
+                                let (key, value) = param.split_at(index);
+
+                                (key, Some(value))
+                            })
+                        })
+                        .flatten()
+                        .unwrap_or((param, None))
+                })
+                .collect::<Vec<_>>()
+        })
+        .ok_or_else(|| anyhow!("no query parameters found in url"))?;
+
+    let query = queries
+        .into_iter()
+        .find(|(key, _)| *key == "search")
+        .and_then(|(_, value)| value)
+        .ok_or_else(|| anyhow!("search query string not found in url"))?;
+
+    let ids = search::search(db, query);
+
+    let stories = ids
+        .iter()
+        .map(|id| {
+            db.get_story_full(id)
+                .map(|(id, story)| StoryCard::new(&id, story))
+        })
+        .collect::<Result<Vec<_>>>()?;
+
+    let body = Layout::new("search", IndexPage { stories });
 
     Ok(res!(200; body))
 }

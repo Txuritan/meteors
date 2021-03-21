@@ -14,7 +14,7 @@ use {
     crate::{
         data::Database,
         prelude::*,
-        router::{get, Router},
+        router::{get, post, Router},
     },
     std::{
         env,
@@ -102,7 +102,8 @@ fn main() -> Result<()> {
 
     let mut router = Router::new(database)
         .on("/", get(handlers::index))
-        .on("/story/:id/:chapter", get(handlers::story));
+        .on("/story/:id/:chapter", get(handlers::story))
+        .on("/search", post(handlers::search));
 
     let server = Server::http(addr).map_err(|err| anyhow!("unable to start server: {}", err))?;
 

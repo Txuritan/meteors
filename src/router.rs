@@ -30,6 +30,7 @@ pub type Response = tiny_http::Response<Cursor<Vec<u8>>>;
 
 pub struct Context<'s, S> {
     state: Arc<S>,
+    query: Option<&'s str>,
     params: Vec<(&'s str, &'s str)>,
 }
 
@@ -43,6 +44,10 @@ impl<'s, S> Context<'s, S> {
             .iter()
             .find(|(k, _)| *k == key)
             .map(|(_, value)| *value)
+    }
+
+    pub fn query(&self) -> Option<&'s str> {
+        self.query
     }
 }
 
@@ -82,6 +87,16 @@ where
 {
     Handler {
         method: Method::Get,
+        route: Boxed(Box::new(route)),
+    }
+}
+
+pub fn post<R, S>(route: R) -> Handler<S>
+where
+    R: for<'r> Route<'r, S>,
+{
+    Handler {
+        method: Method::Post,
         route: Boxed(Box::new(route)),
     }
 }
@@ -132,11 +147,24 @@ impl<S> Router<S> {
 
         let state = self.state.clone();
 
+        let url = req.url();
+
+        let (url, query) = match url.find('?').map(|i| url.split_at(i)) {
+            Some((url, query)) => (url, Some(query)),
+            None => (url, None),
+        };
+
         let res = self
             .tree
             .get(&method)
-            .and_then(|tree| tree.find(req.url()))
-            .map(|(payload, params)| payload.call(Context { state, params }))
+            .and_then(|tree| tree.find(url))
+            .map(|(payload, params)| {
+                payload.call(Context {
+                    state,
+                    query,
+                    params,
+                })
+            })
             .unwrap_or_else(|| Ok(res!(404)))
             .map_err(|err| {
                 for cause in err.chain() {

@@ -43,9 +43,95 @@ impl Bound {
     }
 }
 
-#[allow(dead_code)]
+pub fn search(database: &Database, text: &str) -> Vec<String> {
+    let bounds = parse(text);
+
+    let mut stories = Vec::new();
+
+    let mut bounds_iter = bounds.into_iter();
+
+    if let Some(bound) = bounds_iter.next() {
+        let story_iter = database.index.stories.iter();
+
+        let (include, iter) = match bound {
+            Bound::Author { include, text } => (
+                include,
+                help!(bound; database, story_iter, text, Author, authors),
+            ),
+            Bound::Origin { include, text } => (
+                include,
+                help!(bound; database, story_iter, text, Origin, origins),
+            ),
+            Bound::Pairing { include, text } => (
+                include,
+                help!(bound; database, story_iter, text, Pairing, pairings),
+            ),
+            Bound::Character { include, text } => (
+                include,
+                help!(bound; database, story_iter, text, Character, characters),
+            ),
+            Bound::General { include, text } => (
+                include,
+                help!(bound; database, story_iter, text, General, generals),
+            ),
+        };
+
+        first_push(include, &database, &mut stories, iter);
+    }
+
+    for bound in bounds_iter {
+        match bound {
+            Bound::Author { include, text } => {
+                help!(retain; database, stories, include, text, authors);
+            }
+            Bound::Origin { include, text } => {
+                help!(retain; database, stories, include, text, origins);
+            }
+            Bound::Pairing { include, text } => {
+                help!(retain; database, stories, include, text, pairings);
+            }
+            Bound::Character { include, text } => {
+                help!(retain; database, stories, include, text, characters);
+            }
+            Bound::General { include, text } => {
+                help!(retain; database, stories, include, text, generals);
+            }
+        }
+    }
+
+    stories
+}
+
+fn first_push<'d, I>(include: bool, database: &Database, stories: &mut Vec<String>, ids: I)
+where
+    I: Iterator<Item = (&'d String, &'d Story)>,
+{
+    if include {
+        for id in ids.map(|(id, _)| id) {
+            if !stories.contains(id) {
+                stories.push(id.clone());
+            }
+        }
+    } else {
+        let ids = ids.map(|(id, _)| id).collect::<Vec<_>>();
+
+        for id in database.index.stories.iter().map(|(id, _)| id) {
+            if !ids.contains(&id) {
+                stories.push(id.clone());
+            }
+        }
+    }
+}
+
+fn any_by_text(full: &BTreeMap<String, Entity>, refs: &[String], text: &str) -> bool {
+    refs.iter().map(|id| full.get(id)).any(|a| match a {
+        Some(entity) => entity.text == text,
+        None => false,
+    })
+}
+
 #[allow(clippy::while_let_on_iterator)]
-pub fn parse(text: &str) -> Vec<Bound> {
+fn parse(text: &str) -> Vec<Bound> {
     let mut parts = text.split(',').map(|part| part.trim());
 
     let mut bounds = Vec::with_capacity(parts.size_hint().0);
@@ -181,92 +267,6 @@ where
     } else {
         false
     }
-}
-
-#[allow(dead_code)]
-pub fn search(database: &Database, bounds: Vec<Bound>) -> Vec<String> {
-    let mut stories = Vec::new();
-
-    let mut bounds_iter = bounds.into_iter();
-
-    if let Some(bound) = bounds_iter.next() {
-        let story_iter = database.index.stories.iter();
-
-        let (include, iter) = match bound {
-            Bound::Author { include, text } => (
-                include,
-                help!(bound; database, story_iter, text, Author, authors),
-            ),
-            Bound::Origin { include, text } => (
-                include,
-                help!(bound; database, story_iter, text, Origin, origins),
-            ),
-            Bound::Pairing { include, text } => (
-                include,
-                help!(bound; database, story_iter, text, Pairing, pairings),
-            ),
-            Bound::Character { include, text } => (
-                include,
-                help!(bound; database, story_iter, text, Character, characters),
-            ),
-            Bound::General { include, text } => (
-                include,
-                help!(bound; database, story_iter, text, General, generals),
-            ),
-        };
-
-        first_push(include, &database, &mut stories, iter);
-    }
-
-    for bound in bounds_iter {
-        match bound {
-            Bound::Author { include, text } => {
-                help!(retain; database, stories, include, text, authors);
-            }
-            Bound::Origin { include, text } => {
-                help!(retain; database, stories, include, text, origins);
-            }
-            Bound::Pairing { include, text } => {
-                help!(retain; database, stories, include, text, pairings);
-            }
-            Bound::Character { include, text } => {
-                help!(retain; database, stories, include, text, characters);
-            }
-            Bound::General { include, text } => {
-                help!(retain; database, stories, include, text, generals);
-            }
-        }
-    }
-
-    stories
-}
-
-fn first_push<'d, I>(include: bool, database: &Database, stories: &mut Vec<String>, ids: I)
-where
-    I: Iterator<Item = (&'d String, &'d Story)>,
-{
-    if include {
-        for id in ids.map(|(id, _)| id) {
-            if !stories.contains(id) {
-                stories.push(id.clone());
-            }
-        }
-    } else {
-        let ids = ids.map(|(id, _)| id).collect::<Vec<_>>();
-
-        for id in database.index.stories.iter().map(|(id, _)| id) {
-            if !ids.contains(&id) {
-                stories.push(id.clone());
-            }
-        }
-    }
-}
-
-fn any_by_text(full: &BTreeMap<String, Entity>, refs: &[String], text: &str) -> bool {
-    refs.iter().map(|id| full.get(id)).any(|a| match a {
-        Some(entity) => entity.text == text,
-        None => false,
-    })
 }
 
 enum BoundIter<I, A, O, P, C, G>
