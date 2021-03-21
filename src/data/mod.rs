@@ -1,27 +1,25 @@
+mod file;
 mod reader;
 mod search;
 
-use std::io::Seek;
-
 use {
     crate::{
+        data::file::StoryFile,
         models::{
             proto::{Entity, Index, Range, Rating, StoryMeta},
             StoryFull, StoryFullMeta,
         },
         prelude::*,
-        regex::REGEX,
         Config,
     },
-    flate2::{read::GzDecoder, write::GzEncoder, Compression},
     prost::Message,
     std::{
         collections::BTreeMap,
         env,
         ffi::OsStr,
-        fs::{self, DirEntry, File},
-        io::{self, BufReader, BufWriter, Read, SeekFrom, Write as _},
-        path::{Path, PathBuf},
+        fs::{self, DirEntry},
+        io::Read as _,
+        path::PathBuf,
     },
 };
 
@@ -115,9 +113,11 @@ impl Database {
             .ok_or_else(|| anyhow!("File `{}` does not have a file name", path.display()))?;
 
         match ext {
-            Some("html") => {
+            Some("html") | Some("gz") => {
+                let mut file = StoryFile::new(&path)?;
+
                 let count = if cfg.trackers {
-                    self.rewrite_story(&path)?
+                    file.strip_trackers()?
                 } else {
                     0
                 };
@@ -138,83 +138,17 @@ impl Database {
                     );
                 }
 
-                let mut reader = BufReader::new(File::open(&path)?);
-
-                reader::read_story(self, name, &mut reader).with_context(|| name.to_string())?;
-
-                reader.seek(SeekFrom::Start(0))?;
+                reader::read_story(self, name, &mut file.reader())
+                    .with_context(|| name.to_string())?;
 
                 if cfg.compress {
-                    self.compress_story(&path, &mut reader)?;
-
-                    fs::remove_file(&path)?;
+                    file.compress()?;
                 }
-            }
-            Some("gz") => {
-                debug!(
-                    "  {} found story: {}",
-                    "|".bright_black(),
-                    name.bright_green(),
-                );
-
-                let mut reader = GzDecoder::new(BufReader::new(File::open(&path)?));
-
-                reader::read_story(self, name, &mut reader).with_context(|| name.to_string())?;
             }
             _ => {}
         }
 
         Ok(())
-    }
-
-    fn compress_story<P, R>(&mut self, path: P, reader: &mut R) -> Result<()>
-    where
-        P: AsRef<Path>,
-        R: Read,
-    {
-        let path = path.as_ref();
-
-        let new_path = path.with_extension("html.gz");
-
-        let mut writer = GzEncoder::new(File::create(&new_path)?, Compression::best());
-
-        io::copy(reader, &mut writer)?;
-
-        writer.flush()?;
-
-        Ok(())
-    }
-
-    fn rewrite_story<P>(&mut self, path: P) -> Result<usize>
-    where
-        P: AsRef<Path>,
-    {
-        let mut reader = BufReader::new(File::open(&path)?);
-
-        let mut in_buf = String::new();
-
-        let _ = reader.read_to_string(&mut in_buf)?;
-
-        let positions = REGEX
-            .find_iter(in_buf.as_bytes())
-            .map(|(start, end)| start..end)
-            .collect::<Vec<_>>();
-
-        let count = positions.len();
-
-        if count != 0 {
-            let mut out_buf = BufWriter::new(File::create(&path)?);
-
-            for (i, byte) in in_buf.as_bytes().iter().enumerate() {
-                if positions.iter().find(|range| range.contains(&i)).is_none() {
-                    let _ = out_buf.write(&[*byte])?;
-                }
-            }
-
-            out_buf.flush()?;
-        }
-
-        Ok(count)
     }
 
     pub fn get_chapter_body(&self, id: &str, chapter: usize) -> Result<String> {
@@ -226,7 +160,9 @@ impl Database {
 
         let path = self.data_path.join(&story.file_name);
 
-        let mut reader = GzDecoder::new(BufReader::new(File::open(path)?));
+        let mut file = StoryFile::new(&path)?;
+
+        let mut reader = file.reader();
 
         let mut contents = String::with_capacity(story.length as usize);
 
