@@ -88,7 +88,7 @@ pub fn new_id() -> String {
 
     loop {
         let mut rng = StdRng::from_entropy();
-        let mut bytes = [0u8; STEP];
+        let mut bytes = [0_u8; STEP];
 
         rng.fill(&mut bytes[..]);
 

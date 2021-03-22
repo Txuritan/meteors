@@ -132,7 +132,7 @@ fn any_by_text(full: &BTreeMap<String, Entity>, refs: &[String], text: &str) -> 
 
 #[allow(clippy::while_let_on_iterator)]
 fn parse(text: &str) -> Vec<Bound> {
-    let mut parts = text.split(',').map(|part| part.trim());
+    let mut parts = text.split(',').map(str::trim);
 
     let mut bounds = Vec::with_capacity(parts.size_hint().0);
 

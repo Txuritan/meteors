@@ -7,7 +7,6 @@ use {
         },
         prelude::*,
         router::{Context, Response},
-        utils,
     },
     sailfish::TemplateOnce,
     tiny_http::Header,
@@ -25,19 +24,10 @@ macro_rules! res {
     };
 }
 
-pub fn index(ctx: Context<Database>) -> Result<Response> {
+pub fn index(ctx: &Context<Database>) -> Result<Response> {
     let db = ctx.state();
 
-    let theme = ctx
-        .query()
-        .map(|query| utils::parse_queries(query))
-        .and_then(|queries| {
-            queries
-                .into_iter()
-                .find(|(key, _)| *key == "theme")
-                .and_then(|(_, value)| value)
-        })
-        .unwrap_or("light");
+    let theme = ctx.query("theme").unwrap_or("light");
 
     let stories = db
         .index
@@ -54,19 +44,10 @@ pub fn index(ctx: Context<Database>) -> Result<Response> {
     Ok(res!(200; body))
 }
 
-pub fn story(ctx: Context<Database>) -> Result<Response> {
+pub fn story(ctx: &Context<Database>) -> Result<Response> {
     let db = ctx.state();
 
-    let theme = ctx
-        .query()
-        .map(|query| utils::parse_queries(query))
-        .and_then(|queries| {
-            queries
-                .into_iter()
-                .find(|(key, _)| *key == "theme")
-                .and_then(|(_, value)| value)
-        })
-        .unwrap_or("light");
+    let theme = ctx.query("theme").unwrap_or("light");
 
     let id = ctx
         .param("id")
@@ -93,25 +74,13 @@ pub fn story(ctx: Context<Database>) -> Result<Response> {
     Ok(res!(200; body))
 }
 
-pub fn search(ctx: Context<Database>) -> Result<Response> {
+pub fn search(ctx: &Context<Database>) -> Result<Response> {
     let db = ctx.state();
 
-    let queries = ctx
-        .query()
-        .map(|query| utils::parse_queries(query))
-        .ok_or_else(|| anyhow!("no query parameters found in url"))?;
+    let theme = ctx.query("theme").unwrap_or("light");
 
-    let theme = queries
-        .iter()
-        .find(|(key, _)| *key == "theme")
-        .and_then(|(_, value)| value.as_ref())
-        .copied()
-        .unwrap_or("light");
-
-    let query = queries
-        .iter()
-        .find(|(key, _)| *key == "search")
-        .and_then(|(_, value)| value.as_ref())
+    let query = ctx
+        .query("search")
         .ok_or_else(|| anyhow!("search query string not found in url"))?;
 
     let ids = search::search(db, query);
@@ -127,6 +96,36 @@ pub fn search(ctx: Context<Database>) -> Result<Response> {
     let body = Layout::new("search", theme, IndexPage { stories });
 
     Ok(res!(200; body))
+}
+
+pub fn api_sync(ctx: &Context<Database>) -> Result<Response> {
+    let db = ctx.state();
+
+    let key = ctx
+        .query("key")
+        .ok_or_else(|| anyhow!("missing child node key"))?;
+
+    todo!()
+}
+
+pub fn api_index(ctx: &Context<Database>) -> Result<Response> {
+    let db = ctx.state();
+
+    let token = ctx
+        .query("token")
+        .ok_or_else(|| anyhow!("missing session token"))?;
+
+    todo!()
+}
+
+pub fn api_story(ctx: &Context<Database>) -> Result<Response> {
+    let db = ctx.state();
+
+    let token = ctx
+        .query("token")
+        .ok_or_else(|| anyhow!("missing session token"))?;
+
+    todo!()
 }
 
 #[derive(TemplateOnce)]
@@ -159,6 +158,7 @@ impl<B> Layout<B>
 where
     B: TemplateOnce,
 {
+    #[allow(clippy::needless_pass_by_value)]
     fn new<S, T>(title: S, theme: T, body: B) -> Self
     where
         S: ToString,

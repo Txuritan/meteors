@@ -40,36 +40,56 @@ mod prelude {
 fn main() -> Result<()> {
     logger::init()?;
 
-    let cfg = env::args()
-        .skip(1)
-        .fold(Ok(Config::new()), |cfg: Result<Config>, arg| {
-            cfg.and_then(|mut cfg| {
+    let (help, cfg) = env::args().skip(1).fold(
+        Ok((false, Config::new())),
+        |init: Result<(bool, Config)>, arg| {
+            init.and_then(|(mut help, mut cfg)| {
                 match arg.as_str() {
                     "-ct" | "--tc" => {
                         cfg.compress = true;
                         cfg.trackers = true;
                     }
-                    "-c" | "--compress" => cfg.compress = true,
-                    "-t" | "--trackers" => cfg.trackers = true,
-                    "-h" | "--help" => cfg.help = true,
-                    "--host" => cfg.host_take = true,
-                    "--port" => cfg.port_take = true,
-                    _ if cfg.host_take => {
-                        cfg.host = arg.parse()?;
-                        cfg.host_take = false;
+                    "-cp" | "--pc" => {
+                        cfg.compress = true;
+                        cfg.parent = true;
                     }
-                    _ if cfg.port_take => {
+                    "-tp" | "--pt" => {
+                        cfg.parent = true;
+                        cfg.trackers = true;
+                    }
+                    "-cpt" | "-ctp" | "-pct" | "-ptc" | "-tcp" | "-tpc" => {
+                        cfg.compress = true;
+                        cfg.parent = true;
+                        cfg.trackers = true;
+                    }
+                    "-c" | "--compress" => cfg.compress = true,
+                    "-p" | "--parent" => cfg.parent = true,
+                    "-t" | "--trackers" => cfg.trackers = true,
+                    "-h" | "--help" => help = true,
+                    "--host" => cfg.take = Take::Host,
+                    "--port" => cfg.take = Take::Port,
+                    "--key" => cfg.take = Take::Key,
+                    _ if cfg.take == Take::Host => {
+                        cfg.host = arg.parse()?;
+                        cfg.take = Take::None;
+                    }
+                    _ if cfg.take == Take::Port => {
                         cfg.port = arg.parse()?;
-                        cfg.port_take = false;
+                        cfg.take = Take::None;
+                    }
+                    _ if cfg.take == Take::Key => {
+                        cfg.key = arg.to_string();
+                        cfg.take = Take::None;
                     }
                     _ => {}
                 }
 
-                Ok(cfg)
+                Ok((help, cfg))
             })
-        })?;
+        },
+    )?;
 
-    if cfg.help {
+    if help {
         println!("meteors {}", env!("CARGO_PKG_VERSION"));
         println!();
         println!("USAGE:");
@@ -78,11 +98,13 @@ fn main() -> Result<()> {
         println!("FLAGS:");
         println!("    -h, --help            Prints help information");
         println!("    -c, --compress        Enables the auto compression of data files");
+        println!("    -p, --parent          Sets this server to be parent node");
         println!("    -t, --trackers        Enables the removal of trackers from data files");
         println!();
         println!("OPTIONS:");
         println!("    --host <ADDRESS>      Sets the server's bound IP address [default: 0.0.0.0]");
         println!("    --port <NUMBER>       Sets the port that the server will listen to requests on [default: 8723]");
+        println!("    --key <TOKEN>         The token that children nodes will connect with");
 
         return Ok(());
     }
@@ -99,12 +121,15 @@ fn main() -> Result<()> {
 
     let addr: SocketAddr = (cfg.host, cfg.port).into();
 
-    let database = Database::init(cfg)?;
+    let database = Database::init(&cfg)?;
 
     let mut router = Router::new(database)
         .on("/", get(handlers::index))
         .on("/story/:id/:chapter", get(handlers::story))
-        .on("/search", post(handlers::search));
+        .on("/search", post(handlers::search))
+        .on("/api/sync", post(handlers::api_sync))
+        .on("/api/index", post(handlers::api_index))
+        .on("/api/story", post(handlers::api_story));
 
     let server = Server::http(addr).map_err(|err| anyhow!("unable to start server: {}", err))?;
 
@@ -134,28 +159,36 @@ pub struct Config {
     pub host: Ipv4Addr,
     pub port: u16,
 
-    pub help: bool,
-
     pub compress: bool,
     pub trackers: bool,
 
-    host_take: bool,
-    port_take: bool,
+    pub parent: bool,
+    pub key: String,
+
+    take: Take,
 }
 
 impl Config {
-    const fn new() -> Self {
+    fn new() -> Self {
         Self {
             host: Ipv4Addr::new(0, 0, 0, 0),
             port: 8723,
 
-            help: false,
-
             compress: false,
             trackers: false,
 
-            host_take: false,
-            port_take: false,
+            parent: true,
+            key: "".to_string(),
+
+            take: Take::None,
         }
     }
+}
+
+#[derive(Debug, PartialEq)]
+enum Take {
+    None,
+    Host,
+    Port,
+    Key,
 }

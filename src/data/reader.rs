@@ -66,9 +66,9 @@ fn read_meta(
     database: &mut Database,
     node: &Node<'_, '_>,
 ) -> Result<StoryMeta> {
-    let dts = children_elements(node).filter(|n| n.tag_name().name() == "dt");
+    let detail_names = children_elements(node).filter(|n| n.tag_name().name() == "dt");
 
-    let dds = children_elements(node).filter(|n| n.tag_name().name() == "dd");
+    let detail_definitions = children_elements(node).filter(|n| n.tag_name().name() == "dd");
 
     let mut rating = Rating::Unknown;
 
@@ -81,10 +81,10 @@ fn read_meta(
     let mut characters = Vec::new();
     let mut generals = Vec::new();
 
-    for (dt, dd) in dts.zip(dds) {
-        let part = match dt.get_text()?.trim() {
+    for (detail_names, detail_definition) in detail_names.zip(detail_definitions) {
+        let part = match detail_names.get_text()?.trim() {
             "Rating:" => {
-                match dd.get_child("a")?.get_text()?.trim() {
+                match detail_definition.get_child("a")?.get_text()?.trim() {
                     "Explicit" => rating = Rating::Explicit,
                     "Mature" => rating = Rating::Mature,
                     "Teen And Up Audiences" => rating = Rating::Teen,
@@ -94,12 +94,36 @@ fn read_meta(
 
                 None
             }
-            "Archive Warning:" => Some((&mut database.index.warnings, &mut warnings, &dd)),
-            "Category:" => Some((&mut database.index.categories, &mut categories, &dd)),
-            "Fandom:" => Some((&mut database.index.origins, &mut origins, &dd)),
-            "Relationship:" => Some((&mut database.index.pairings, &mut pairings, &dd)),
-            "Characters:" => Some((&mut database.index.characters, &mut characters, &dd)),
-            "Additional Tags:" => Some((&mut database.index.generals, &mut generals, &dd)),
+            "Archive Warning:" => Some((
+                &mut database.index.warnings,
+                &mut warnings,
+                &detail_definition,
+            )),
+            "Category:" => Some((
+                &mut database.index.categories,
+                &mut categories,
+                &detail_definition,
+            )),
+            "Fandom:" => Some((
+                &mut database.index.origins,
+                &mut origins,
+                &detail_definition,
+            )),
+            "Relationship:" => Some((
+                &mut database.index.pairings,
+                &mut pairings,
+                &detail_definition,
+            )),
+            "Characters:" => Some((
+                &mut database.index.characters,
+                &mut characters,
+                &detail_definition,
+            )),
+            "Additional Tags:" => Some((
+                &mut database.index.generals,
+                &mut generals,
+                &detail_definition,
+            )),
             _ => None,
         };
 
@@ -109,7 +133,7 @@ fn read_meta(
     }
 
     Ok(StoryMeta {
-        rating: Rating::to(&rating),
+        rating: Rating::to(rating),
         categories,
         authors,
         origins,
@@ -167,22 +191,19 @@ fn add_to_if_exists_or_create(
 ) {
     let entry = database_map.iter().find(|(_, v)| v.text == text);
 
-    match entry {
-        Some((id, _)) => {
-            list.push(id.clone());
-        }
-        None => {
-            let id = new_id();
+    if let Some((id, _)) = entry {
+        list.push(id.clone());
+    } else {
+        let id = new_id();
 
-            database_map.insert(
-                id.clone(),
-                Entity {
-                    text: text.to_string(),
-                },
-            );
+        database_map.insert(
+            id.clone(),
+            Entity {
+                text: text.to_string(),
+            },
+        );
 
-            list.push(id);
-        }
+        list.push(id);
     }
 }
 

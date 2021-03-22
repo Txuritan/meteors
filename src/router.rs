@@ -1,5 +1,5 @@
 use {
-    crate::prelude::*,
+    crate::{prelude::*, utils},
     chrono::Duration,
     path_tree::PathTree,
     std::{collections::BTreeMap, io::Cursor, sync::Arc, time::Instant},
@@ -30,7 +30,7 @@ pub type Response = tiny_http::Response<Cursor<Vec<u8>>>;
 
 pub struct Context<'s, S> {
     state: Arc<S>,
-    query: Option<&'s str>,
+    query: Vec<(&'s str, Option<&'s str>)>,
     params: Vec<(&'s str, &'s str)>,
 }
 
@@ -42,17 +42,19 @@ impl<'s, S> Context<'s, S> {
     pub fn param(&self, key: &str) -> Option<&'s str> {
         self.params
             .iter()
-            .find(|(k, _)| *k == key)
-            .map(|(_, value)| *value)
+            .find_map(|(k, v)| (*k == key).then(|| *v))
     }
 
-    pub fn query(&self) -> Option<&'s str> {
+    pub fn query(&self, key: &str) -> Option<&'s str> {
         self.query
+            .iter()
+            .find(|(k, _)| *k == key)
+            .and_then(|(_, value)| *value)
     }
 }
 
 pub trait Route<'r, S>: 'static {
-    fn call(&'r self, ctx: Context<'r, S>) -> Result<Response>;
+    fn call(&'r self, ctx: &'r Context<'r, S>) -> Result<Response>;
 }
 
 pub struct Boxed<S>(Box<dyn for<'r> Route<'r, S>>);
@@ -60,9 +62,9 @@ pub struct Boxed<S>(Box<dyn for<'r> Route<'r, S>>);
 impl<'r, S, T> Route<'r, S> for T
 where
     S: 'r,
-    T: 'static + Fn(Context<'r, S>) -> Result<Response>,
+    T: 'static + Fn(&'r Context<'r, S>) -> Result<Response>,
 {
-    fn call(&'r self, ctx: Context<'r, S>) -> Result<Response> {
+    fn call(&'r self, ctx: &'r Context<'r, S>) -> Result<Response> {
         (self)(ctx)
     }
 }
@@ -71,7 +73,7 @@ impl<'r, S> Route<'r, S> for Boxed<S>
 where
     S: 'static,
 {
-    fn call(&'r self, ctx: Context<'r, S>) -> Result<Response> {
+    fn call(&'r self, ctx: &'r Context<'r, S>) -> Result<Response> {
         self.0.call(ctx)
     }
 }
@@ -125,47 +127,46 @@ impl<S> Router<S> {
         self
     }
 
-    pub fn handle(&mut self, req: Request) -> Result<()>
+    pub fn handle(&mut self, request: Request) -> Result<()>
     where
         S: 'static,
     {
         let earlier = Instant::now();
 
-        let url = req.url().to_string();
+        let url = request.url().to_string();
 
-        let method = Method::from(req.method());
+        let method = Method::from(request.method());
 
         log::info!(
             "{} {} {}/{} {} {}",
             "+".bright_black(),
             "+".bright_black(),
             "HTTP".bright_yellow(),
-            req.http_version(),
+            request.http_version(),
             method.to_colored_string(),
             url.bright_purple(),
         );
 
         let state = self.state.clone();
 
-        let url = req.url();
+        let url = request.url();
 
         let (url, query) = match url.find('?').map(|i| url.split_at(i)) {
-            Some((url, query)) => (url, Some(query)),
-            None => (url, None),
+            Some((url, query)) => (url, utils::parse_queries(query)),
+            None => (url, vec![]),
         };
 
-        let res = self
+        let response = self
             .tree
             .get(&method)
             .and_then(|tree| tree.find(url))
-            .map(|(payload, params)| {
-                payload.call(Context {
+            .map_or(Ok(res!(404)), |(payload, params)| {
+                payload.call(&Context {
                     state,
                     query,
                     params,
                 })
             })
-            .unwrap_or_else(|| Ok(res!(404)))
             .map_err(|err| {
                 for cause in err.chain() {
                     log::error!("  {} {}", "|".bright_black(), cause,);
@@ -181,7 +182,7 @@ impl<S> Router<S> {
             "{} {} {} {}ms",
             "+".bright_black(),
             "+".bright_black(),
-            match res.status_code().0 {
+            match response.status_code().0 {
                 200 => format!("{}", "200".green()),
                 404 => format!("{}", "404".bright_yellow()),
                 503 => format!("{}", "200".bright_red()),
@@ -190,7 +191,7 @@ impl<S> Router<S> {
             dur.num_milliseconds().bright_purple(),
         );
 
-        req.respond(res)?;
+        request.respond(response)?;
 
         Ok(())
     }
@@ -210,7 +211,7 @@ pub enum Method {
 }
 
 impl Method {
-    fn to_colored_string(&self) -> String {
+    fn to_colored_string(self) -> String {
         match self {
             Method::Get => format!("{}", "GET".green()),
             Method::Post => format!("{}", "POST".bright_blue()),
@@ -234,7 +235,7 @@ impl From<tiny_http::Method> for Method {
 impl From<&tiny_http::Method> for Method {
     fn from(method: &tiny_http::Method) -> Self {
         match method {
-            tiny_http::Method::Get => Method::Get,
+            tiny_http::Method::Get | tiny_http::Method::NonStandard(_) => Method::Get,
             tiny_http::Method::Head => Method::Head,
             tiny_http::Method::Post => Method::Post,
             tiny_http::Method::Put => Method::Put,
@@ -243,7 +244,6 @@ impl From<&tiny_http::Method> for Method {
             tiny_http::Method::Options => Method::Options,
             tiny_http::Method::Trace => Method::Trace,
             tiny_http::Method::Patch => Method::Patch,
-            tiny_http::Method::NonStandard(_) => Method::Get,
         }
     }
 }
@@ -255,8 +255,7 @@ trait ResultExt<T> {
 impl<T> ResultExt<T> for Result<T, T> {
     fn ignore(self) -> T {
         match self {
-            Ok(t) => t,
-            Err(t) => t,
+            Ok(t) | Err(t) => t,
         }
     }
 }

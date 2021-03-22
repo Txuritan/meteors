@@ -28,13 +28,14 @@ use {
 pub struct Database {
     pub index: Index,
 
-    pub data_path: PathBuf,
+    pub children: Vec<String>,
 
+    pub data_path: PathBuf,
     pub index_path: PathBuf,
 }
 
 impl Database {
-    pub fn init(cfg: Config) -> Result<Self> {
+    pub fn init(cfg: &Config) -> Result<Self> {
         debug!("{} building database", "+".bright_black());
 
         let cur = env::current_dir()?.canonicalize()?;
@@ -52,7 +53,9 @@ impl Database {
             Self {
                 index,
 
-                data_path: data_path.clone(),
+                children: vec![],
+
+                data_path,
                 index_path,
             }
         } else {
@@ -70,7 +73,9 @@ impl Database {
                     generals: BTreeMap::new(),
                 },
 
-                data_path: data_path.clone(),
+                children: vec![],
+
+                data_path,
                 index_path,
             }
         };
@@ -81,12 +86,12 @@ impl Database {
             "+".bright_black(),
         );
 
-        for entry in fs::read_dir(&data_path)? {
+        for entry in fs::read_dir(&database.data_path)? {
             let entry = entry?;
             let meta = entry.metadata()?;
 
             if meta.is_file() {
-                database.handle_file(&cfg, entry)?;
+                database.handle_file(&cfg, &entry)?;
             }
         }
 
@@ -103,7 +108,7 @@ impl Database {
         Ok(database)
     }
 
-    fn handle_file(&mut self, cfg: &Config, entry: DirEntry) -> Result<()> {
+    fn handle_file(&mut self, cfg: &Config, entry: &DirEntry) -> Result<()> {
         let path = entry.path();
         let ext = path.extension().and_then(OsStr::to_str);
 
@@ -122,19 +127,19 @@ impl Database {
                     0
                 };
 
-                if count != 0 {
+                if count == 0 {
+                    debug!(
+                        "  {} found story: {}",
+                        "|".bright_black(),
+                        name.bright_green(),
+                    );
+                } else {
                     debug!(
                         "  {} found story: {} (with {} trackers, {})",
                         "|".bright_black(),
                         name.bright_green(),
                         count.bright_purple(),
                         "removed".bright_red(),
-                    );
-                } else {
-                    debug!(
-                        "  {} found story: {}",
-                        "|".bright_black(),
-                        name.bright_green(),
                     );
                 }
 
@@ -191,7 +196,7 @@ impl Database {
             Generals,
         }
 
-        fn values(index: &Index, meta: &StoryMeta, kind: Kind) -> Result<Vec<Entity>> {
+        fn values(index: &Index, meta: &StoryMeta, kind: &Kind) -> Result<Vec<Entity>> {
             let (map, keys) = match kind {
                 Kind::Categories => (&index.categories, &meta.categories),
                 Kind::Authors => (&index.authors, &meta.authors),
@@ -233,13 +238,13 @@ impl Database {
                 info: story_ref.info.clone(),
                 meta: StoryFullMeta {
                     rating: Rating::from(story_ref.meta.rating),
-                    categories: values(&index, &meta, Kind::Categories).context("categories")?,
-                    authors: values(&index, &meta, Kind::Authors).context("authors")?,
-                    origins: values(&index, &meta, Kind::Origins).context("origins")?,
-                    warnings: values(&index, &meta, Kind::Warnings).context("warnings")?,
-                    pairings: values(&index, &meta, Kind::Pairings).context("pairings")?,
-                    characters: values(&index, &meta, Kind::Characters).context("characters")?,
-                    generals: values(&index, &meta, Kind::Generals).context("generals")?,
+                    categories: values(&index, &meta, &Kind::Categories).context("categories")?,
+                    authors: values(&index, &meta, &Kind::Authors).context("authors")?,
+                    origins: values(&index, &meta, &Kind::Origins).context("origins")?,
+                    warnings: values(&index, &meta, &Kind::Warnings).context("warnings")?,
+                    pairings: values(&index, &meta, &Kind::Pairings).context("pairings")?,
+                    characters: values(&index, &meta, &Kind::Characters).context("characters")?,
+                    generals: values(&index, &meta, &Kind::Generals).context("generals")?,
                 },
             },
         ))

@@ -1,4 +1,5 @@
 pub mod proto;
+pub mod service;
 
 use {
     crate::models::proto::{Entity, Rating, StoryInfo},
@@ -35,7 +36,7 @@ pub struct StoryFullMeta {
 }
 
 impl Rating {
-    pub const fn class(&self) -> &'static str {
+    pub const fn class(self) -> &'static str {
         match self {
             Rating::Explicit => "explicit",
             Rating::Mature => "mature",
@@ -46,7 +47,7 @@ impl Rating {
         }
     }
 
-    pub const fn symbol(&self) -> &'static str {
+    pub const fn symbol(self) -> &'static str {
         match self {
             Rating::Explicit => "e",
             Rating::Mature => "m",
@@ -57,7 +58,7 @@ impl Rating {
         }
     }
 
-    pub const fn to(&self) -> i32 {
+    pub const fn to(self) -> i32 {
         match self {
             Rating::Explicit => 0,
             Rating::Mature => 1,
