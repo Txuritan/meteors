@@ -23,6 +23,7 @@ use {
             atomic::{AtomicBool, Ordering},
             Arc,
         },
+        thread,
         time::Duration,
     },
     tiny_http::Server,
@@ -123,12 +124,15 @@ fn main() -> Result<()> {
 
     let database = Database::init(&cfg)?;
 
-    let mut router = Router::new(database)
-        .on("/", get(handlers::index))
-        .on("/story/:id/:chapter", get(handlers::story))
-        .on("/search", post(handlers::search));
+    let router = Arc::new(
+        Router::new(database)
+            .on("/", get(handlers::index))
+            .on("/story/:id/:chapter", get(handlers::story))
+            .on("/search", post(handlers::search)),
+    );
 
-    let server = Server::http(addr).map_err(|err| anyhow!("unable to start server: {}", err))?;
+    let server =
+        Arc::new(Server::http(addr).map_err(|err| anyhow!("unable to start server: {}", err))?);
 
     info!(
         "{} sever listening on: {}",
@@ -136,16 +140,39 @@ fn main() -> Result<()> {
         addr.bright_purple()
     );
 
-    loop {
-        match server.recv_timeout(Duration::from_millis(100))? {
-            Some(req) => router.handle(req)?,
-            None => {
-                if stop.load(Ordering::SeqCst) {
-                    info!("{} shutting down server", "+".bright_black());
+    let mut guards = Vec::with_capacity(4);
 
-                    break;
+    for id in 0..4 {
+        guards.push(thread::spawn({
+            let stop = stop.clone();
+            let router = router.clone();
+            let server = server.clone();
+
+            move || loop {
+                match server.recv_timeout(Duration::from_millis(100)) {
+                    Ok(Some(req)) => {
+                        if let Err(err) = router.handle(req) {
+                            error!("{} unable to handle request {:?}", "+".bright_black(), err);
+                        }
+                    }
+                    Ok(None) => {
+                        if stop.load(Ordering::SeqCst) {
+                            info!("{} shutting down server thread {}", "+".bright_black(), id.bright_purple());
+
+                            break;
+                        }
+                    }
+                    Err(err) => {
+                        error!("{} {:?}", "+".bright_black(), err);
+                    }
                 }
             }
+        }));
+    }
+
+    for guard in guards {
+        if guard.join().is_err() {
+            error!("{} unable to join server thread", "+".bright_black());
         }
     }
 

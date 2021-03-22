@@ -57,7 +57,7 @@ pub trait Route<'r, S>: 'static {
     fn call(&'r self, ctx: &'r Context<'r, S>) -> Result<Response>;
 }
 
-pub struct Boxed<S>(Box<dyn for<'r> Route<'r, S>>);
+pub struct Boxed<S>(Box<dyn (for<'r> Route<'r, S>) + Send + Sync>);
 
 impl<'r, S, T> Route<'r, S> for T
 where
@@ -85,7 +85,7 @@ pub struct Handler<S> {
 
 pub fn get<R, S>(route: R) -> Handler<S>
 where
-    R: for<'r> Route<'r, S>,
+    R: (for<'r> Route<'r, S>) + Send + Sync,
 {
     Handler {
         method: Method::Get,
@@ -95,7 +95,7 @@ where
 
 pub fn post<R, S>(route: R) -> Handler<S>
 where
-    R: for<'r> Route<'r, S>,
+    R: (for<'r> Route<'r, S>) + Send + Sync,
 {
     Handler {
         method: Method::Post,
@@ -127,7 +127,7 @@ impl<S> Router<S> {
         self
     }
 
-    pub fn handle(&mut self, request: Request) -> Result<()>
+    pub fn handle(&self, request: Request) -> Result<()>
     where
         S: 'static,
     {
