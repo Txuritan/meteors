@@ -62,7 +62,7 @@ pub fn parse_queries(query: &str) -> Vec<(&str, Option<&str>)> {
                     param.find('=').map(|index| {
                         let (key, value) = param.split_at(index);
 
-                        (key, Some(value))
+                        (key, Some(&value[1..]))
                     })
                 })
                 .flatten()

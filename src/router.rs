@@ -152,7 +152,7 @@ impl<S> Router<S> {
         let url = request.url();
 
         let (url, query) = match url.find('?').map(|i| url.split_at(i)) {
-            Some((url, query)) => (url, utils::parse_queries(query)),
+            Some((url, query)) => (url, utils::parse_queries(&query[1..])),
             None => (url, vec![]),
         };
 
