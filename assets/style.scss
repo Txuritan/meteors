@@ -36,6 +36,12 @@ html.light {
         color: $black;
     }
 }
+html.dark {
+    html, body {
+        background-color: $black;
+        color: $silver;
+    }
+}
 
 body {
     overflow-y: scroll;
@@ -52,6 +58,11 @@ html.light {
         color: $blue;
     }
 }
+html.dark {
+    a {
+        color: $aqua;
+    }
+}
 
 hr {
     border: none;
@@ -60,6 +71,11 @@ hr {
 html.light {
     hr {
         background-color: $black;
+    }
+}
+html.dark {
+    hr {
+        background-color: $silver;
     }
 }
 
@@ -82,6 +98,11 @@ button {
 html.light {
     button {
         border: 1px solid $black;
+    }
+}
+html.dark {
+    button {
+        border: 1px solid $silver;
     }
 }
 
@@ -121,6 +142,23 @@ html.light {
         }
     }
 }
+html.dark {
+    textarea,
+    input[type="number"],
+    input[type="password"],
+    input[type="text"]  {
+        background-color: $black;
+        border-bottom: 1px solid $silver;
+        color: $silver;
+        &:disabled {
+            background-color: $black;
+            color: $gray;
+        }
+        &::placeholder {
+            color: $gray;
+        }
+    }
+}
 
 nav {
     display: flex;
@@ -144,8 +182,15 @@ html.light {
         }
     }
 }
+html.dark {
+    nav {
+        .brand {
+            color: $silver;
+        }
+    }
+}
 
-html.light article.story {
+article.story {
     line-height: 24px;
     p {
         margin: 0;
@@ -157,7 +202,7 @@ html.light article.story {
         color: $gray;
     }
 }
-html.light {
+html.light, html.dark {
     article.story {
         .title {
             color: $purple;
@@ -178,9 +223,6 @@ html.light {
             &.generals .tag {
                 color: $olive;
             }
-            // .tag {
-            //     color: $black;
-            // }
         }
         .info {
             color: $blue;
