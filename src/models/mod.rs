@@ -1,5 +1,4 @@
 pub mod proto;
-pub mod service;
 
 use {
     crate::models::proto::{Entity, Rating, StoryInfo},

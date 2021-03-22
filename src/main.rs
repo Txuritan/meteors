@@ -126,10 +126,7 @@ fn main() -> Result<()> {
     let mut router = Router::new(database)
         .on("/", get(handlers::index))
         .on("/story/:id/:chapter", get(handlers::story))
-        .on("/search", post(handlers::search))
-        .on("/api/sync", post(handlers::api_sync))
-        .on("/api/index", post(handlers::api_index))
-        .on("/api/story", post(handlers::api_story));
+        .on("/search", post(handlers::search));
 
     let server = Server::http(addr).map_err(|err| anyhow!("unable to start server: {}", err))?;
 

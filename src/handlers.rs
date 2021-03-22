@@ -98,36 +98,6 @@ pub fn search(ctx: &Context<Database>) -> Result<Response> {
     Ok(res!(200; body))
 }
 
-pub fn api_sync(ctx: &Context<Database>) -> Result<Response> {
-    let db = ctx.state();
-
-    let key = ctx
-        .query("key")
-        .ok_or_else(|| anyhow!("missing child node key"))?;
-
-    todo!()
-}
-
-pub fn api_index(ctx: &Context<Database>) -> Result<Response> {
-    let db = ctx.state();
-
-    let token = ctx
-        .query("token")
-        .ok_or_else(|| anyhow!("missing session token"))?;
-
-    todo!()
-}
-
-pub fn api_story(ctx: &Context<Database>) -> Result<Response> {
-    let db = ctx.state();
-
-    let token = ctx
-        .query("token")
-        .ok_or_else(|| anyhow!("missing session token"))?;
-
-    todo!()
-}
-
 #[derive(TemplateOnce)]
 #[template(path = "pages/index.stpl")]
 struct IndexPage<'s> {
