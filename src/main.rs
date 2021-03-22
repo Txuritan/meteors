@@ -157,7 +157,11 @@ fn main() -> Result<()> {
                     }
                     Ok(None) => {
                         if stop.load(Ordering::SeqCst) {
-                            info!("{} shutting down server thread {}", "+".bright_black(), id.bright_purple());
+                            info!(
+                                "{} shutting down server thread {}",
+                                "+".bright_black(),
+                                id.bright_purple()
+                            );
 
                             break;
                         }

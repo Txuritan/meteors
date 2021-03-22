@@ -9,6 +9,7 @@ use {
         router::{Context, Response},
     },
     sailfish::TemplateOnce,
+    std::borrow::Cow,
     tiny_http::Header,
 };
 
@@ -29,17 +30,19 @@ pub fn index(ctx: &Context<Database>) -> Result<Response> {
 
     let theme = ctx.query("theme").unwrap_or("light");
 
+    let query = ctx.rebuild_query();
+
     let stories = db
         .index
         .stories
         .keys()
         .map(|id| {
             db.get_story_full(id)
-                .map(|(id, story)| StoryCard::new(&id, story))
+                .map(|(id, story)| StoryCard::new(&id, story, query.clone()))
         })
         .collect::<Result<Vec<StoryCard>>>()?;
 
-    let body = Layout::new("home", theme, IndexPage { stories });
+    let body = Layout::new("home", theme, query, IndexPage { stories });
 
     Ok(res!(200; body))
 }
@@ -61,13 +64,17 @@ pub fn story(ctx: &Context<Database>) -> Result<Response> {
     let (_, story) = db.get_story_full(&id)?;
     let story_body = db.get_chapter_body(&id, chapter)?;
 
+    let query = ctx.rebuild_query();
+
     let body = Layout::new(
         story.info.title.clone(),
         theme,
+        query.clone(),
         ChapterPage {
-            card: StoryCard::new(&id, story),
+            card: StoryCard::new(&id, story, query.clone()),
             chapter: &story_body,
             index: chapter,
+            query,
         },
     );
 
@@ -85,15 +92,17 @@ pub fn search(ctx: &Context<Database>) -> Result<Response> {
 
     let ids = search::search(db, query);
 
+    let query = ctx.rebuild_query();
+
     let stories = ids
         .iter()
         .map(|id| {
             db.get_story_full(id)
-                .map(|(id, story)| StoryCard::new(&id, story))
+                .map(|(id, story)| StoryCard::new(&id, story, query.clone()))
         })
         .collect::<Result<Vec<_>>>()?;
 
-    let body = Layout::new("search", theme, IndexPage { stories });
+    let body = Layout::new("search", theme, query, IndexPage { stories });
 
     Ok(res!(200; body))
 }
@@ -110,6 +119,8 @@ struct ChapterPage<'s> {
     card: StoryCard<'s>,
     chapter: &'s str,
     index: usize,
+
+    query: Cow<'static, str>,
 }
 
 #[derive(TemplateOnce)]
@@ -121,6 +132,7 @@ where
     css: &'static str,
     title: String,
     theme: String,
+    query: Cow<'static, str>,
     body: B,
 }
 
@@ -129,7 +141,7 @@ where
     B: TemplateOnce,
 {
     #[allow(clippy::needless_pass_by_value)]
-    fn new<S, T>(title: S, theme: T, body: B) -> Self
+    fn new<S, T>(title: S, theme: T, query: Cow<'static, str>, body: B) -> Self
     where
         S: ToString,
         T: ToString,
@@ -138,6 +150,7 @@ where
             css: CSS,
             title: title.to_string(),
             theme: theme.to_string(),
+            query,
             body,
         }
     }
@@ -162,10 +175,12 @@ struct StoryCard<'s> {
     pairings: TagList<'s>,
     characters: TagList<'s>,
     generals: TagList<'s>,
+
+    query: Cow<'static, str>,
 }
 
 impl<'s> StoryCard<'s> {
-    pub fn new(id: &'s str, story: StoryFull) -> Self {
+    pub fn new(id: &'s str, story: StoryFull, query: Cow<'static, str>) -> Self {
         StoryCard {
             id,
 
@@ -195,6 +210,8 @@ impl<'s> StoryCard<'s> {
                 kind: "generals",
                 tags: story.meta.generals,
             },
+
+            query,
         }
     }
 }

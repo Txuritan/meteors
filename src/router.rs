@@ -2,7 +2,7 @@ use {
     crate::{prelude::*, utils},
     chrono::Duration,
     path_tree::PathTree,
-    std::{collections::BTreeMap, io::Cursor, sync::Arc, time::Instant},
+    std::{borrow::Cow, collections::BTreeMap, io::Cursor, sync::Arc, time::Instant},
     tiny_http::{Header, Request},
 };
 
@@ -30,8 +30,9 @@ pub type Response = tiny_http::Response<Cursor<Vec<u8>>>;
 
 pub struct Context<'s, S> {
     state: Arc<S>,
-    query: Vec<(&'s str, Option<&'s str>)>,
     params: Vec<(&'s str, &'s str)>,
+    query: Vec<(&'s str, Option<&'s str>)>,
+    raw_query: &'s str,
 }
 
 impl<'s, S> Context<'s, S> {
@@ -50,6 +51,14 @@ impl<'s, S> Context<'s, S> {
             .iter()
             .find(|(k, _)| *k == key)
             .and_then(|(_, value)| *value)
+    }
+
+    pub fn rebuild_query(&self) -> Cow<'static, str> {
+        Cow::from(if self.raw_query.is_empty() {
+            String::new()
+        } else {
+            format!("?{}", self.raw_query)
+        })
     }
 }
 
@@ -151,9 +160,13 @@ impl<S> Router<S> {
 
         let url = request.url();
 
-        let (url, query) = match url.find('?').map(|i| url.split_at(i)) {
-            Some((url, query)) => (url, utils::parse_queries(&query[1..])),
-            None => (url, vec![]),
+        let (url, raw_query, query) = match url.find('?').map(|i| url.split_at(i)) {
+            Some((url, query)) => {
+                let query = &query[1..];
+
+                (url, query, utils::parse_queries(query))
+            }
+            None => (url, "", vec![]),
         };
 
         let response = self
@@ -165,6 +178,7 @@ impl<S> Router<S> {
                     state,
                     query,
                     params,
+                    raw_query,
                 })
             })
             .map_err(|err| {

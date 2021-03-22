@@ -12,7 +12,7 @@
 <body>
     <header>
         <nav>
-            <a href="/" class="brand">local archive</a>
+            <a href="/<%= query %>" class="brand">local archive</a>
             <div class="spacer"></div>
             <form>
                 <input id="search" type="text" placeholder="search" value="" aria-label="Search" />
