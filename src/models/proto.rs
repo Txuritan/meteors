@@ -63,6 +63,7 @@ pub struct StoryInfo {
 
 #[derive(Clone, PartialEq, prost::Message, SerJson)]
 pub struct StoryMeta {
+    #[nserde(proxy = "RatingProxy")]
     #[prost(enumeration = "Rating", tag = "1")]
     pub rating: i32,
     #[prost(message, repeated, tag = "2")]
@@ -98,38 +99,15 @@ pub enum Rating {
     Unknown = 5,
 }
 
-impl SerJson for Rating {
-    fn ser_json(&self, _: usize, s: &mut SerJsonState) {
-        match self {
-            Self::Explicit => {
-                s.label("Explicit");
-            }
-            Self::Mature => {
-                s.label("Mature");
-            }
-            Self::Teen => {
-                s.label("Teen");
-            }
-            Self::General => {
-                s.label("General");
-            }
-            Self::NotRated => {
-                s.label("NotRated");
-            }
-            Self::Unknown => {
-                s.label("Unknown");
-            }
-        }
-    }
-}
-
 struct StoryMapProxy<'m> {
     inner: MapProxy<'m, Story>,
 }
 
 impl<'m> From<&'m BTreeMap<String, Story>> for StoryMapProxy<'m> {
     fn from(inner: &'m BTreeMap<String, Story>) -> Self {
-        Self { inner: MapProxy::from(inner) }
+        Self {
+            inner: MapProxy::from(inner),
+        }
     }
 }
 
@@ -145,7 +123,9 @@ struct EntityMapProxy<'m> {
 
 impl<'m> From<&'m BTreeMap<String, Entity>> for EntityMapProxy<'m> {
     fn from(inner: &'m BTreeMap<String, Entity>) -> Self {
-        Self { inner: MapProxy::from(inner) }
+        Self {
+            inner: MapProxy::from(inner),
+        }
     }
 }
 
@@ -197,5 +177,40 @@ where
         s.indent(d);
 
         s.out.push('}');
+    }
+}
+
+struct RatingProxy<'m> {
+    inner: &'m i32,
+}
+
+impl<'m> From<&'m i32> for RatingProxy<'m> {
+    fn from(inner: &'m i32) -> Self {
+        Self { inner }
+    }
+}
+
+impl<'m> SerJson for RatingProxy<'m> {
+    fn ser_json(&self, _: usize, s: &mut SerJsonState) {
+        match self.inner {
+            0 => {
+                s.label("Explicit");
+            }
+            1 => {
+                s.label("Mature");
+            }
+            2 => {
+                s.label("Teen");
+            }
+            3 => {
+                s.label("General");
+            }
+            4 => {
+                s.label("NotRated");
+            }
+            _ => {
+                s.label("Unknown");
+            }
+        }
     }
 }
