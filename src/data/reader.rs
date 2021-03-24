@@ -114,7 +114,7 @@ fn read_meta(
                 &mut pairings,
                 &detail_definition,
             )),
-            "Characters:" => Some((
+            "Character:" => Some((
                 &mut database.index.characters,
                 &mut characters,
                 &detail_definition,
