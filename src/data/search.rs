@@ -21,6 +21,7 @@ macro_rules! help {
     }};
 }
 
+#[derive(Debug, PartialEq)]
 pub enum Bound {
     Author { include: bool, text: String },
     Origin { include: bool, text: String },
@@ -38,8 +39,16 @@ impl Bound {
         Bound::Origin { include, text }
     }
 
+    const fn pairing(include: bool, text: String) -> Bound {
+        Bound::Pairing { include, text }
+    }
+
     const fn character(include: bool, text: String) -> Bound {
         Bound::Character { include, text }
+    }
+
+    const fn general(include: bool, text: String) -> Bound {
+        Bound::General { include, text }
     }
 }
 
@@ -131,15 +140,15 @@ fn any_by_text(full: &BTreeMap<String, Entity>, refs: &[String], text: &str) -> 
 }
 
 #[allow(clippy::while_let_on_iterator)]
-fn parse(text: &str) -> Vec<Bound> {
+pub(self) fn parse(text: &str) -> Vec<Bound> {
     let mut parts = text.split(',').map(str::trim);
 
     let mut bounds = Vec::with_capacity(parts.size_hint().0);
 
     while let Some(mut part) = parts.next() {
-        let included = part.starts_with('-');
+        let included = !part.starts_with('-');
 
-        if included {
+        if !included {
             part = part.trim_start_matches('-');
         }
 
@@ -174,7 +183,7 @@ fn parse(text: &str) -> Vec<Bound> {
         }
 
         if parse_prefixed(
-            ["c:", "origin:"],
+            ["o:", "origin:"],
             Bound::origin,
             &mut bounds,
             included,
@@ -193,10 +202,17 @@ fn parse(text: &str) -> Vec<Bound> {
             continue;
         }
 
-        bounds.push(Bound::General {
-            include: included,
-            text: part.to_owned(),
-        });
+        if parse_prefixed(
+            ["g:", "general:"],
+            Bound::general,
+            &mut bounds,
+            included,
+            &mut part,
+        ) {
+            continue;
+        }
+
+        bounds.push(Bound::general(included, part.to_owned()));
     }
 
     bounds
@@ -258,10 +274,7 @@ where
             part.push_str(sep);
         }
 
-        bounds.push(Bound::Pairing {
-            include: included,
-            text: part,
-        });
+        bounds.push(Bound::pairing(included, part));
 
         true
     } else {
@@ -302,5 +315,141 @@ where
             BoundIter::Character(i) => i.next(),
             BoundIter::General(i) => i.next(),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    macro_rules! test {
+        ($module:ident, $new:expr, [$prefix_long:expr, $prefix_short:expr]) => {
+            mod $module {
+                use super::*;
+
+                const NEW: fn(bool, String) -> Bound = $new;
+
+                test!(NEW, [$prefix_long, $prefix_short]);
+            }
+        };
+        ($new:ident, [$prefix_short:expr, $prefix_long:expr]) => {
+            #[test]
+            fn test_prefix_long() {
+                assert_eq!(
+                    vec![
+                        $new(true, "tag 1".to_string()),
+                        $new(true, "tag 2".to_string()),
+                    ],
+                    parse(concat!($prefix_long, ":tag 1, ", $prefix_long, ":tag 2"))
+                )
+            }
+
+            #[test]
+            fn test_prefix_short() {
+                assert_eq!(
+                    vec![
+                        $new(true, "tag 1".to_string()),
+                        $new(true, "tag 2".to_string()),
+                    ],
+                    parse(concat!($prefix_short, ":tag 1, ", $prefix_short, ":tag 2"))
+                )
+            }
+
+            #[test]
+            fn test_exclude_prefix_long() {
+                assert_eq!(
+                    vec![
+                        $new(false, "tag 1".to_string()),
+                        $new(false, "tag 2".to_string()),
+                    ],
+                    parse(concat!("-", $prefix_long, ":tag 1, -", $prefix_long, ":tag 2"))
+                )
+            }
+
+            #[test]
+            fn test_exclude_prefix_short() {
+                assert_eq!(
+                    vec![
+                        $new(false, "tag 1".to_string()),
+                        $new(false, "tag 2".to_string()),
+                    ],
+                    parse(concat!("-", $prefix_short, ":tag 1, -", $prefix_short, ":tag 2"))
+                )
+            }
+        };
+    }
+
+    test!(author, Bound::author, ["author", "a"]);
+
+    test!(origin, Bound::origin, ["origin", "o"]);
+
+    test!(character, Bound::character, ["character", "c"]);
+
+    mod pairing {
+        use super::*;
+
+        const NEW: fn(bool, String) -> Bound = Bound::pairing;
+
+        #[test]
+        fn test_romantic() {
+            assert_eq!(
+                vec![NEW(true, "tag 1/tag 2".to_string()),],
+                parse("[tag 1, tag 2]")
+            )
+        }
+
+        #[test]
+        fn test_platonic() {
+            assert_eq!(
+                vec![NEW(true, "tag 1 & tag 2".to_string()),],
+                parse("(tag 1, tag 2)")
+            )
+        }
+
+        #[test]
+        fn test_exclude_romantic() {
+            assert_eq!(
+                vec![NEW(false, "tag 1/tag 2".to_string()),],
+                parse("-[tag 1, tag 2]")
+            )
+        }
+
+        #[test]
+        fn test_exclude_platonic() {
+            assert_eq!(
+                vec![NEW(false, "tag 1 & tag 2".to_string()),],
+                parse("-(tag 1, tag 2)")
+            )
+        }
+    }
+
+    mod general {
+        use super::*;
+
+        const NEW: fn(bool, String) -> Bound = Bound::general;
+
+        #[test]
+        fn test_no_prefix() {
+            assert_eq!(
+                vec![
+                    NEW(true, "tag 1".to_string()),
+                    NEW(true, "tag 2".to_string()),
+                ],
+                parse("tag 1, tag 2")
+            )
+        }
+
+        #[test]
+        fn test_exclude_no_prefix() {
+            assert_eq!(
+                vec![
+                    NEW(false, "tag 1".to_string()),
+                    NEW(false, "tag 2".to_string()),
+                ],
+                parse("-tag 1, -tag 2")
+            )
+        }
+
+        test!(NEW, ["general", "g"]);
     }
 }
