@@ -249,7 +249,6 @@ dependencies = [
  "lazy_static",
  "log",
  "mimalloc",
- "nanoserde",
  "owo-colors",
  "path-tree",
  "prost",
@@ -278,21 +277,6 @@ dependencies = [
  "adler",
  "autocfg",
 ]
-
-[[package]]
-name = "nanoserde"
-version = "0.1.24"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b2fe39f13d2f33cea80b6fae64e1db34d32e8953a57dcd5b50a77642c9d0e951"
-dependencies = [
- "nanoserde-derive",
-]
-
-[[package]]
-name = "nanoserde-derive"
-version = "0.1.16"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71c29c140bb2a43bdc554ca5a34ecfe678bb6e6c6a3dc8d6856852ba2c74f20f"
 
 [[package]]
 name = "nix"
