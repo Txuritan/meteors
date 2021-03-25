@@ -43,6 +43,8 @@ impl Database {
         let data_path = cur.join("data");
         let index_path = cur.join("index.pb");
 
+        fs::create_dir_all(&data_path)?;
+
         let mut database = if index_path.exists() {
             debug!("{} found existing", "|".bright_black());
 
