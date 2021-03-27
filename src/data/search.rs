@@ -362,7 +362,13 @@ mod test {
                         $new(false, "tag 1".to_string()),
                         $new(false, "tag 2".to_string()),
                     ],
-                    parse(concat!("-", $prefix_long, ":tag 1, -", $prefix_long, ":tag 2"))
+                    parse(concat!(
+                        "-",
+                        $prefix_long,
+                        ":tag 1, -",
+                        $prefix_long,
+                        ":tag 2"
+                    ))
                 )
             }
 
@@ -373,7 +379,13 @@ mod test {
                         $new(false, "tag 1".to_string()),
                         $new(false, "tag 2".to_string()),
                     ],
-                    parse(concat!("-", $prefix_short, ":tag 1, -", $prefix_short, ":tag 2"))
+                    parse(concat!(
+                        "-",
+                        $prefix_short,
+                        ":tag 1, -",
+                        $prefix_short,
+                        ":tag 2"
+                    ))
                 )
             }
         };
