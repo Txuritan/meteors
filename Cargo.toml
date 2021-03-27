@@ -20,6 +20,7 @@ regex-automata = { version = "0.1", default-features = false }
 roxmltree = { version = "0.14", features = [ "std" ] }
 sailfish = "0.3"
 tiny_http = "0.8"
+xxhash-rust = { version = "0.8", features = [ "xxh3" ] }
 
 [build-dependencies]
 embed-resource = "1.3"

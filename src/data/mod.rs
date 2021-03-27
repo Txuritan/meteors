@@ -12,13 +12,14 @@ use {
         prelude::*,
         Config,
     },
+    flate2::{read::GzDecoder, write::GzEncoder, Compression},
     prost::Message,
     std::{
         collections::BTreeMap,
         env,
         ffi::OsStr,
-        fs::{self, DirEntry},
-        io::Read as _,
+        fs::{self, DirEntry, File},
+        io::{Read as _, Write as _, self},
         path::PathBuf,
     },
 };
@@ -41,14 +42,18 @@ impl Database {
         let cur = env::current_dir()?.canonicalize()?;
 
         let data_path = cur.join("data");
-        let index_path = cur.join("index.pb");
+        let index_path = cur.join("index.pb.gz");
 
         fs::create_dir_all(&data_path)?;
 
         let mut database = if index_path.exists() {
             debug!("{} found existing", "|".bright_black());
 
-            let bytes = fs::read(&index_path)?;
+            let mut decoder = GzDecoder::new(File::open(&index_path)?);
+
+            let mut bytes = Vec::new();
+
+            decoder.read_to_end(&mut bytes)?;
 
             let index = <Index as Message>::decode(&bytes[..])?;
 
@@ -105,7 +110,11 @@ impl Database {
 
         <Index as Message>::encode(&database.index, &mut buf)?;
 
-        fs::write(&database.index_path, &buf)?;
+        let mut encoder = GzEncoder::new(File::create(&database.index_path)?, Compression::best());
+
+        io::copy( &mut &buf[..], &mut encoder)?;
+
+        encoder.flush()?;
 
         Ok(database)
     }

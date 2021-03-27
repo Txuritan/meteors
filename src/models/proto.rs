@@ -32,13 +32,15 @@ pub struct Range {
 pub struct Story {
     #[prost(string, tag = "1")]
     pub file_name: String,
-    #[prost(uint32, tag = "2")]
+    #[prost(uint64, tag = "2")]
+    pub file_hash: u64,
+    #[prost(uint32, tag = "3")]
     pub length: u32,
-    #[prost(message, repeated, tag = "3")]
+    #[prost(message, repeated, tag = "4")]
     pub chapters: Vec<Range>,
-    #[prost(message, required, tag = "4")]
-    pub info: StoryInfo,
     #[prost(message, required, tag = "5")]
+    pub info: StoryInfo,
+    #[prost(message, required, tag = "6")]
     pub meta: StoryMeta,
 }
 

@@ -6,6 +6,7 @@ use {
     },
     roxmltree::{Document, Node},
     std::{collections::BTreeMap, io::Read},
+    xxhash_rust::xxh3::xxh3_64,
 };
 
 pub fn read_story<R>(database: &mut Database, name: &str, reader: &mut R) -> Result<()>
@@ -15,6 +16,16 @@ where
     let mut buf = String::new();
 
     let _ = reader.read_to_string(&mut buf)?;
+
+    let file_hash = xxh3_64(buf.as_bytes());
+
+    let maybe_entry = database.index.stories.iter().any(|(_, story)| {
+        (story.file_name == name) && (story.file_hash == file_hash)
+    });
+
+    if maybe_entry {
+        return Ok(());
+    }
 
     let length = buf.len();
 
@@ -51,6 +62,7 @@ where
         story_id,
         Story {
             file_name: name.to_string(),
+            file_hash,
             length: length as u32,
             chapters: chapter_sections,
             info: story_info,
