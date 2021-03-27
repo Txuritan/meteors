@@ -19,9 +19,11 @@ where
 
     let file_hash = xxh3_64(buf.as_bytes());
 
-    let maybe_entry = database.index.stories.iter().any(|(_, story)| {
-        (story.file_name == name) && (story.file_hash == file_hash)
-    });
+    let maybe_entry = database
+        .index
+        .stories
+        .iter()
+        .any(|(_, story)| (story.file_name == name) && (story.file_hash == file_hash));
 
     if maybe_entry {
         return Ok(());

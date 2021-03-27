@@ -257,6 +257,7 @@ dependencies = [
  "roxmltree",
  "sailfish",
  "tiny_http",
+ "url",
  "xxhash-rust",
 ]
 

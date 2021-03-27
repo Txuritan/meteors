@@ -1,15 +1,24 @@
 use {
-    crate::{prelude::*, utils},
+    crate::{prelude::*,},
     chrono::Duration,
     path_tree::PathTree,
     std::{borrow::Cow, collections::BTreeMap, io::Cursor, sync::Arc, time::Instant},
     tiny_http::{Header, Request},
+    url::Url,
 };
 
+pub static PAGE_400: &str = r#"<!DOCTYPE html><html><head><title>400 | local archive</title><style>*{transition:all .6s}html{height:100%}body{font-family:sans-serif;color:#888;margin:0}#main{display:table;width:100%;height:100vh;text-align:center}.fof{display:table-cell;vertical-align:middle}.fof h1{font-size:50px;display:inline-block;padding-right:12px;animation:type .5s alternate infinite}@keyframes type{from{box-shadow:inset -3px 0 0 #888}to{box-shadow:inset -3px 0 0 transparent}}</style></head><body><div id="main"><div class="fof"><h1>Error 400</h1></div></div></body></html>"#;
 pub static PAGE_404: &str = r#"<!DOCTYPE html><html><head><title>404 | local archive</title><style>*{transition:all .6s}html{height:100%}body{font-family:sans-serif;color:#888;margin:0}#main{display:table;width:100%;height:100vh;text-align:center}.fof{display:table-cell;vertical-align:middle}.fof h1{font-size:50px;display:inline-block;padding-right:12px;animation:type .5s alternate infinite}@keyframes type{from{box-shadow:inset -3px 0 0 #888}to{box-shadow:inset -3px 0 0 transparent}}</style></head><body><div id="main"><div class="fof"><h1>Error 404</h1></div></div></body></html>"#;
 pub static PAGE_503: &str = r#"<!DOCTYPE html><html><head><title>503 | local archive</title><style>*{transition:all .6s}html{height:100%}body{font-family:sans-serif;color:#888;margin:0}#main{display:table;width:100%;height:100vh;text-align:center}.fof{display:table-cell;vertical-align:middle}.fof h1{font-size:50px;display:inline-block;padding-right:12px;animation:type .5s alternate infinite}@keyframes type{from{box-shadow:inset -3px 0 0 #888}to{box-shadow:inset -3px 0 0 transparent}}</style></head><body><div id="main"><div class="fof"><h1>Error 503</h1></div></div></body></html>"#;
 
 macro_rules! res {
+    (400) => {
+        Response::from_string(PAGE_400)
+            .with_header(
+                Header::from_bytes(&b"Content-Type"[..], &b"text/html; charset=utf-8"[..]).unwrap(),
+            )
+            .with_status_code(400)
+    };
     (404) => {
         Response::from_string(PAGE_404)
             .with_header(
@@ -31,7 +40,7 @@ pub type Response = tiny_http::Response<Cursor<Vec<u8>>>;
 pub struct Context<'s, S> {
     state: Arc<S>,
     params: Vec<(&'s str, &'s str)>,
-    query: Vec<(&'s str, Option<&'s str>)>,
+    query: Vec<(Cow<'s, str>, Cow<'s, str>)>,
     raw_query: &'s str,
 }
 
@@ -46,11 +55,11 @@ impl<'s, S> Context<'s, S> {
             .find_map(|(k, v)| (*k == key).then(|| *v))
     }
 
-    pub fn query(&self, key: &str) -> Option<&'s str> {
+    pub fn query(&self, key: &str) -> Option<Cow<'s, str>> {
         self.query
             .iter()
             .find(|(k, _)| *k == key)
-            .and_then(|(_, value)| *value)
+            .map(|(_, value)| Clone::clone(value))
     }
 
     pub fn rebuild_query(&self) -> Cow<'static, str> {
@@ -113,16 +122,18 @@ where
 }
 
 pub struct Router<S> {
+    base: Url,
     tree: BTreeMap<Method, PathTree<Boxed<S>>>,
     state: Arc<S>,
 }
 
 impl<S> Router<S> {
-    pub fn new(state: S) -> Self {
-        Self {
+    pub fn new(state: S) -> Result<Self> {
+        Ok(Self {
+            base: Url::parse("http://localhost:8723")?,
             tree: BTreeMap::new(),
             state: Arc::new(state),
-        }
+        })
     }
 
     pub fn on(mut self, path: &str, handler: Handler<S>) -> Self {
@@ -142,68 +153,71 @@ impl<S> Router<S> {
     {
         let earlier = Instant::now();
 
-        let url = request.url().to_string();
+        let response = match Url::options().base_url(Some(&self.base)).parse(request.url()) {
+            Ok(url) => {
+                let method = Method::from(request.method());
 
-        let method = Method::from(request.method());
+                log::info!(
+                    "{} {} {}/{} {} {}",
+                    "+".bright_black(),
+                    "+".bright_black(),
+                    "HTTP".bright_yellow(),
+                    request.http_version(),
+                    method.to_colored_string(),
+                    url.bright_purple(),
+                );
 
-        log::info!(
-            "{} {} {}/{} {} {}",
-            "+".bright_black(),
-            "+".bright_black(),
-            "HTTP".bright_yellow(),
-            request.http_version(),
-            method.to_colored_string(),
-            url.bright_purple(),
-        );
+                let state = self.state.clone();
 
-        let state = self.state.clone();
+                let raw_query = url.query().unwrap_or("");
+                let query = url.query_pairs().collect();
 
-        let url = request.url();
+                let response = self
+                    .tree
+                    .get(&method)
+                    .and_then(|tree| tree.find(url.path()))
+                    .map_or(Ok(res!(404)), |(payload, params)| {
+                        payload.call(&Context {
+                            state,
+                            query,
+                            params,
+                            raw_query,
+                        })
+                    })
+                    .map_err(|err| {
+                        for cause in err.chain() {
+                            log::error!("  {} {}", "|".bright_black(), cause,);
+                        }
 
-        let (url, raw_query, query) = match url.find('?').map(|i| url.split_at(i)) {
-            Some((url, query)) => {
-                let query = &query[1..];
+                        res!(503)
+                    })
+                    .ignore();
 
-                (url, query, utils::parse_queries(query))
+                let dur = Duration::from_std(Instant::now().duration_since(earlier))?;
+
+                log::info!(
+                    "{} {} {} {}ms",
+                    "+".bright_black(),
+                    "+".bright_black(),
+                    match response.status_code().0 {
+                        200 => format!("{}", "200".green()),
+                        404 => format!("{}", "404".bright_yellow()),
+                        503 => format!("{}", "200".bright_red()),
+                        code => format!("{}", code.to_string().bright_blue()),
+                    },
+                    dur.num_milliseconds().bright_purple(),
+                );
+
+                response
             }
-            None => (url, "", vec![]),
+            Err(err) => {
+                error!("invalid url request: {}", err);
+
+                request.respond(res!(400))?;
+
+                return Ok(());
+            }
         };
-
-        let response = self
-            .tree
-            .get(&method)
-            .and_then(|tree| tree.find(url))
-            .map_or(Ok(res!(404)), |(payload, params)| {
-                payload.call(&Context {
-                    state,
-                    query,
-                    params,
-                    raw_query,
-                })
-            })
-            .map_err(|err| {
-                for cause in err.chain() {
-                    log::error!("  {} {}", "|".bright_black(), cause,);
-                }
-
-                res!(503)
-            })
-            .ignore();
-
-        let dur = Duration::from_std(Instant::now().duration_since(earlier))?;
-
-        log::info!(
-            "{} {} {} {}ms",
-            "+".bright_black(),
-            "+".bright_black(),
-            match response.status_code().0 {
-                200 => format!("{}", "200".green()),
-                404 => format!("{}", "404".bright_yellow()),
-                503 => format!("{}", "200".bright_red()),
-                code => format!("{}", code.to_string().bright_blue()),
-            },
-            dur.num_milliseconds().bright_purple(),
-        );
 
         request.respond(response)?;
 

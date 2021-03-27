@@ -126,7 +126,7 @@ fn main() -> Result<()> {
     let database = Database::init(&cfg)?;
 
     let router = Arc::new(
-        Router::new(database)
+        Router::new(database)?
             .on("/", get(handlers::index))
             .on("/story/:id/:chapter", get(handlers::story))
             .on("/search", post(handlers::search)),

@@ -19,7 +19,7 @@ use {
         env,
         ffi::OsStr,
         fs::{self, DirEntry, File},
-        io::{Read as _, Write as _, self},
+        io::{self, Read as _, Write as _},
         path::PathBuf,
     },
 };
@@ -112,7 +112,7 @@ impl Database {
 
         let mut encoder = GzEncoder::new(File::create(&database.index_path)?, Compression::best());
 
-        io::copy( &mut &buf[..], &mut encoder)?;
+        io::copy(&mut &buf[..], &mut encoder)?;
 
         encoder.flush()?;
 

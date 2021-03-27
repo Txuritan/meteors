@@ -51,26 +51,6 @@ where
     }
 }
 
-// TODO: handle percent encoding
-pub fn parse_queries(query: &str) -> Vec<(&str, Option<&str>)> {
-    query
-        .split('&')
-        .map(|param| {
-            param
-                .contains('=')
-                .then(|| {
-                    param.find('=').map(|index| {
-                        let (key, value) = param.split_at(index);
-
-                        (key, Some(&value[1..]))
-                    })
-                })
-                .flatten()
-                .unwrap_or((param, None))
-        })
-        .collect()
-}
-
 pub const SIZE: usize = 8;
 
 const LEN: usize = 54;
