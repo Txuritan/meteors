@@ -1,5 +1,5 @@
 use {
-    crate::{prelude::*,},
+    crate::prelude::*,
     chrono::Duration,
     path_tree::PathTree,
     std::{borrow::Cow, collections::BTreeMap, io::Cursor, sync::Arc, time::Instant},
@@ -153,7 +153,10 @@ impl<S> Router<S> {
     {
         let earlier = Instant::now();
 
-        let response = match Url::options().base_url(Some(&self.base)).parse(request.url()) {
+        let response = match Url::options()
+            .base_url(Some(&self.base))
+            .parse(request.url())
+        {
             Ok(url) => {
                 let method = Method::from(request.method());
 
