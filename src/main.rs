@@ -1,3 +1,5 @@
+#![warn(unconditional_panic, rust_2018_idioms)]
+
 #[cfg(feature = "mimalloc")]
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
@@ -42,71 +44,10 @@ mod prelude {
 fn main() -> Result<()> {
     logger::init()?;
 
-    let (help, cfg) = env::args().skip(1).fold(
-        Ok((false, Config::new())),
-        |init: Result<(bool, Config)>, arg| {
-            init.and_then(|(mut help, mut cfg)| {
-                match arg.as_str() {
-                    "-ct" | "--tc" => {
-                        cfg.compress = true;
-                        cfg.trackers = true;
-                    }
-                    "-cp" | "--pc" => {
-                        cfg.compress = true;
-                        cfg.parent = true;
-                    }
-                    "-tp" | "--pt" => {
-                        cfg.parent = true;
-                        cfg.trackers = true;
-                    }
-                    "-cpt" | "-ctp" | "-pct" | "-ptc" | "-tcp" | "-tpc" => {
-                        cfg.compress = true;
-                        cfg.parent = true;
-                        cfg.trackers = true;
-                    }
-                    "-c" | "--compress" => cfg.compress = true,
-                    "-p" | "--parent" => cfg.parent = true,
-                    "-t" | "--trackers" => cfg.trackers = true,
-                    "-h" | "--help" => help = true,
-                    "--host" => cfg.take = Take::Host,
-                    "--port" => cfg.take = Take::Port,
-                    "--key" => cfg.take = Take::Key,
-                    _ if cfg.take == Take::Host => {
-                        cfg.host = arg.parse()?;
-                        cfg.take = Take::None;
-                    }
-                    _ if cfg.take == Take::Port => {
-                        cfg.port = arg.parse()?;
-                        cfg.take = Take::None;
-                    }
-                    _ if cfg.take == Take::Key => {
-                        cfg.key = arg.to_string();
-                        cfg.take = Take::None;
-                    }
-                    _ => {}
-                }
-
-                Ok((help, cfg))
-            })
-        },
-    )?;
+    let (help, cfg) = Config::from_env()?;
 
     if help {
-        println!("meteors {}", env!("CARGO_PKG_VERSION"));
-        println!();
-        println!("USAGE:");
-        println!("    meteors [FLAGS] [OPTIONS]");
-        println!();
-        println!("FLAGS:");
-        println!("    -h, --help            Prints help information");
-        println!("    -c, --compress        Enables the auto compression of data files");
-        println!("    -p, --parent          Sets this server to be parent node");
-        println!("    -t, --trackers        Enables the removal of trackers from data files");
-        println!();
-        println!("OPTIONS:");
-        println!("    --host <ADDRESS>      Sets the server's bound IP address [default: 0.0.0.0]");
-        println!("    --port <NUMBER>       Sets the port that the server will listen to requests on [default: 8723]");
-        println!("    --key <TOKEN>         The token that children nodes will connect with");
+        print_help();
 
         return Ok(());
     }
@@ -114,7 +55,7 @@ fn main() -> Result<()> {
     let stop = Arc::new(AtomicBool::new(false));
 
     ctrlc::set_handler({
-        let stop = stop.clone();
+        let stop = Arc::clone(&stop);
 
         move || {
             stop.store(true, Ordering::SeqCst);
@@ -145,9 +86,9 @@ fn main() -> Result<()> {
 
     for id in 0..4 {
         guards.push(thread::spawn({
-            let stop = stop.clone();
-            let router = router.clone();
-            let server = server.clone();
+            let stop = Arc::clone(&stop);
+            let router = Arc::clone(&router);
+            let server = Arc::clone(&server);
 
             move || loop {
                 match server.recv_timeout(Duration::from_millis(100)) {
@@ -184,6 +125,24 @@ fn main() -> Result<()> {
     Ok(())
 }
 
+fn print_help() {
+    println!("meteors {}", env!("CARGO_PKG_VERSION"));
+    println!();
+    println!("USAGE:");
+    println!("    meteors [FLAGS] [OPTIONS]");
+    println!();
+    println!("FLAGS:");
+    println!("    -h, --help            Prints help information");
+    println!("    -c, --compress        Enables the auto compression of data files");
+    println!("    -p, --parent          Sets this server to be parent node");
+    println!("    -t, --trackers        Enables the removal of trackers from data files");
+    println!();
+    println!("OPTIONS:");
+    println!("    --host <ADDRESS>      Sets the server's bound IP address [default: 0.0.0.0]");
+    println!("    --port <NUMBER>       Sets the port that the server will listen to requests on [default: 8723]");
+    println!("    --key <TOKEN>         The token that children nodes will connect with");
+}
+
 pub struct Config {
     pub host: Ipv4Addr,
     pub port: u16,
@@ -207,10 +166,61 @@ impl Config {
             trackers: false,
 
             parent: true,
-            key: "".to_string(),
+            key: "".to_owned(),
 
             take: Take::None,
         }
+    }
+
+    fn from_env() -> Result<(bool, Config)> {
+        env::args().skip(1).fold(
+            Ok((false, Config::new())),
+            |init: Result<(bool, Config)>, arg| {
+                init.and_then(|(mut help, mut cfg)| {
+                    match arg.as_str() {
+                        "-ct" | "--tc" => {
+                            cfg.compress = true;
+                            cfg.trackers = true;
+                        }
+                        "-cp" | "--pc" => {
+                            cfg.compress = true;
+                            cfg.parent = true;
+                        }
+                        "-tp" | "--pt" => {
+                            cfg.parent = true;
+                            cfg.trackers = true;
+                        }
+                        "-cpt" | "-ctp" | "-pct" | "-ptc" | "-tcp" | "-tpc" => {
+                            cfg.compress = true;
+                            cfg.parent = true;
+                            cfg.trackers = true;
+                        }
+                        "-c" | "--compress" => cfg.compress = true,
+                        "-p" | "--parent" => cfg.parent = true,
+                        "-t" | "--trackers" => cfg.trackers = true,
+                        "-h" | "--help" => help = true,
+                        "--host" => cfg.take = Take::Host,
+                        "--port" => cfg.take = Take::Port,
+                        "--key" => cfg.take = Take::Key,
+                        _ if cfg.take == Take::Host => {
+                            cfg.host = arg.parse()?;
+                            cfg.take = Take::None;
+                        }
+                        _ if cfg.take == Take::Port => {
+                            cfg.port = arg.parse()?;
+                            cfg.take = Take::None;
+                        }
+                        _ if cfg.take == Take::Key => {
+                            cfg.key = arg;
+                            cfg.take = Take::None;
+                        }
+                        _ => {}
+                    }
+
+                    Ok((help, cfg))
+                })
+            },
+        )
     }
 }
 

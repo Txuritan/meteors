@@ -170,7 +170,7 @@ impl<S> Router<S> {
                     url.bright_purple(),
                 );
 
-                let state = self.state.clone();
+                let state = Arc::clone(&self.state);
 
                 let raw_query = url.query().unwrap_or("");
                 let query = url.query_pairs().collect();
@@ -249,10 +249,10 @@ impl Method {
             Method::Put => format!("{}", "PUT".bright_purple()),
             Method::Patch => format!("{}", "PATCH".bright_yellow()),
             Method::Delete => format!("{}", "DELETE".bright_red()),
-            Method::Head => "HEAD".to_string(),
-            Method::Connect => "CONNECT".to_string(),
-            Method::Options => "OPTION".to_string(),
-            Method::Trace => "TRACE".to_string(),
+            Method::Head => "HEAD".to_owned(),
+            Method::Connect => "CONNECT".to_owned(),
+            Method::Options => "OPTION".to_owned(),
+            Method::Trace => "TRACE".to_owned(),
         }
     }
 }

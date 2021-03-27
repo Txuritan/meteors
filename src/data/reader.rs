@@ -5,7 +5,7 @@ use {
         prelude::*,
     },
     roxmltree::{Document, Node},
-    std::{collections::BTreeMap, io::Read},
+    std::{collections::BTreeMap, convert::TryInto as _, io::Read},
     xxhash_rust::xxh3::xxh3_64,
 };
 
@@ -49,7 +49,7 @@ where
 
     let chapters = body.get_child_by_id("chapters")?;
 
-    let mut chapter_sections = read_chapters(&chapters);
+    let mut chapter_sections = read_chapters(&chapters)?;
 
     if chapter_sections.is_empty() {
         let range = chapters.range();
@@ -57,15 +57,15 @@ where
         chapter_sections.push(Range::from_std(
             (range.start + "<div id=\"chapters\" class=\"userstuff\">".len())
                 ..(range.end - "</div>".len()),
-        ));
+        )?);
     }
 
     database.index.stories.insert(
         story_id,
         Story {
-            file_name: name.to_string(),
+            file_name: name.to_owned(),
             file_hash,
-            length: length as u32,
+            length: length.try_into()?,
             chapters: chapter_sections,
             info: story_info,
             meta: story_meta,
@@ -166,7 +166,7 @@ fn read_info(
     let authors_node = node.get_child_by_class("byline")?;
     let summary = node
         .get_child("blockquote")
-        .and_then(|node| Ok(node.get_child("p")?.get_text()?.to_string()))
+        .and_then(|node| Ok(node.get_child("p")?.get_text()?.to_owned()))
         .unwrap_or_else(|_| String::new());
 
     let mut authors = Vec::new();
@@ -180,7 +180,7 @@ fn read_info(
     Ok((
         authors,
         StoryInfo {
-            title: title_node.get_text()?.to_string(),
+            title: title_node.get_text()?.to_owned(),
             summary,
         },
     ))
@@ -213,7 +213,7 @@ fn add_to_if_exists_or_create(
         database_map.insert(
             id.clone(),
             Entity {
-                text: text.to_string(),
+                text: text.to_owned(),
             },
         );
 
@@ -237,7 +237,7 @@ fn read_id(node: &Node<'_, '_>) -> Result<String> {
     }
 }
 
-fn read_chapters(node: &Node<'_, '_>) -> Vec<Range> {
+fn read_chapters(node: &Node<'_, '_>) -> Result<Vec<Range>> {
     let meta_groups =
         children_elements(node).filter(|n| n.attribute("class") == Some("meta group"));
 
@@ -252,7 +252,7 @@ fn read_chapters(node: &Node<'_, '_>) -> Vec<Range> {
             start..end
         })
         .map(Range::from_std)
-        .collect::<Vec<_>>()
+        .collect::<Result<Vec<_>>>()
 }
 
 fn children_elements<'node, 'doc, 'input>(

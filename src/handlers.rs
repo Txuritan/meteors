@@ -25,7 +25,7 @@ macro_rules! res {
     };
 }
 
-pub fn index(ctx: &Context<Database>) -> Result<Response> {
+pub fn index(ctx: &Context<'_, Database>) -> Result<Response> {
     let db = ctx.state();
 
     let theme = ctx.query("theme").unwrap_or_else(|| Cow::from("light"));
@@ -38,16 +38,16 @@ pub fn index(ctx: &Context<Database>) -> Result<Response> {
         .keys()
         .map(|id| {
             db.get_story_full(id)
-                .map(|(id, story)| StoryCard::new(&id, story, query.clone()))
+                .and_then(|(id, story)| StoryCard::new(&id, story, query.clone()))
         })
-        .collect::<Result<Vec<StoryCard>>>()?;
+        .collect::<Result<Vec<StoryCard<'_>>>>()?;
 
     let body = Layout::new("home", theme, query, IndexPage { stories });
 
     Ok(res!(200; body))
 }
 
-pub fn story(ctx: &Context<Database>) -> Result<Response> {
+pub fn story(ctx: &Context<'_, Database>) -> Result<Response> {
     let db = ctx.state();
 
     let theme = ctx.query("theme").unwrap_or_else(|| Cow::from("light"));
@@ -71,7 +71,7 @@ pub fn story(ctx: &Context<Database>) -> Result<Response> {
         theme,
         query.clone(),
         ChapterPage {
-            card: StoryCard::new(&id, story, query.clone()),
+            card: StoryCard::new(&id, story, query.clone())?,
             chapter: &story_body,
             index: chapter,
             query,
@@ -81,7 +81,7 @@ pub fn story(ctx: &Context<Database>) -> Result<Response> {
     Ok(res!(200; body))
 }
 
-pub fn search(ctx: &Context<Database>) -> Result<Response> {
+pub fn search(ctx: &Context<'_, Database>) -> Result<Response> {
     let db = ctx.state();
 
     let theme = ctx.query("theme").unwrap_or_else(|| Cow::from("light"));
@@ -98,7 +98,7 @@ pub fn search(ctx: &Context<Database>) -> Result<Response> {
         .iter()
         .map(|id| {
             db.get_story_full(id)
-                .map(|(id, story)| StoryCard::new(&id, story, query.clone()))
+                .and_then(|(id, story)| StoryCard::new(&id, story, query.clone()))
         })
         .collect::<Result<Vec<_>>>()?;
 
@@ -180,12 +180,12 @@ struct StoryCard<'s> {
 }
 
 impl<'s> StoryCard<'s> {
-    pub fn new(id: &'s str, story: StoryFull, query: Cow<'static, str>) -> Self {
-        StoryCard {
+    pub fn new(id: &'s str, story: StoryFull, query: Cow<'static, str>) -> Result<Self> {
+        Ok(StoryCard {
             id,
 
             file_name: story.file_name,
-            length: story.length as usize,
+            length: story.length,
             chapters: story.chapters.len(),
 
             info: story.info,
@@ -212,7 +212,7 @@ impl<'s> StoryCard<'s> {
             },
 
             query,
-        }
+        })
     }
 }
 
@@ -244,6 +244,6 @@ where
     I: TemplateOnce,
 {
     fn response(self) -> String {
-        self.render_once().unwrap()
+        self.render_once().expect("unable to render template")
     }
 }

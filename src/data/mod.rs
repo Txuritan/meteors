@@ -16,6 +16,7 @@ use {
     prost::Message,
     std::{
         collections::BTreeMap,
+        convert::TryInto as _,
         env,
         ffi::OsStr,
         fs::{self, DirEntry, File},
@@ -155,7 +156,7 @@ impl Database {
                 }
 
                 reader::read_story(self, name, &mut file.reader())
-                    .with_context(|| name.to_string())?;
+                    .with_context(|| name.to_owned())?;
 
                 if cfg.compress {
                     file.compress()?;
@@ -180,7 +181,7 @@ impl Database {
 
         let mut reader = file.reader();
 
-        let mut contents = String::with_capacity(story.length as usize);
+        let mut contents = String::with_capacity(story.length.try_into()?);
 
         let _ = reader.read_to_string(&mut contents)?;
 
@@ -192,7 +193,16 @@ impl Database {
             )
         })?;
 
-        Ok(contents[(range.start as usize)..(range.end as usize)].to_string())
+        Ok(contents
+            .get((range.start.try_into()?)..(range.end.try_into()?))
+            .ok_or_else(|| {
+                anyhow::anyhow!(
+                    "chapter `{}` not found in chapter index for `{}`",
+                    chapter,
+                    id
+                )
+            })?
+            .to_owned())
     }
 
     #[allow(clippy::ptr_arg)]
@@ -240,12 +250,12 @@ impl Database {
             id,
             StoryFull {
                 file_name: story_ref.file_name.clone(),
-                length: story_ref.length as usize,
+                length: story_ref.length.try_into()?,
                 chapters: story_ref
                     .chapters
                     .iter()
                     .map(Range::to_std)
-                    .collect::<Vec<_>>(),
+                    .collect::<Result<Vec<_>>>()?,
                 info: story_ref.info.clone(),
                 meta: StoryFullMeta {
                     rating: Rating::from(story_ref.meta.rating),

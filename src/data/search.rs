@@ -234,7 +234,7 @@ where
         let part = part
             .trim_start_matches(short)
             .trim_start_matches(long)
-            .to_string();
+            .to_owned();
 
         bounds.push(builder(included, part));
 
@@ -257,7 +257,7 @@ where
     let [open, close, sep] = symbols;
 
     if part.starts_with(open) {
-        let mut part = part.trim_start_matches(open).to_string();
+        let mut part = part.trim_start_matches(open).to_owned();
 
         part.push_str(sep);
 
@@ -337,8 +337,8 @@ mod test {
             fn test_prefix_long() {
                 assert_eq!(
                     vec![
-                        $new(true, "tag 1".to_string()),
-                        $new(true, "tag 2".to_string()),
+                        $new(true, "tag 1".to_owned()),
+                        $new(true, "tag 2".to_owned()),
                     ],
                     parse(concat!($prefix_long, ":tag 1, ", $prefix_long, ":tag 2"))
                 )
@@ -348,8 +348,8 @@ mod test {
             fn test_prefix_short() {
                 assert_eq!(
                     vec![
-                        $new(true, "tag 1".to_string()),
-                        $new(true, "tag 2".to_string()),
+                        $new(true, "tag 1".to_owned()),
+                        $new(true, "tag 2".to_owned()),
                     ],
                     parse(concat!($prefix_short, ":tag 1, ", $prefix_short, ":tag 2"))
                 )
@@ -359,8 +359,8 @@ mod test {
             fn test_exclude_prefix_long() {
                 assert_eq!(
                     vec![
-                        $new(false, "tag 1".to_string()),
-                        $new(false, "tag 2".to_string()),
+                        $new(false, "tag 1".to_owned()),
+                        $new(false, "tag 2".to_owned()),
                     ],
                     parse(concat!(
                         "-",
@@ -376,8 +376,8 @@ mod test {
             fn test_exclude_prefix_short() {
                 assert_eq!(
                     vec![
-                        $new(false, "tag 1".to_string()),
-                        $new(false, "tag 2".to_string()),
+                        $new(false, "tag 1".to_owned()),
+                        $new(false, "tag 2".to_owned()),
                     ],
                     parse(concat!(
                         "-",
@@ -405,7 +405,7 @@ mod test {
         #[test]
         fn test_romantic() {
             assert_eq!(
-                vec![NEW(true, "tag 1/tag 2".to_string()),],
+                vec![NEW(true, "tag 1/tag 2".to_owned()),],
                 parse("[tag 1, tag 2]")
             )
         }
@@ -413,7 +413,7 @@ mod test {
         #[test]
         fn test_platonic() {
             assert_eq!(
-                vec![NEW(true, "tag 1 & tag 2".to_string()),],
+                vec![NEW(true, "tag 1 & tag 2".to_owned()),],
                 parse("(tag 1, tag 2)")
             )
         }
@@ -421,7 +421,7 @@ mod test {
         #[test]
         fn test_exclude_romantic() {
             assert_eq!(
-                vec![NEW(false, "tag 1/tag 2".to_string()),],
+                vec![NEW(false, "tag 1/tag 2".to_owned()),],
                 parse("-[tag 1, tag 2]")
             )
         }
@@ -429,7 +429,7 @@ mod test {
         #[test]
         fn test_exclude_platonic() {
             assert_eq!(
-                vec![NEW(false, "tag 1 & tag 2".to_string()),],
+                vec![NEW(false, "tag 1 & tag 2".to_owned()),],
                 parse("-(tag 1, tag 2)")
             )
         }
@@ -443,10 +443,7 @@ mod test {
         #[test]
         fn test_no_prefix() {
             assert_eq!(
-                vec![
-                    NEW(true, "tag 1".to_string()),
-                    NEW(true, "tag 2".to_string()),
-                ],
+                vec![NEW(true, "tag 1".to_owned()), NEW(true, "tag 2".to_owned()),],
                 parse("tag 1, tag 2")
             )
         }
@@ -455,8 +452,8 @@ mod test {
         fn test_exclude_no_prefix() {
             assert_eq!(
                 vec![
-                    NEW(false, "tag 1".to_string()),
-                    NEW(false, "tag 2".to_string()),
+                    NEW(false, "tag 1".to_owned()),
+                    NEW(false, "tag 2".to_owned()),
                 ],
                 parse("-tag 1, -tag 2")
             )

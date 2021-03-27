@@ -1,8 +1,11 @@
 pub mod proto;
 
 use {
-    crate::models::proto::{Entity, Rating, StoryInfo},
-    std::ops::Range,
+    crate::{
+        models::proto::{Entity, Rating, StoryInfo},
+        prelude::*,
+    },
+    std::{convert::TryInto as _, ops::Range},
 };
 
 #[rustfmt::skip]
@@ -81,14 +84,14 @@ impl Rating {
 }
 
 impl proto::Range {
-    pub const fn from_std(range: Range<usize>) -> proto::Range {
-        proto::Range {
-            start: range.start as u32,
-            end: range.end as u32,
-        }
+    pub fn from_std(range: Range<usize>) -> Result<proto::Range> {
+        Ok(proto::Range {
+            start: range.start.try_into()?,
+            end: range.end.try_into()?,
+        })
     }
 
-    pub const fn to_std(&self) -> Range<usize> {
-        (self.start as usize)..(self.end as usize)
+    pub fn to_std(&self) -> Result<Range<usize>> {
+        Ok((self.start.try_into()?)..(self.end.try_into()?))
     }
 }

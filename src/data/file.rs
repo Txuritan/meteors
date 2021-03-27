@@ -28,7 +28,10 @@ impl StoryFile {
             match ext {
                 Some("html") => false,
                 Some("gz") => true,
-                _ => unreachable!(),
+                ext => anyhow::bail!(
+                    "LOGIC ERROR: reached unreachable file extension match with extension `{:?}`",
+                    ext
+                ),
             }
         };
 
