@@ -28,7 +28,7 @@ macro_rules! res {
 pub fn index(ctx: &Context<'_, Database>) -> Result<Response> {
     let db = ctx.state();
 
-    let theme = ctx.query("theme").unwrap_or_else(|| Cow::from("light"));
+    let theme = ctx.query("theme").unwrap_or("light");
 
     let query = ctx.rebuild_query();
 
@@ -50,7 +50,7 @@ pub fn index(ctx: &Context<'_, Database>) -> Result<Response> {
 pub fn story(ctx: &Context<'_, Database>) -> Result<Response> {
     let db = ctx.state();
 
-    let theme = ctx.query("theme").unwrap_or_else(|| Cow::from("light"));
+    let theme = ctx.query("theme").unwrap_or("light");
 
     let id = ctx
         .param("id")
@@ -84,7 +84,7 @@ pub fn story(ctx: &Context<'_, Database>) -> Result<Response> {
 pub fn search(ctx: &Context<'_, Database>) -> Result<Response> {
     let db = ctx.state();
 
-    let theme = ctx.query("theme").unwrap_or_else(|| Cow::from("light"));
+    let theme = ctx.query("theme").unwrap_or("light");
 
     let query = ctx
         .query("search")
