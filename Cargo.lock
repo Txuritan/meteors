@@ -8,9 +8,9 @@ checksum = "f26201604c87b1e01bd3d98f8d5d9a8fcbb815e8cedb41ffccbeb4bf593a35fe"
 
 [[package]]
 name = "anyhow"
-version = "1.0.39"
+version = "1.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81cddc5f91628367664cc7c69714ff08deee8a3efc54623011c772544d7b2767"
+checksum = "28b2cd92db5cbd74e8e5028f7e27dd7aa3090e89e4f2a197cc7c8dfb69c7063b"
 
 [[package]]
 name = "ascii"
@@ -185,9 +185,9 @@ dependencies = [
 
 [[package]]
 name = "itoap"
-version = "0.1.5"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22ff16bae486bcc1443ddbf7fa93d21dbe638f0b96d141bf7e8c37e311e75777"
+checksum = "9028f49264629065d057f340a86acb84867925865f73bbf8d47b4d149a7e88b8"
 
 [[package]]
 name = "lazy_static"
@@ -197,9 +197,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.91"
+version = "0.2.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8916b1f6ca17130ec6568feccee27c156ad12037880833a3b842a823236502e7"
+checksum = "56d855069fafbb9b344c0f962150cd2c1187975cb1c22c1522c240d8c4986714"
 
 [[package]]
 name = "libmimalloc-sys"
@@ -313,9 +313,9 @@ dependencies = [
 
 [[package]]
 name = "owo-colors"
-version = "1.4.2"
+version = "1.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f27ef240f1cbbcdc0774a634db63dde96db624aa010aceebccc2bb8a9a0cb67"
+checksum = "2386b4ebe91c2f7f51082d4cefa145d030e33a1842a96b12e4885cc3c01f7a55"
 
 [[package]]
 name = "path-tree"
@@ -460,9 +460,9 @@ checksum = "71d301d4193d031abdd79ff7e3dd721168a9572ef3fe51a1517aba235bd8f86e"
 
 [[package]]
 name = "sailfish"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2be107c816a4ca0ea7798f9b3d42878892512cd60ffc023def09a31c4648f96f"
+checksum = "a5ef143e1c551a0eee1d1c4a1faf45558749750826db1eab212babbe08e4a7b8"
 dependencies = [
  "itoap",
  "ryu",
@@ -472,9 +472,9 @@ dependencies = [
 
 [[package]]
 name = "sailfish-compiler"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6e32eb8a9ea767358207c61e951d2302ad70a596419910e1db2a65326289649"
+checksum = "b823601d78663c108d4425fea46ee63e1622144eadbcf0eeb9c279c1be681cd9"
 dependencies = [
  "filetime",
  "home",
@@ -487,9 +487,9 @@ dependencies = [
 
 [[package]]
 name = "sailfish-macros"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab7528e53111cbece7c4ec638c275e4e59aaf9adbf1ce10a5d0de3a22068a8af"
+checksum = "90b31a6c9be3d1bd5fa41a6d5c274ba3c7d1ebb1d0e0b6381e60cc70725e9e10"
 dependencies = [
  "proc-macro2",
  "sailfish-compiler",
@@ -497,9 +497,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.64"
+version = "1.0.67"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3fd9d1e9976102a03c542daa2eff1b43f9d72306342f3f8b3ed5fb8908195d6f"
+checksum = "6498a9efc342871f91cc2d0d694c674368b4ceb40f62b65a7a08c3792935e702"
 dependencies = [
  "proc-macro2",
  "quote",
