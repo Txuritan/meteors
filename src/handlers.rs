@@ -180,20 +180,14 @@ impl TagKind {
 struct StoryCard<'s> {
     id: &'s str,
 
-    file_name: String,
-    length: usize,
     chapters: usize,
-
     info: StoryInfo,
 
     rating: Rating,
-
     categories: Vec<Entity>,
-
     authors: Vec<Entity>,
 
     origins: OriginList,
-
     tags: TagList,
 
     query: Cow<'static, str>,
@@ -215,20 +209,14 @@ impl<'s> StoryCard<'s> {
         Ok(StoryCard {
             id,
 
-            file_name: story.file_name,
-            length: story.length,
             chapters: story.chapters.len(),
-
             info: story.info,
 
             rating,
-
             categories,
-
             authors,
 
             origins: OriginList { origins },
-
             tags: TagList {
                 tags: {
                     let mut tags = Vec::with_capacity(
