@@ -233,9 +233,6 @@ html.light, html.dark {
         .title {
             color: $purple;
         }
-        .origins a {
-            color: $gray;
-        }
         .tags .tag {
             &.warning {
                 color: $red;
@@ -250,14 +247,31 @@ html.light, html.dark {
                 color: $olive;
             }
         }
-        .summary {
-            color: $gray;
-        }
         .info {
             color: $blue;
         }
         .count {
-            color: $black;
+            color: $purple;
+        }
+    }
+}
+html.light {
+    article.story {
+        .origins a {
+            color: $gray;
+        }
+        .summary {
+            color: $gray;
+        }
+    }
+}
+html.dark {
+    article.story {
+        .origins a {
+            color: $silver;
+        }
+        .summary {
+            color: $silver;
         }
     }
 }
