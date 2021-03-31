@@ -195,41 +195,15 @@ article.story {
     p {
         margin: 0;
     }
-    .tags {
+    .origins {
         display: block;
     }
-    .summary {
-        color: $gray;
+    .tags {
+        display: block;
     }
 }
 html.light, html.dark {
     article.story {
-        .title {
-            color: $purple;
-        }
-        .meta {
-            color: $green;
-        }
-        .tags {
-            &.warnings .tag {
-                color: $red;
-            }
-            &.pairings .tag {
-                color: $orange;
-            }
-            &.characters .tag {
-                color: $blue;
-            }
-            &.generals .tag {
-                color: $olive;
-            }
-        }
-        .info {
-            color: $blue;
-        }
-        .count {
-            color: $black;
-        }
         .rating {
             &.explicit {
                 color: $red;
@@ -243,6 +217,35 @@ html.light, html.dark {
             &.unknown {
                 color: $gray;
             }
+        }
+        .title {
+            color: $purple;
+        }
+        .origins a {
+            color: $gray;
+        }
+        .tags .tag {
+            &.warning {
+                color: $red;
+            }
+            &.pairing {
+                color: $orange;
+            }
+            &.character {
+                color: $blue;
+            }
+            &.general {
+                color: $olive;
+            }
+        }
+        .summary {
+            color: $gray;
+        }
+        .info {
+            color: $blue;
+        }
+        .count {
+            color: $black;
         }
     }
 }

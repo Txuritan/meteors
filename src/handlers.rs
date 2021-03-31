@@ -3,7 +3,7 @@ use {
         data::{search, Database},
         models::{
             proto::{Entity, Rating, StoryInfo},
-            StoryFull,
+            StoryFull, StoryFullMeta,
         },
         prelude::*,
         router::{Context, Response},
@@ -156,6 +156,25 @@ where
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+enum TagKind {
+    Warning,
+    Pairing,
+    Character,
+    General,
+}
+
+impl TagKind {
+    pub const fn class(self) -> &'static str {
+        match self {
+            TagKind::Warning => "warning",
+            TagKind::Pairing => "pairing",
+            TagKind::Character => "character",
+            TagKind::General => "general",
+        }
+    }
+}
+
 #[derive(TemplateOnce)]
 #[template(path = "partials/story.stpl")]
 struct StoryCard<'s> {
@@ -171,16 +190,26 @@ struct StoryCard<'s> {
 
     authors: Vec<Entity>,
 
-    warnings: TagList<'s>,
-    pairings: TagList<'s>,
-    characters: TagList<'s>,
-    generals: TagList<'s>,
+    origins: OriginList,
+
+    tags: TagList,
 
     query: Cow<'static, str>,
 }
 
 impl<'s> StoryCard<'s> {
     pub fn new(id: &'s str, story: StoryFull, query: Cow<'static, str>) -> Result<Self> {
+        let StoryFullMeta {
+            rating,
+    authors,
+    categories,
+    origins,
+    warnings,
+    pairings,
+    characters,
+    generals,
+        } = story.meta;
+
         Ok(StoryCard {
             id,
 
@@ -190,37 +219,48 @@ impl<'s> StoryCard<'s> {
 
             info: story.info,
 
-            rating: story.meta.rating,
+            rating,
 
-            authors: story.meta.authors,
+            authors,
 
-            warnings: TagList {
-                kind: "warnings",
-                tags: story.meta.warnings,
+            origins: OriginList {
+                origins,
             },
-            pairings: TagList {
-                kind: "pairings",
-                tags: story.meta.pairings,
-            },
-            characters: TagList {
-                kind: "characters",
-                tags: story.meta.characters,
-            },
-            generals: TagList {
-                kind: "generals",
-                tags: story.meta.generals,
+
+            tags: TagList {
+                tags: {
+                    let mut tags = Vec::with_capacity(warnings.len() + pairings.len() + characters.len() + generals.len());
+
+                    Self::push(&mut tags, TagKind::Warning, warnings);
+                    Self::push(&mut tags, TagKind::Pairing, pairings);
+                    Self::push(&mut tags, TagKind::Character, characters);
+                    Self::push(&mut tags, TagKind::General, generals);
+
+                    tags
+                },
             },
 
             query,
         })
     }
+
+    fn push(tags: &mut Vec<(TagKind, Entity)>, kind: TagKind, list: Vec<Entity>) {
+        for entity in list {
+            tags.push((kind, entity));
+        }
+    }
+}
+
+#[derive(TemplateOnce)]
+#[template(path = "partials/origin-list.stpl")]
+struct OriginList {
+    origins: Vec<Entity>,
 }
 
 #[derive(TemplateOnce)]
 #[template(path = "partials/tag-list.stpl")]
-struct TagList<'s> {
-    kind: &'s str,
-    tags: Vec<Entity>,
+struct TagList {
+    tags: Vec<(TagKind, Entity)>,
 }
 
 trait Res {
