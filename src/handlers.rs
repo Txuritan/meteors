@@ -188,6 +188,8 @@ struct StoryCard<'s> {
 
     rating: Rating,
 
+    categories: Vec<Entity>,
+
     authors: Vec<Entity>,
 
     origins: OriginList,
@@ -220,6 +222,8 @@ impl<'s> StoryCard<'s> {
             info: story.info,
 
             rating,
+
+            categories,
 
             authors,
 

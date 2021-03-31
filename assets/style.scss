@@ -194,6 +194,17 @@ article.story {
     line-height: 24px;
     margin-bottom: 1rem;
     margin-top: 1rem;
+    header {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        .left {
+            flex: 1 1 auto;
+        }
+        .right {
+            flex: 0 1 auto;
+        }
+    }
     p {
         margin: 0;
     }

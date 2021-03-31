@@ -1,9 +1,16 @@
 <article class="story">
     <header>
-        <span class="rating <%= &rating.class() %>"><%= &rating.symbol() %></span> <a href="/story/<%= id %>/1<%= query %>" class="title"><%= &info.title %></a> by
-        <% for (i, author) in authors.iter().enumerate() { %>
-            <a><%= &author.text %></a><% if i != (&authors.len() - 1) { %>,<% } %>
-        <% } %>
+        <div class="left">
+            <span class="rating <%= &rating.class() %>"><%= &rating.symbol() %></span> <a href="/story/<%= id %>/1<%= query %>" class="title"><%= &info.title %></a> by
+            <% for (i, author) in authors.iter().enumerate() { %>
+                <a><%= &author.text %></a><% if i != (&authors.len() - 1) { %>,<% } %>
+            <% } %>
+        </div>
+        <p class="right">
+            <% for (i, category) in categories.iter().enumerate() { %>
+                <span><%= &category.text %></span><% if i != (&categories.len() - 1) { %>,<% } %>
+            <% } %>
+        </p>
     </header>
     <%- origins.render_once()? %>
     <%- tags.render_once()? %>
