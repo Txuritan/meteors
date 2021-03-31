@@ -1,19 +1,13 @@
 use {
     crate::{
         data::{search, Database},
-        models::{
-            proto::{Entity, Rating, StoryInfo},
-            StoryFull, StoryFullMeta,
-        },
         prelude::*,
         router::{Context, Response},
+        views::{ChapterPage, IndexPage, Layout, StoryCard},
     },
     sailfish::TemplateOnce,
-    std::borrow::Cow,
     tiny_http::Header,
 };
-
-static CSS: &str = include_str!("../assets/style.css");
 
 macro_rules! res {
     (200; $body:expr) => {
@@ -105,154 +99,6 @@ pub fn search(ctx: &Context<'_, Database>) -> Result<Response> {
     let body = Layout::new("search", theme, query, IndexPage { stories });
 
     Ok(res!(200; body))
-}
-
-#[derive(TemplateOnce)]
-#[template(path = "pages/index.stpl")]
-struct IndexPage<'s> {
-    stories: Vec<StoryCard<'s>>,
-}
-
-#[derive(TemplateOnce)]
-#[template(path = "pages/chapter.stpl")]
-struct ChapterPage<'s> {
-    card: StoryCard<'s>,
-    chapter: &'s str,
-    index: usize,
-
-    query: Cow<'static, str>,
-}
-
-#[derive(TemplateOnce)]
-#[template(path = "layout.stpl")]
-struct Layout<B>
-where
-    B: TemplateOnce,
-{
-    css: &'static str,
-    title: String,
-    theme: String,
-    query: Cow<'static, str>,
-    body: B,
-}
-
-impl<B> Layout<B>
-where
-    B: TemplateOnce,
-{
-    #[allow(clippy::needless_pass_by_value)]
-    fn new<S, T>(title: S, theme: T, query: Cow<'static, str>, body: B) -> Self
-    where
-        S: ToString,
-        T: ToString,
-    {
-        Self {
-            css: CSS,
-            title: title.to_string(),
-            theme: theme.to_string(),
-            query,
-            body,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-enum TagKind {
-    Warning,
-    Pairing,
-    Character,
-    General,
-}
-
-impl TagKind {
-    pub const fn class(self) -> &'static str {
-        match self {
-            TagKind::Warning => "warning",
-            TagKind::Pairing => "pairing",
-            TagKind::Character => "character",
-            TagKind::General => "general",
-        }
-    }
-}
-
-#[derive(TemplateOnce)]
-#[template(path = "partials/story.stpl")]
-struct StoryCard<'s> {
-    id: &'s str,
-
-    chapters: usize,
-    info: StoryInfo,
-
-    rating: Rating,
-    categories: Vec<Entity>,
-    authors: Vec<Entity>,
-
-    origins: OriginList,
-    tags: TagList,
-
-    query: Cow<'static, str>,
-}
-
-impl<'s> StoryCard<'s> {
-    pub fn new(id: &'s str, story: StoryFull, query: Cow<'static, str>) -> Result<Self> {
-        let StoryFullMeta {
-            rating,
-            authors,
-            categories,
-            origins,
-            warnings,
-            pairings,
-            characters,
-            generals,
-        } = story.meta;
-
-        Ok(StoryCard {
-            id,
-
-            chapters: story.chapters.len(),
-            info: story.info,
-
-            rating,
-            categories,
-            authors,
-
-            origins: OriginList { origins },
-            tags: TagList {
-                tags: {
-                    let mut tags = Vec::with_capacity(
-                        warnings.len() + pairings.len() + characters.len() + generals.len(),
-                    );
-
-                    Self::push(&mut tags, TagKind::Warning, warnings);
-                    Self::push(&mut tags, TagKind::Pairing, pairings);
-                    Self::push(&mut tags, TagKind::Character, characters);
-                    Self::push(&mut tags, TagKind::General, generals);
-
-                    tags
-                },
-            },
-
-            query,
-        })
-    }
-
-    fn push(tags: &mut Vec<(TagKind, Entity)>, kind: TagKind, list: Vec<Entity>) {
-        for entity in list {
-            tags.push((kind, entity));
-        }
-    }
-}
-
-#[derive(TemplateOnce)]
-#[template(path = "partials/origin-list.stpl")]
-struct OriginList {
-    origins: Vec<Entity>,
-}
-
-#[derive(TemplateOnce)]
-#[template(path = "partials/tag-list.stpl")]
-struct TagList {
-    tags: Vec<(TagKind, Entity)>,
 }
 
 trait Res {

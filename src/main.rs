@@ -12,6 +12,7 @@ mod handlers;
 mod logger;
 mod router;
 mod utils;
+mod views;
 
 use {
     crate::{
