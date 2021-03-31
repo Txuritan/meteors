@@ -15,17 +15,39 @@ static CSS: &str = include_str!("../assets/style.css");
 #[derive(TemplateOnce)]
 #[template(path = "pages/index.stpl")]
 pub struct IndexPage<'s> {
-    pub stories: Vec<StoryCard<'s>>,
+    stories: Vec<StoryCard<'s>>,
+}
+
+impl<'s> IndexPage<'s> {
+    pub fn new(stories: Vec<StoryCard<'s>>) -> Self {
+        Self { stories }
+    }
 }
 
 #[derive(TemplateOnce)]
 #[template(path = "pages/chapter.stpl")]
 pub struct ChapterPage<'s> {
-    pub card: StoryCard<'s>,
-    pub chapter: &'s str,
-    pub index: usize,
+    card: StoryCard<'s>,
+    chapter: &'s str,
+    index: usize,
 
-    pub query: Cow<'static, str>,
+    query: Cow<'static, str>,
+}
+
+impl<'s> ChapterPage<'s> {
+    pub fn new(
+        card: StoryCard<'s>,
+        chapter: &'s str,
+        index: usize,
+        query: Cow<'static, str>,
+    ) -> Self {
+        Self {
+            card,
+            chapter,
+            index,
+            query,
+        }
+    }
 }
 
 #[derive(TemplateOnce)]
@@ -62,7 +84,7 @@ where
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum TagKind {
+enum TagKind {
     Warning,
     Pairing,
     Character,
@@ -70,7 +92,7 @@ pub enum TagKind {
 }
 
 impl TagKind {
-    pub const fn class(self) -> &'static str {
+    const fn class(self) -> &'static str {
         match self {
             TagKind::Warning => "warning",
             TagKind::Pairing => "pairing",
@@ -150,12 +172,12 @@ impl<'s> StoryCard<'s> {
 
 #[derive(TemplateOnce)]
 #[template(path = "partials/origin-list.stpl")]
-pub struct OriginList {
-    pub origins: Vec<Entity>,
+struct OriginList {
+    origins: Vec<Entity>,
 }
 
 #[derive(TemplateOnce)]
 #[template(path = "partials/tag-list.stpl")]
-pub struct TagList {
-    pub tags: Vec<(TagKind, Entity)>,
+struct TagList {
+    tags: Vec<(TagKind, Entity)>,
 }

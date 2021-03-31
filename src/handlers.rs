@@ -36,7 +36,7 @@ pub fn index(ctx: &Context<'_, Database>) -> Result<Response> {
         })
         .collect::<Result<Vec<StoryCard<'_>>>>()?;
 
-    let body = Layout::new("home", theme, query, IndexPage { stories });
+    let body = Layout::new("home", theme, query, IndexPage::new(stories));
 
     Ok(res!(200; body))
 }
@@ -50,13 +50,13 @@ pub fn story(ctx: &Context<'_, Database>) -> Result<Response> {
         .param("id")
         .map(String::from)
         .ok_or_else(|| anyhow!("no story id was found is the request uri"))?;
-    let chapter: usize = ctx
+    let index: usize = ctx
         .param("chapter")
         .ok_or_else(|| anyhow!("no story id was found is the request uri"))
         .and_then(|s| s.parse().map_err(anyhow::Error::from))?;
 
     let (_, story) = db.get_story_full(&id)?;
-    let story_body = db.get_chapter_body(&id, chapter)?;
+    let chapter = db.get_chapter_body(&id, index)?;
 
     let query = ctx.rebuild_query();
 
@@ -64,12 +64,12 @@ pub fn story(ctx: &Context<'_, Database>) -> Result<Response> {
         story.info.title.clone(),
         theme,
         query.clone(),
-        ChapterPage {
-            card: StoryCard::new(&id, story, query.clone())?,
-            chapter: &story_body,
-            index: chapter,
+        ChapterPage::new(
+            StoryCard::new(&id, story, query.clone())?,
+            &chapter,
+            index,
             query,
-        },
+        ),
     );
 
     Ok(res!(200; body))
@@ -96,7 +96,7 @@ pub fn search(ctx: &Context<'_, Database>) -> Result<Response> {
         })
         .collect::<Result<Vec<_>>>()?;
 
-    let body = Layout::new("search", theme, query, IndexPage { stories });
+    let body = Layout::new("search", theme, query, IndexPage::new(stories));
 
     Ok(res!(200; body))
 }
