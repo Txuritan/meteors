@@ -201,13 +201,13 @@ impl<'s> StoryCard<'s> {
     pub fn new(id: &'s str, story: StoryFull, query: Cow<'static, str>) -> Result<Self> {
         let StoryFullMeta {
             rating,
-    authors,
-    categories,
-    origins,
-    warnings,
-    pairings,
-    characters,
-    generals,
+            authors,
+            categories,
+            origins,
+            warnings,
+            pairings,
+            characters,
+            generals,
         } = story.meta;
 
         Ok(StoryCard {
@@ -223,13 +223,13 @@ impl<'s> StoryCard<'s> {
 
             authors,
 
-            origins: OriginList {
-                origins,
-            },
+            origins: OriginList { origins },
 
             tags: TagList {
                 tags: {
-                    let mut tags = Vec::with_capacity(warnings.len() + pairings.len() + characters.len() + generals.len());
+                    let mut tags = Vec::with_capacity(
+                        warnings.len() + pairings.len() + characters.len() + generals.len(),
+                    );
 
                     Self::push(&mut tags, TagKind::Warning, warnings);
                     Self::push(&mut tags, TagKind::Pairing, pairings);
