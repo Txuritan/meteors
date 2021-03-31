@@ -10,4 +10,5 @@
     <%- characters.render_once()? %>
     <%- generals.render_once()? %>
     <p class="summary"># <%= &info.summary %></p>
+    <p class="meta">&#123;<span class="info">parts</span>: <span class="count"><%= chapters %></span>&#125;</p>
 </article>
