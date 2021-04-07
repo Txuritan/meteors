@@ -1,0 +1,10 @@
+[package]
+name = "query"
+version = "0.1.0"
+authors = ["Txuritan <txuritan@protonmail.com>"]
+edition = "2018"
+
+[dependencies]
+anyhow = "1.0"
+html_parser = { git = "https://github.com/Txuritan/html-parser.git", rev = "1e318181a86666d2bbb870736db96a7cf4bf6cec" }
+query-macros = { path = "../query-macros" }

@@ -320,6 +320,7 @@ dependencies = [
  "path-tree",
  "prost",
  "qstring",
+ "query",
  "rand",
  "regex-automata",
  "roxmltree",
@@ -490,6 +491,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d464fae65fff2680baf48019211ce37aaec0c78e9264c84a3e484717f965104e"
 dependencies = [
  "percent-encoding",
+]
+
+[[package]]
+name = "query"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "html_parser",
+ "query-macros",
+]
+
+[[package]]
+name = "query-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]
