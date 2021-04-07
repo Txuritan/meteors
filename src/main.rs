@@ -10,6 +10,7 @@ mod regex;
 
 mod handlers;
 mod logger;
+mod query;
 mod router;
 mod utils;
 mod views;
