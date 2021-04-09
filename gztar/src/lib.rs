@@ -1,5 +1,5 @@
 use {
-    flate2::{read::GzEncoder, Compression},
+    flate2::read::{GzDecoder, GzEncoder},
     std::{
         io::{Error, ErrorKind, Read, Result, Write},
         path::Path,
@@ -7,6 +7,8 @@ use {
     },
     tar::{Archive as TarReader, Builder as TarWriter, EntryType, Header},
 };
+
+pub use flate2::Compression;
 
 pub struct GzTarReader<R>
 where
@@ -43,10 +45,14 @@ where
                     .unwrap_or(false)
             })
             .map(|entry| {
-                entry.and_then(|mut entry| {
-                    let mut bytes = Vec::with_capacity(entry.size() as usize);
+                entry.and_then(|entry| {
+                    let size = entry.size() as usize;
 
-                    entry.read_to_end(&mut bytes)?;
+                    let mut decoder = GzDecoder::new(entry);
+
+                    let mut bytes = Vec::with_capacity(size);
+
+                    decoder.read_to_end(&mut bytes)?;
 
                     Ok(bytes)
                 })
@@ -95,12 +101,22 @@ where
     where
         P: AsRef<Path>,
     {
-        let mut header = Header::new_gnu();
+        let bytes = {
+            let mut bytes = Vec::with_capacity(data.len());
+
+            let mut encoder = GzEncoder::new(data, self.compression);
+
+            encoder.read_to_end(&mut bytes)?;
+
+            bytes
+        };
+
+        let mut header = Header::new_old();
 
         header.set_gid(0);
         header.set_uid(0);
         header.set_mode(744);
-        header.set_size((data.len() + 1) as u64);
+        header.set_size(bytes.len() as u64);
         header.set_entry_type(EntryType::Regular);
         header.set_mtime(
             SystemTime::now()
@@ -110,8 +126,7 @@ where
         );
         header.set_cksum();
 
-        self.inner
-            .append_data(&mut header, path, GzEncoder::new(data, self.compression))?;
+        self.inner.append_data(&mut header, path, &bytes[..])?;
 
         Ok(())
     }
