@@ -81,22 +81,22 @@ pub fn selector(
                     const ATTRIBUTES: usize,
                 >(
                     &self,
-                    matcher: &crate::query::compile_time::StaticMatcher<TAGS, CLASSES, IDS, ATTRIBUTES>,
-                    elements: &[html_parser::Node<'input>],
+                    matcher: &::query::compile_time::StaticMatcher<TAGS, CLASSES, IDS, ATTRIBUTES>,
+                    elements: &[::html_parser::Node<'input>],
                     direct_match: bool,
-                ) -> Vec<html_parser::Node<'input>> {
-                    use crate::query::Matcher;
+                ) -> Vec<::html_parser::Node<'input>> {
+                    use ::query::Matcher;
 
                     let mut acc = vec![];
 
                     for node in elements.iter() {
-                        if let html_parser::Node::Element(el) = node {
+                        if let ::html_parser::Node::Element(el) = node {
                             if !direct_match {
                                 acc.append(&mut self.find_nodes(matcher, &el.children, false));
                             }
 
                             if matcher.matches(el.name, &el.attributes) {
-                                acc.push(html_parser::Node::Element(el.clone()));
+                                acc.push(::html_parser::Node::Element(el.clone()));
                             }
                         }
                     }
@@ -105,8 +105,8 @@ pub fn selector(
                 }
             }
 
-            impl crate::query::Selector for #selector_struct_ident {
-                fn find<'input>(&self, elements: &[html_parser::Node<'input>]) -> Vec<html_parser::Node<'input>> {
+            impl ::query::Selector for #selector_struct_ident {
+                fn find<'input>(&self, elements: &[::html_parser::Node<'input>]) -> Vec<::html_parser::Node<'input>> {
                     let mut elements: Vec<_> = elements.to_vec();
                     let mut direct_match = false;
 
@@ -157,7 +157,7 @@ fn matcher_to_stmt_tokens(matcher: &Matcher) -> proc_macro2::TokenStream {
     let attributes = matcher.attribute.len();
 
     quote::quote! {
-        crate::query::compile_time::StaticMatcher<#tags, #classes, #ids, #attributes>
+        ::query::compile_time::StaticMatcher<#tags, #classes, #ids, #attributes>
     }
 }
 
@@ -181,7 +181,7 @@ fn matcher_to_expr_tokens(matcher: &Matcher) -> proc_macro2::TokenStream {
     let direct_match = matcher.direct_match;
 
     quote::quote! {
-        crate::query::compile_time::StaticMatcher {
+        ::query::compile_time::StaticMatcher {
             tag: [ #( #tags , )* ],
             class: [ #( #classes , )* ],
             id: [ #( #ids , )* ],
