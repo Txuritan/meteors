@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "gztar",
+    "html-parser",
     "query",
     "query-macros",
     "meteors",

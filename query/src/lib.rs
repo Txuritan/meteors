@@ -7,12 +7,13 @@ pub use query_macros::selector;
 
 type Attributes<'input> = HashMap<&'input str, Option<&'input str>>;
 
+#[derive(Debug)]
 pub struct Document<'input> {
     root: Dom<'input>,
 }
 
 impl<'input> Document<'input> {
-    pub fn select<S>(&self, selector: S) -> Vec<Node<'input>>
+    pub fn select_all<S>(&self, selector: &S) -> Vec<Node<'input>>
     where
         S: Selector,
     {
@@ -21,6 +22,13 @@ impl<'input> Document<'input> {
         } else {
             vec![]
         }
+    }
+
+    pub fn select<S>(&self, selector: &S) -> Option<Node<'input>>
+    where
+        S: Selector,
+    {
+        self.select_all(selector).into_iter().next()
     }
 }
 
@@ -38,13 +46,7 @@ pub trait Selector {
     fn elements<'input>(elements: Vec<Node<'input>>) -> Vec<Node<'input>> {
         elements
             .iter()
-            .flat_map(|node| {
-                if let Node::Element(el) = node {
-                    el.children.clone()
-                } else {
-                    vec![]
-                }
-            })
+            .flat_map(|node| node.children.clone())
             .collect::<Vec<Node<'input>>>()
     }
 
@@ -58,7 +60,7 @@ pub trait Matcher {
 pub mod runtime {
     use {
         super::{Attributes, Matcher, Selector},
-        html_parser::Node,
+        html_parser::{Element, Node, NodeData},
         std::collections::HashMap,
     };
 
@@ -76,15 +78,20 @@ pub mod runtime {
         ) -> Vec<Node<'input>> {
             let mut acc = vec![];
 
-            for node in elements.iter() {
-                if let Node::Element(el) = node {
-                    if !direct_match {
-                        acc.append(&mut self.find_nodes(matcher, &el.children, false));
-                    }
+            for el in elements.iter() {
+                if !direct_match {
+                    acc.append(&mut self.find_nodes(matcher, &el.children, false));
+                }
 
-                    if matcher.matches(el.name, &el.attributes) {
-                        acc.push(Node::Element(el.clone()));
+                match el.data {
+                    NodeData::Element(Element {
+                        ref name,
+                        ref attributes,
+                        ..
+                    }) if matcher.matches(name, attributes) => {
+                        acc.push(el.clone());
                     }
+                    _ => {}
                 }
             }
 
@@ -267,7 +274,18 @@ pub mod runtime {
             let name = name.to_string();
             let tag_match = self.tag.is_empty() || self.tag.iter().any(|tag| &name == tag);
 
-            tag_match && id_match && class_match && attr_match
+            let res = tag_match && id_match && class_match && attr_match;
+
+            if false {
+                println!(
+                    "for: {:?} \n {:?} \n {:?} \n tag_match: {}, id_match: {}, class_match: {}, attr_match: {} \n result: {} \n\n",
+                    &self, name, attrs,
+                    tag_match, id_match, class_match, attr_match,
+                    res,
+                );
+            }
+
+            res
         }
     }
 
@@ -292,6 +310,23 @@ pub mod runtime {
                 Contains(v) => other.contains(v),
             }
         }
+    }
+
+    #[test]
+    fn test_simple_multiple_a() {
+        use std::convert::TryFrom;
+
+        let doc = super::Document::try_from(
+            "<div class='container'>
+               <a class='link button' id='linkmain'>
+                 <span>text hi there</span>
+               </a>
+               <span>text hi there <a href='blob'>two</a></span>
+             </div>",
+        )
+        .unwrap();
+        let sel = doc.select_all(&DynamicSelector::from("a"));
+        assert_eq!(sel.len(), 2);
     }
 }
 

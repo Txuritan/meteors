@@ -225,7 +225,6 @@ dependencies = [
 [[package]]
 name = "html_parser"
 version = "0.6.2"
-source = "git+https://github.com/Txuritan/html-parser.git?rev=1e318181a86666d2bbb870736db96a7cf4bf6cec#1e318181a86666d2bbb870736db96a7cf4bf6cec"
 dependencies = [
  "pest",
  "pest_derive",

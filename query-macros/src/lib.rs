@@ -66,8 +66,10 @@ pub fn selector(
     });
 
     let selector_module = quote::quote! {
+        #[allow(non_snake_case)]
         pub(self) mod #selector_module_ident {
             #[allow(non_camel_case_types)]
+            #[derive(Debug)]
             pub struct #selector_struct_ident {
                 #( #selector_member_stmt , )*
             }
@@ -90,14 +92,19 @@ pub fn selector(
                     let mut acc = vec![];
 
                     for node in elements.iter() {
-                        if let ::html_parser::Node::Element(el) = node {
-                            if !direct_match {
-                                acc.append(&mut self.find_nodes(matcher, &el.children, false));
-                            }
+                        if !direct_match {
+                            acc.append(&mut self.find_nodes(matcher, &node.children, false));
+                        }
 
-                            if matcher.matches(el.name, &el.attributes) {
-                                acc.push(::html_parser::Node::Element(el.clone()));
+                        match node.data {
+                            ::html_parser::NodeData::Element(::html_parser::Element {
+                                ref name,
+                                ref attributes,
+                                ..
+                            }) if matcher.matches(name, attributes) => {
+                                acc.push(node.clone());
                             }
+                            _ => {}
                         }
                     }
 
@@ -168,11 +175,21 @@ fn matcher_to_expr_tokens(matcher: &Matcher) -> proc_macro2::TokenStream {
 
     let attributes = matcher.attribute.iter().map(|(key, value)| {
         let value = match value {
-            AttributeSpec::Present => quote::quote! { AttributeSpec::Present },
-            AttributeSpec::Exact(t) => quote::quote! { AttributeSpec::Exact(#t) },
-            AttributeSpec::Starts(t) => quote::quote! { AttributeSpec::Starts(#t) },
-            AttributeSpec::Ends(t) => quote::quote! { AttributeSpec::Ends(#t) },
-            AttributeSpec::Contains(t) => quote::quote! { AttributeSpec::Contains(#t) },
+            AttributeSpec::Present => {
+                quote::quote! { ::query::compile_time::StaticAttributeSpec::Present }
+            }
+            AttributeSpec::Exact(t) => {
+                quote::quote! { ::query::compile_time::StaticAttributeSpec::Exact(#t) }
+            }
+            AttributeSpec::Starts(t) => {
+                quote::quote! { ::query::compile_time::StaticAttributeSpec::Starts(#t) }
+            }
+            AttributeSpec::Ends(t) => {
+                quote::quote! { ::query::compile_time::StaticAttributeSpec::Ends(#t) }
+            }
+            AttributeSpec::Contains(t) => {
+                quote::quote! { ::query::compile_time::StaticAttributeSpec::Contains(#t) }
+            }
         };
 
         quote::quote! { ( #key, #value ) }
