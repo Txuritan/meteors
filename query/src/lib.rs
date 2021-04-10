@@ -328,7 +328,7 @@ pub mod runtime {
 }
 
 pub mod compile_time {
-    use super::{Attributes, Matcher};
+    use super::{Attributes, Element, Matcher, Node, NodeData};
 
     #[derive(Debug, PartialEq, Clone, Copy)]
     pub struct StaticMatcher<
@@ -402,5 +402,38 @@ pub mod compile_time {
                 Contains(v) => other.contains(v),
             }
         }
+    }
+
+    pub fn find_nodes<
+        'input,
+        const TAGS: usize,
+        const CLASSES: usize,
+        const IDS: usize,
+        const ATTRIBUTES: usize,
+    >(
+        matcher: &StaticMatcher<TAGS, CLASSES, IDS, ATTRIBUTES>,
+        elements: &[Node<'input>],
+        direct_match: bool,
+    ) -> Vec<Node<'input>> {
+        let mut acc = vec![];
+
+        for node in elements.iter() {
+            if !direct_match {
+                acc.append(&mut find_nodes(matcher, &node.children, false));
+            }
+
+            match node.data {
+                NodeData::Element(Element {
+                    ref name,
+                    ref attributes,
+                    ..
+                }) if matcher.matches(name, attributes) => {
+                    acc.push(node.clone());
+                }
+                _ => {}
+            }
+        }
+
+        acc
     }
 }

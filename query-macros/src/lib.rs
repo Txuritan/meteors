@@ -58,7 +58,7 @@ pub fn selector(
 
                     elements = Self::elements(elements);
                 } else {
-                    elements = self.find_nodes(&self. #member, &elements, direct_match);
+                    elements = ::query::compile_time::find_nodes(&self. #member, &elements, direct_match);
                     direct_match = false;
                 }
             }
@@ -72,44 +72,6 @@ pub fn selector(
             #[derive(Debug)]
             pub struct #selector_struct_ident {
                 #( #selector_member_stmt , )*
-            }
-
-            impl #selector_struct_ident {
-                fn find_nodes<
-                    'input,
-                    const TAGS: usize,
-                    const CLASSES: usize,
-                    const IDS: usize,
-                    const ATTRIBUTES: usize,
-                >(
-                    &self,
-                    matcher: &::query::compile_time::StaticMatcher<TAGS, CLASSES, IDS, ATTRIBUTES>,
-                    elements: &[::query::Node<'input>],
-                    direct_match: bool,
-                ) -> Vec<::query::Node<'input>> {
-                    use ::query::Matcher;
-
-                    let mut acc = vec![];
-
-                    for node in elements.iter() {
-                        if !direct_match {
-                            acc.append(&mut self.find_nodes(matcher, &node.children, false));
-                        }
-
-                        match node.data {
-                            ::query::NodeData::Element(::query::Element {
-                                ref name,
-                                ref attributes,
-                                ..
-                            }) if matcher.matches(name, attributes) => {
-                                acc.push(node.clone());
-                            }
-                            _ => {}
-                        }
-                    }
-
-                    acc
-                }
             }
 
             impl ::query::Selector for #selector_struct_ident {
