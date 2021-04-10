@@ -1,7 +1,6 @@
 use {
     crate::{format::ParsedInfo, prelude::*},
-    html_parser::{Dom, Node, NodeData},
-    query::{runtime::DynamicSelector, Document},
+    query::{Document, Dom, Node, NodeData},
 };
 
 /// Used to get the parent element `p` to be able to get the story id from its children `a`s

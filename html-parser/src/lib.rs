@@ -102,7 +102,7 @@ mod grammar;
 
 use grammar::Rule;
 
-pub use crate::dom::element::{Element, ElementVariant};
+pub use crate::dom::element::{Attributes, Element, ElementVariant};
 pub use crate::dom::node::{Node, NodeData};
 pub use crate::dom::Dom;
 pub use crate::dom::DomVariant;

@@ -84,9 +84,9 @@ pub fn selector(
                 >(
                     &self,
                     matcher: &::query::compile_time::StaticMatcher<TAGS, CLASSES, IDS, ATTRIBUTES>,
-                    elements: &[::html_parser::Node<'input>],
+                    elements: &[::query::Node<'input>],
                     direct_match: bool,
-                ) -> Vec<::html_parser::Node<'input>> {
+                ) -> Vec<::query::Node<'input>> {
                     use ::query::Matcher;
 
                     let mut acc = vec![];
@@ -97,7 +97,7 @@ pub fn selector(
                         }
 
                         match node.data {
-                            ::html_parser::NodeData::Element(::html_parser::Element {
+                            ::query::NodeData::Element(::query::Element {
                                 ref name,
                                 ref attributes,
                                 ..
@@ -113,7 +113,7 @@ pub fn selector(
             }
 
             impl ::query::Selector for #selector_struct_ident {
-                fn find<'input>(&self, elements: &[::html_parser::Node<'input>]) -> Vec<::html_parser::Node<'input>> {
+                fn find<'input>(&self, elements: &[::query::Node<'input>]) -> Vec<::query::Node<'input>> {
                     let mut elements: Vec<_> = elements.to_vec();
                     let mut direct_match = false;
 

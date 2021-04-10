@@ -1,11 +1,9 @@
-use {
-    html_parser::{Dom, DomVariant, Node},
-    std::{collections::HashMap, convert::TryFrom},
+use std::convert::TryFrom;
+
+pub use {
+    html_parser::{Attributes, Dom, DomVariant, Element, ElementVariant, Node, NodeData},
+    query_macros::selector,
 };
-
-pub use query_macros::selector;
-
-type Attributes<'input> = HashMap<&'input str, Option<&'input str>>;
 
 #[derive(Debug)]
 pub struct Document<'input> {
@@ -59,8 +57,7 @@ pub trait Matcher {
 
 pub mod runtime {
     use {
-        super::{Attributes, Matcher, Selector},
-        html_parser::{Element, Node, NodeData},
+        super::{Attributes, Element, Matcher, Node, NodeData, Selector},
         std::collections::HashMap,
     };
 

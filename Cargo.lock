@@ -319,7 +319,6 @@ dependencies = [
  "ctrlc",
  "embed-resource",
  "flate2",
- "html_parser",
  "lazy_static",
  "log",
  "mimalloc",
