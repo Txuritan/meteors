@@ -11,10 +11,10 @@ use {
 };
 
 #[derive(Debug, PartialEq)]
-pub struct ParsedInfo {
-    pub title: String,
-    pub authors: Vec<String>,
-    pub summary: String,
+pub struct ParsedInfo<'input> {
+    pub title: &'input str,
+    pub authors: Vec<&'input str>,
+    pub summary: &'input str,
 }
 
 pub fn handle(entry: &DirEntry) -> Result<()> {

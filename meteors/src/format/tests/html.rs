@@ -11,9 +11,9 @@ fn test_parse_info() {
     let doc = Document::try_from(DATA).expect("BUG: This file should always be parsable");
 
     let left = ParsedInfo {
-        title: "testing backdating &amp; previewing".to_string(),
-        authors: vec!["testy".to_string()],
-        summary: "".to_string(),
+        title: "testing backdating &amp; previewing",
+        authors: vec!["testy"],
+        summary: "",
     };
     let right = parse_info(&doc).unwrap();
 

@@ -33,10 +33,6 @@ pub enum NodeData<'input> {
 }
 
 impl<'input> NodeData<'input> {
-    pub(crate) fn comment(contains: &'input str) -> NodeData<'input> {
-        NodeData::Comment { contains }
-    }
-
     pub(crate) fn element(element: Element<'input>) -> NodeData<'input> {
         NodeData::Element(element)
     }

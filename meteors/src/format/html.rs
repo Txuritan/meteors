@@ -34,29 +34,38 @@ pub fn parse<'input>(dom: Dom<'input>) -> Result<()> {
     Ok(())
 }
 
-pub fn parse_info(doc: &Document<'_>) -> Result<ParsedInfo> {
-    let title = doc
-        .select(&META_TITLE)
-        .and_then(get_node_text)
-        .unwrap_or_else(String::new);
+pub fn parse_info<'input>(doc: &Document<'input>) -> Result<ParsedInfo<'input>> {
+    let title = doc.select(&META_TITLE)
+        .and_then(|node| {
+            node.children.get(0).map(|n| match n.data {
+                NodeData::Text { contains } => contains,
+                _ => "",
+            })
+        })
+        .unwrap_or("");
 
     let summary = doc
         .select(&META_SUMMARY)
-        .and_then(get_node_text)
-        .unwrap_or_else(String::new);
+        .and_then(|node| {
+            node.children.get(0).map(|n| match n.data {
+                NodeData::Text { contains } => contains,
+                _ => "",
+            })
+        })
+        .unwrap_or("");
 
     let authors = {
-        let mut authors: Vec<String> = doc
+        let mut authors: Vec<&'input str> = doc
             .select_all(&META_BYLINE)
             .into_iter()
             .map(|node| match node.children[0].data {
-                NodeData::Text { contains } => contains.to_string(),
+                NodeData::Text { contains } => contains,
                 _ => unreachable!(),
             })
             .collect();
 
         if authors.is_empty() {
-            authors.push("Anonymous".to_string());
+            authors.push("Anonymous");
         }
 
         authors
@@ -69,16 +78,4 @@ pub fn parse_info(doc: &Document<'_>) -> Result<ParsedInfo> {
     })
 }
 
-fn get_node_text(node: Node<'_>) -> Option<String> {
-    match node.data {
-        NodeData::Text { contains } => Some(contains.to_string()),
-        NodeData::Element(_) => node.children.into_iter().next().map(|node| {
-            if let NodeData::Text { contains } = node.data {
-                contains.to_string()
-            } else {
-                String::new()
-            }
-        }),
-        NodeData::Comment { contains: _ } => Some(String::new()),
-    }
-}
+pub fn parse_meta<'input>(doc: &Document<'input>) {}
