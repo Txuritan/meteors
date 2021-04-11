@@ -23,6 +23,17 @@ impl<'input> Node<'input> {
             span,
         }
     }
+
+    pub fn get_text(&self) -> Option<&'input str> {
+        self.children.get(0).and_then(|n| match n.data {
+            NodeData::Text { contains } => Some(contains),
+            _ => None,
+        })
+    }
+
+    pub fn into_text(self) -> Option<&'input str> {
+        self.get_text()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]

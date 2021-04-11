@@ -6,7 +6,7 @@ pub mod gztar;
 pub mod html;
 
 use {
-    crate::{models::proto::StoryInfo, prelude::*},
+    crate::{models::proto::Rating, prelude::*},
     std::{ffi::OsStr, fs::DirEntry},
 };
 
@@ -15,6 +15,17 @@ pub struct ParsedInfo<'input> {
     pub title: &'input str,
     pub authors: Vec<&'input str>,
     pub summary: &'input str,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ParsedMeta<'input> {
+    pub rating: Rating,
+    pub categories: Vec<&'input str>,
+    pub origins: Vec<&'input str>,
+    pub warnings: Vec<&'input str>,
+    pub pairings: Vec<&'input str>,
+    pub characters: Vec<&'input str>,
+    pub generals: Vec<&'input str>,
 }
 
 pub fn handle(entry: &DirEntry) -> Result<()> {

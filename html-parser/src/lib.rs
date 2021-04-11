@@ -80,19 +80,6 @@
 //!         assert!(Dom::parse(html).is_ok());
 //!     }
 //! ```
-//!
-//! Print to json
-//!
-//! ```rust
-//!     use html_parser::{Dom, Result};
-//!
-//!     fn main() -> Result<()> {
-//!         let html = "<div id=cat />";
-//!         let json = Dom::parse(html)?.to_json_pretty()?;
-//!         println!("{}", json);
-//!         Ok(())
-//!     }
-//! ```
 
 #![allow(clippy::needless_doctest_main)]
 

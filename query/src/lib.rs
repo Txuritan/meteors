@@ -308,23 +308,6 @@ pub mod runtime {
             }
         }
     }
-
-    #[test]
-    fn test_simple_multiple_a() {
-        use std::convert::TryFrom;
-
-        let doc = super::Document::try_from(
-            "<div class='container'>
-               <a class='link button' id='linkmain'>
-                 <span>text hi there</span>
-               </a>
-               <span>text hi there <a href='blob'>two</a></span>
-             </div>",
-        )
-        .unwrap();
-        let sel = doc.select_all(&DynamicSelector::from("a"));
-        assert_eq!(sel.len(), 2);
-    }
 }
 
 pub mod compile_time {
