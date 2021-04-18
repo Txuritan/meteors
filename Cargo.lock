@@ -206,14 +206,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gztar"
-version = "0.1.0"
-dependencies = [
- "flate2",
- "tar",
-]
-
-[[package]]
 name = "home"
 version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -331,6 +323,7 @@ dependencies = [
  "regex-automata",
  "roxmltree",
  "sailfish",
+ "tar",
  "tiny_http",
  "xxhash-rust",
 ]

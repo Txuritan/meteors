@@ -9,6 +9,7 @@ mod format;
 mod models;
 mod regex;
 
+mod gztar;
 mod handlers;
 mod logger;
 mod router;
