@@ -1,12 +1,13 @@
 use std::convert::TryFrom;
 
 pub use {
-    html_parser::{Attributes, Dom, DomVariant, Element, ElementVariant, Node, NodeData},
+    html_parser::{Attributes, Dom, DomVariant, Element, ElementVariant, Node, NodeData, Span},
     query_macros::selector,
 };
 
 #[derive(Debug)]
 pub struct Document<'input> {
+    input: &'input str,
     root: Dom<'input>,
 }
 
@@ -28,6 +29,10 @@ impl<'input> Document<'input> {
     {
         self.select_all(selector).into_iter().next()
     }
+
+    pub fn input(&self) -> &'input str {
+        self.input
+    }
 }
 
 impl<'input> TryFrom<&'input str> for Document<'input> {
@@ -36,7 +41,7 @@ impl<'input> TryFrom<&'input str> for Document<'input> {
     fn try_from(input: &'input str) -> Result<Self, Self::Error> {
         let dom = Dom::parse(input)?;
 
-        Ok(Self { root: dom })
+        Ok(Self { input, root: dom })
     }
 }
 

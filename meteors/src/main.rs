@@ -37,7 +37,7 @@ use {
 mod prelude {
     pub use {
         crate::utils::new_id,
-        ::anyhow::{self, anyhow, Context as _, Result},
+        ::anyhow::{self, anyhow, bail, Context as _, Result},
         log::{debug, error, info, trace, warn},
         owo_colors::OwoColorize as _,
     };

@@ -25,6 +25,12 @@ pub struct Element<'input> {
     pub attributes: Attributes<'input>,
 }
 
+impl<'input> Element<'input> {
+    pub fn get_attr(&self, key: &str) -> Option<&str> {
+        self.attributes.get(key).copied().flatten()
+    }
+}
+
 impl<'input> Default for Element<'input> {
     fn default() -> Self {
         Self {

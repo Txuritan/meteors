@@ -7,6 +7,7 @@ pub mod html;
 
 use {
     crate::{models::proto::Rating, prelude::*},
+    query::Span,
     std::{ffi::OsStr, fs::DirEntry},
 };
 
@@ -26,6 +27,20 @@ pub struct ParsedMeta<'input> {
     pub pairings: Vec<&'input str>,
     pub characters: Vec<&'input str>,
     pub generals: Vec<&'input str>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ParsedChapters<'input> {
+    pub chapters: Vec<ParsedChapter<'input>>,
+}
+
+#[derive(Debug, PartialEq)]
+pub struct ParsedChapter<'input> {
+    pub title: &'input str,
+    pub summary: Option<&'input str>,
+    pub start_notes: Option<Span<'input>>,
+    pub content: Span<'input>,
+    pub end_notes: Option<Span<'input>>,
 }
 
 pub fn handle(entry: &DirEntry) -> Result<()> {

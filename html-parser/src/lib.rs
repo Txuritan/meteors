@@ -95,3 +95,5 @@ pub use crate::dom::Dom;
 pub use crate::dom::DomVariant;
 pub use crate::error::Error;
 pub use crate::error::Result;
+
+pub use pest::Span;

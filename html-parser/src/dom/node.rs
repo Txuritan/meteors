@@ -24,6 +24,46 @@ impl<'input> Node<'input> {
         }
     }
 
+    pub fn get_attribute(&self, key: &str) -> Option<&'input str> {
+        if let NodeData::Element(element) = &self.data {
+            element.attributes.get(key).copied().flatten()
+        } else {
+            None
+        }
+    }
+
+    pub fn get_child_by_tag(&self, tag: &str) -> Option<&Node<'input>> {
+        self.children.iter().find(|node| {
+            if let NodeData::Element(element) = &node.data {
+                element.name == tag
+            } else {
+                false
+            }
+        })
+    }
+
+    pub fn get_children_by_tag(&self, tag: &str) -> Vec<&Node<'input>> {
+        self.children
+            .iter()
+            .filter(|node| {
+                if let NodeData::Element(element) = &node.data {
+                    element.name == tag
+                } else {
+                    false
+                }
+            })
+            .collect()
+    }
+
+    pub fn get_span_of_children(&self, input: &'input str) -> Option<Span<'input>> {
+        let first = self.children.first();
+        let last = self.children.last();
+
+        first
+            .zip(last)
+            .and_then(|(first, last)| Span::new(input, first.span.start(), last.span.end()))
+    }
+
     pub fn get_text(&self) -> Option<&'input str> {
         self.children.get(0).and_then(|n| match n.data {
             NodeData::Text { contains } => Some(contains),
@@ -33,6 +73,17 @@ impl<'input> Node<'input> {
 
     pub fn into_text(self) -> Option<&'input str> {
         self.get_text()
+    }
+
+    pub fn is_element(&self) -> bool {
+        matches!(self.data, NodeData::Element(_))
+    }
+
+    pub fn get_element(&self) -> Option<&Element<'input>> {
+        match &self.data {
+            NodeData::Element(element) => Some(element),
+            _ => None,
+        }
     }
 }
 
