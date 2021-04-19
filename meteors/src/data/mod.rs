@@ -1,16 +1,15 @@
 mod file;
-mod reader;
 pub mod search;
 
 use {
     crate::{
         data::file::StoryFile,
+        format::{self, FileKind},
         models::{
             proto::{Entity, Index, Range, Rating, StoryMeta},
             StoryFull, StoryFullMeta,
         },
         prelude::*,
-        Config,
     },
     flate2::{read::GzDecoder, write::GzEncoder, Compression},
     prost::Message,
@@ -37,7 +36,7 @@ pub struct Database {
 }
 
 impl Database {
-    pub fn init(cfg: &Config) -> Result<Self> {
+    pub fn init() -> Result<Self> {
         debug!("{} building database", "+".bright_black());
 
         let cur = env::current_dir()?.canonicalize()?;
@@ -99,7 +98,7 @@ impl Database {
             let meta = entry.metadata()?;
 
             if meta.is_file() {
-                database.handle_file(&cfg, &entry)?;
+                database.handle_file(&entry)?;
             }
         }
 
@@ -120,7 +119,7 @@ impl Database {
         Ok(database)
     }
 
-    fn handle_file(&mut self, cfg: &Config, entry: &DirEntry) -> Result<()> {
+    fn handle_file(&mut self, entry: &DirEntry) -> Result<()> {
         let path = entry.path();
         let ext = path.extension().and_then(OsStr::to_str);
 
@@ -129,40 +128,29 @@ impl Database {
             .and_then(OsStr::to_str)
             .ok_or_else(|| anyhow!("File `{}` does not have a file name", path.display()))?;
 
-        match ext {
+        let pair = match ext {
             Some("html") | Some("gz") => {
                 let mut file = StoryFile::new(&path)?;
 
-                let count = if cfg.trackers {
-                    file.strip_trackers()?
-                } else {
-                    0
-                };
+                debug!(
+                    "  {} found story: {}",
+                    "|".bright_black(),
+                    name.bright_green(),
+                );
 
-                if count == 0 {
-                    debug!(
-                        "  {} found story: {}",
-                        "|".bright_black(),
-                        name.bright_green(),
-                    );
-                } else {
-                    debug!(
-                        "  {} found story: {} (with {} trackers, {})",
-                        "|".bright_black(),
-                        name.bright_green(),
-                        count.bright_purple(),
-                        "removed".bright_red(),
-                    );
-                }
+                Some((FileKind::Html, {
+                    let mut buf = String::new();
 
-                reader::read_story(self, name, &mut file.reader())
-                    .with_context(|| name.to_owned())?;
+                    file.reader().read_to_string(&mut buf)?;
 
-                if cfg.compress {
-                    file.compress()?;
-                }
+                    buf
+                }))
             }
-            _ => {}
+            _ => None,
+        };
+
+        if let Some((kind, content)) = pair {
+            format::parse(kind, &content).with_context(|| name.to_owned())?;
         }
 
         Ok(())

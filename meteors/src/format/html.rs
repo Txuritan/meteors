@@ -4,12 +4,8 @@ use {
         models::proto::Rating,
         prelude::*,
     },
-    query::{Document, Dom, Node, Span},
+    query::{Document, Node, Span},
 };
-
-pub fn parse<'input>(dom: Dom<'input>) -> Result<()> {
-    Ok(())
-}
 
 pub fn parse_info<'input>(doc: &Document<'input>) -> ParsedInfo<'input> {
     #[query::selector]

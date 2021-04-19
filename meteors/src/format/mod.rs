@@ -7,8 +7,8 @@ pub mod html;
 
 use {
     crate::{models::proto::Rating, prelude::*},
-    query::Span,
-    std::{ffi::OsStr, fs::DirEntry},
+    query::{Document, Span},
+    std::convert::TryFrom,
 };
 
 #[derive(Debug, PartialEq)]
@@ -43,22 +43,28 @@ pub struct ParsedChapter<'input> {
     pub end_notes: Option<Span<'input>>,
 }
 
-pub fn handle(entry: &DirEntry) -> Result<()> {
-    let path = entry.path();
-    let ext = path.extension().and_then(OsStr::to_str);
+#[derive(Debug, Clone, Copy)]
+pub enum FileKind {
+    Epub,
+    Html,
+    Gztar,
+}
 
-    let name = path
-        .file_name()
-        .and_then(OsStr::to_str)
-        .ok_or_else(|| anyhow!("File `{}` does not have a file name", path.display()))?;
+pub fn parse(
+    kind: FileKind,
+    input: &str,
+) -> Result<(ParsedInfo<'_>, ParsedMeta<'_>, ParsedChapters<'_>)> {
+    match kind {
+        FileKind::Epub => todo!(),
+        FileKind::Html => {
+            let doc = Document::try_from(input)?;
 
-    match ext {
-        Some("epub") => {}
-        Some("html") => {}
-        Some("gztar") => {}
-        Some(ext) => {}
-        None => {}
+            let info = html::parse_info(&doc);
+            let meta = html::parse_meta(&doc);
+            let chapters = html::parse_chapters(&doc)?;
+
+            Ok((info, meta, chapters))
+        }
+        FileKind::Gztar => todo!(),
     }
-
-    Ok(())
 }
