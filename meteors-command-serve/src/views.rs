@@ -1,5 +1,5 @@
 use {
-    crate::{
+    common::{
         models::{
             proto::{Entity, Rating, StoryInfo},
             StoryFull, StoryFullMeta,
@@ -10,7 +10,7 @@ use {
     std::borrow::Cow,
 };
 
-static CSS: &str = include_str!("../../../../assets/style.css");
+static CSS: &str = include_str!("../../assets/style.css");
 
 #[derive(TemplateOnce)]
 #[template(path = "pages/index.stpl")]

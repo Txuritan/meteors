@@ -1,9 +1,6 @@
 use {
-    crate::{
-        format::{ParsedChapter, ParsedChapters, ParsedInfo, ParsedMeta},
-        models::proto::Rating,
-        prelude::*,
-    },
+    crate::{ParsedChapter, ParsedChapters, ParsedInfo, ParsedMeta},
+    common::{models::proto::Rating, prelude::*},
     query::{Document, Node, Span},
 };
 

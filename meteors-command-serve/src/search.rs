@@ -1,6 +1,6 @@
 use {
-    crate::{
-        data::Database,
+    common::{
+        database::Database,
         models::proto::{Entity, Story},
     },
     std::collections::BTreeMap,

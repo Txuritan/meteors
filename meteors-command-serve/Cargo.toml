@@ -1,0 +1,18 @@
+[package]
+name = "meteors-command-serve"
+version = "0.1.0"
+authors = [ "Txuritan <txuritan@protonmail.com>" ]
+edition = "2018"
+
+workspace = ".."
+
+[dependencies]
+common = { path = "../meteors-common", package = "meteors-common" }
+
+chrono = { version = "0.4", default-features = false }
+ctrlc = "3.1"
+path-tree = "0.1"
+qstring = "0.7"
+sailfish = "0.3"
+seahorse = "1.1"
+tiny_http = "0.8"

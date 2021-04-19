@@ -1,9 +1,13 @@
 [workspace]
 members = [
     "html-parser",
+    "meteors",
+    "meteors-command-index",
+    "meteors-command-serve",
+    "meteors-common",
+    "meteors-format-ao3",
     "query",
     "query-macros",
-    "meteors",
 ]
 
 [profile.release]

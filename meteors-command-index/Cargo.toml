@@ -1,0 +1,16 @@
+[package]
+name = "meteors-command-index"
+version = "0.1.0"
+authors = [ "Txuritan <txuritan@protonmail.com>" ]
+edition = "2018"
+
+workspace = ".."
+
+[dependencies]
+common = { path = "../meteors-common", package = "meteors-common" }
+
+format-ao3 = { path = "../meteors-format-ao3", package = "meteors-format-ao3" }
+
+flate2 = "1.0"
+seahorse = "1.1"
+xxhash-rust = { version = "0.8", features = [ "xxh3" ] }

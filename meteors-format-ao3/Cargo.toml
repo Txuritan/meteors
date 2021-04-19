@@ -1,0 +1,12 @@
+[package]
+name = "meteors-format-ao3"
+version = "0.1.0"
+authors = [ "Txuritan <txuritan@protonmail.com>" ]
+edition = "2018"
+
+workspace = ".."
+
+[dependencies]
+common = { path = "../meteors-common", package = "meteors-common" }
+
+query = { path = "../query" }

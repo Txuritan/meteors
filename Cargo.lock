@@ -249,25 +249,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9028f49264629065d057f340a86acb84867925865f73bbf8d47b4d149a7e88b8"
 
 [[package]]
-name = "lazy_static"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
-
-[[package]]
 name = "libc"
 version = "0.2.93"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9385f66bf6105b241aa65a61cb923ef20efc665cb9f9bb50ac2f0c4b7f378d41"
-
-[[package]]
-name = "libmimalloc-sys"
-version = "0.1.21"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2396cf99d2f58611cd69f0efeee4af3d2e2c7b61bed433515029163aa567e65c"
-dependencies = [
- "cc",
-]
 
 [[package]]
 name = "linked-hash-map"
@@ -306,37 +291,58 @@ checksum = "0ee1c47aaa256ecabcaea351eae4a9b01ef39ed810004e298d2511ed284b1525"
 name = "meteors"
 version = "0.1.0"
 dependencies = [
- "anyhow",
- "chrono",
- "ctrlc",
- "either",
  "embed-resource",
- "flate2",
- "lazy_static",
- "log",
- "mimalloc",
- "owo-colors",
- "path-tree",
- "prost",
- "qstring",
- "query",
- "rand",
- "regex-automata",
- "roxmltree",
- "sailfish",
+ "meteors-command-index",
+ "meteors-command-serve",
+ "meteors-common",
  "seahorse",
- "tar",
- "tiny_http",
+]
+
+[[package]]
+name = "meteors-command-index"
+version = "0.1.0"
+dependencies = [
+ "flate2",
+ "meteors-common",
+ "meteors-format-ao3",
+ "seahorse",
  "xxhash-rust",
 ]
 
 [[package]]
-name = "mimalloc"
-version = "0.1.25"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e7c6b11afd1e5e689ac96b6d18b1fc763398fe3d7eed99e8773426bc2033dfb"
+name = "meteors-command-serve"
+version = "0.1.0"
 dependencies = [
- "libmimalloc-sys",
+ "chrono",
+ "ctrlc",
+ "meteors-common",
+ "path-tree",
+ "qstring",
+ "sailfish",
+ "seahorse",
+ "tiny_http",
+]
+
+[[package]]
+name = "meteors-common"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "either",
+ "flate2",
+ "log",
+ "owo-colors",
+ "prost",
+ "rand",
+]
+
+[[package]]
+name = "meteors-format-ao3"
+version = "0.1.0"
+dependencies = [
+ "meteors-common",
+ "query",
 ]
 
 [[package]]
@@ -571,24 +577,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "regex-automata"
-version = "0.1.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ae1ded71d66a4a97f5e961fd0cb25a5f366a42a41570d16a763a69c092c26ae4"
-dependencies = [
- "byteorder",
-]
-
-[[package]]
-name = "roxmltree"
-version = "0.14.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "921904a62e410e37e215c40381b7117f830d9d89ba60ab5236170541dd25646b"
-dependencies = [
- "xmlparser",
-]
-
-[[package]]
 name = "ryu"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -658,17 +646,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-xid",
-]
-
-[[package]]
-name = "tar"
-version = "0.4.33"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0bcfbd6a598361fda270d82469fff3d65089dc33e175c9a131f7b4cd395f228"
-dependencies = [
- "filetime",
- "libc",
- "xattr",
 ]
 
 [[package]]
@@ -819,21 +796,6 @@ checksum = "d107f8c6e916235c4c01cabb3e8acf7bea8ef6a63ca2e7fa0527c049badfc48c"
 dependencies = [
  "winapi",
 ]
-
-[[package]]
-name = "xattr"
-version = "0.2.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "244c3741f4240ef46274860397c7c74e50eb23624996930e484c16679633a54c"
-dependencies = [
- "libc",
-]
-
-[[package]]
-name = "xmlparser"
-version = "0.13.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "114ba2b24d2167ef6d67d7d04c8cc86522b87f490025f39f0303b7db5bf5e3d8"
 
 [[package]]
 name = "xxhash-rust"

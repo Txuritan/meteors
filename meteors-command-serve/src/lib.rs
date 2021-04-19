@@ -1,13 +1,13 @@
 mod handlers;
+
 mod router;
+mod search;
+mod utils;
 mod views;
 
 use {
-    crate::{
-        commands::serve::router::{get, post, Router},
-        data::Database,
-        prelude::*,
-    },
+    crate::router::{get, post, Router},
+    common::{database::Database, prelude::*},
     seahorse::{Command, Context, Flag, FlagType},
     std::{
         net::{Ipv4Addr, SocketAddr},
@@ -62,7 +62,7 @@ fn run(ctx: &Context) -> Result<()> {
     )
         .into();
 
-    let database = Database::init()?;
+    let database = Database::open()?;
 
     let router = Arc::new(
         Router::new(database)

@@ -1,6 +1,6 @@
 use {
-    crate::prelude::*,
     chrono::Duration,
+    common::prelude::*,
     path_tree::PathTree,
     qstring::QString,
     std::{borrow::Cow, collections::BTreeMap, io::Cursor, sync::Arc, time::Instant},
@@ -149,7 +149,7 @@ impl<S> Router<S> {
 
         let method = Method::from(request.method());
 
-        log::info!(
+        info!(
             "{} {} {}/{} {} {}",
             "+".bright_black(),
             "+".bright_black(),
@@ -177,7 +177,7 @@ impl<S> Router<S> {
             })
             .map_err(|err| {
                 for cause in err.chain() {
-                    log::error!("  {} {}", "|".bright_black(), cause,);
+                    error!("  {} {}", "|".bright_black(), cause,);
                 }
 
                 res!(503)
@@ -186,7 +186,7 @@ impl<S> Router<S> {
 
         let dur = Duration::from_std(Instant::now().duration_since(earlier))?;
 
-        log::info!(
+        info!(
             "{} {} {} {}ms",
             "+".bright_black(),
             "+".bright_black(),

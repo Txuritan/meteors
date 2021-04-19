@@ -6,7 +6,7 @@ pub mod gztar;
 pub mod html;
 
 use {
-    crate::{models::proto::Rating, prelude::*},
+    common::{models::proto::Rating, prelude::*},
     query::{Document, Span},
     std::convert::TryFrom,
 };

@@ -1,11 +1,9 @@
 use {
     crate::{
-        format::{
-            html::{parse_chapters, parse_info, parse_meta},
-            ParsedChapter, ParsedChapters, ParsedInfo, ParsedMeta,
-        },
-        models::proto::Rating,
+        html::{parse_chapters, parse_info, parse_meta},
+        ParsedChapter, ParsedChapters, ParsedInfo, ParsedMeta,
     },
+    common::models::proto::Rating,
     query::{Document, Span},
     std::convert::TryFrom as _,
 };
