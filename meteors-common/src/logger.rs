@@ -40,11 +40,11 @@ impl Logger {
         write!(
             &mut out,
             "{}[{}] ",
-            env!("CARGO_PKG_NAME").green(),
+            "meteors".green(),
             self.pid.bright_purple(),
         )?;
 
-        write!(&mut out, "{: <17} ", record.target().bright_red())?;
+        write!(&mut out, "{: <21} ", record.target().trim_start_matches("meteors_").bright_red())?;
 
         #[allow(clippy::write_literal)]
         match record.level() {
