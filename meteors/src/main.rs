@@ -13,6 +13,7 @@ fn main() -> Result<()> {
         .description(env!("CARGO_PKG_DESCRIPTION"))
         .author(env!("CARGO_PKG_AUTHORS"))
         .version(env!("CARGO_PKG_VERSION"))
+        .command(command_index::command())
         .command(command_serve::command());
 
     app.run(env::args().collect());
