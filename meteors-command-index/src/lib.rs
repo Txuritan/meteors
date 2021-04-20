@@ -73,13 +73,13 @@ fn handle_entry(db: &mut Database, known_ids: &mut Vec<String>, entry: DirEntry)
     };
 
     if let Some(kind) = pair {
-        let data = handle_file(db, known_ids, path, name)
+        let data = handle_file(db, known_ids, &path, name)
             .with_context(|| format!("While reading file {}", name))?;
 
         if let Some((id, hash, bytes)) = data {
             let parsed = format_ao3::parse(kind, bytes).with_context(|| name.to_owned())?;
 
-            add_to_index(db, name, hash, parsed);
+            add_to_index(db, name, hash, id, parsed);
         }
     }
 
@@ -136,6 +136,7 @@ fn add_to_index(
     db: &mut Database,
     name: &str,
     hash: u64,
+    id: String,
     parsed: (ParsedInfo, ParsedMeta, ParsedChapters),
 ) {
     let (info, meta, chapters) = parsed;
@@ -150,7 +151,7 @@ fn add_to_index(
             .map(|chapter| StoryChapter {
                 title: chapter.title.to_string(),
                 content: chapter.content,
-                summary: chapter.summary.map(|s| s.to_string()),
+                summary: chapter.summary,
                 start_notes: chapter.start_notes,
                 end_notes: chapter.end_notes,
             })
@@ -170,6 +171,8 @@ fn add_to_index(
             generals: values_to_keys(meta.generals, &mut db.index.generals),
         },
     };
+
+    db.index.stories.insert(id, story);
 }
 
 fn values_to_keys(vec: Vec<String>, map: &mut BTreeMap<String, Entity>) -> Vec<String> {
