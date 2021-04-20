@@ -204,9 +204,19 @@ article.story {
         .right {
             flex: 0 1 auto;
         }
+        p {
+            margin: 0;
+        }
     }
-    p {
-        margin: 0;
+    .summary {
+        p {
+            &:first-child {
+                margin-top: 0;
+            }
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
     }
     .origins, .tags, .meta {
         display: block;
