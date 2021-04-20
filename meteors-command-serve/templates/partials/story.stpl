@@ -14,6 +14,6 @@
     </header>
     <%- origins.render_once()? %>
     <%- tags.render_once()? %>
-    <p class="summary"><%- &info.summary %></p>
+    <div class="summary"><%- &info.summary %></div>
     <p class="meta"><span class="info">chapters</span>: <span class="count"><%= chapters %></span></p>
 </article>
