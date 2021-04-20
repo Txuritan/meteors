@@ -1,10 +1,13 @@
 use {
     crate::{ParsedChapter, ParsedChapters, ParsedInfo, ParsedMeta},
-    common::{models::proto::Rating, prelude::*},
+    common::{
+        models::proto::{Range, Rating},
+        prelude::*,
+    },
     query::{Document, Node, Span},
 };
 
-pub fn parse_info<'input>(doc: &Document<'input>) -> ParsedInfo<'input> {
+pub fn parse_info(doc: &Document<'_>) -> ParsedInfo {
     #[query::selector]
     static META_TITLE: &str = "html > body > #preface > .meta > h1";
 
@@ -19,7 +22,8 @@ pub fn parse_info<'input>(doc: &Document<'input>) -> ParsedInfo<'input> {
     let title = doc
         .select(&META_TITLE)
         .and_then(Node::into_text)
-        .unwrap_or("");
+        .unwrap_or("")
+        .to_string();
 
     let summary = doc
         .select(&META_SUMMARY)
@@ -34,25 +38,25 @@ pub fn parse_info<'input>(doc: &Document<'input>) -> ParsedInfo<'input> {
                     .map(|span| span.as_str())
             }
         })
-        .unwrap_or("");
+        .unwrap_or("").to_string();
 
     let authors = {
-        let authors: Option<Vec<&'input str>> = doc
+        let authors: Option<Vec<String>> = doc
             .select_all(&META_BYLINE)
             .into_iter()
-            .map(Node::into_text)
+            .map(|n| n.get_text().map(String::from))
             .collect();
 
         match authors {
             Some(mut authors) => {
                 if authors.is_empty() {
-                    authors.push("Anonymous");
+                    authors.push("Anonymous".to_string());
                 }
 
                 authors
             }
             None => {
-                vec!["Anonymous"]
+                vec!["Anonymous".to_string()]
             }
         }
     };
@@ -64,7 +68,7 @@ pub fn parse_info<'input>(doc: &Document<'input>) -> ParsedInfo<'input> {
     }
 }
 
-pub fn parse_meta<'input>(doc: &Document<'input>) -> ParsedMeta<'input> {
+pub fn parse_meta(doc: &Document<'_>) -> ParsedMeta {
     #[query::selector]
     static META_TAGS_DT: &str = "html > body > #preface > .meta > .tags > dt";
 
@@ -123,7 +127,7 @@ pub fn parse_meta<'input>(doc: &Document<'input>) -> ParsedMeta<'input> {
         if let Some(list) = list {
             for child in &detail_definition.children {
                 if let Some(text) = child.get_text() {
-                    list.push(text);
+                    list.push(text.to_string());
                 }
             }
         }
@@ -140,7 +144,7 @@ pub fn parse_meta<'input>(doc: &Document<'input>) -> ParsedMeta<'input> {
     }
 }
 
-pub fn parse_chapters<'input>(doc: &Document<'input>) -> Result<ParsedChapters<'input>> {
+pub fn parse_chapters(doc: &Document<'_>) -> Result<ParsedChapters> {
     /// Selects the `toc-heading` that is present on single chapter stories
     #[query::selector]
     static CHAPTERS: &str = "html > body > #chapters";
@@ -162,7 +166,7 @@ pub fn parse_chapters<'input>(doc: &Document<'input>) -> Result<ParsedChapters<'
 fn parse_chapter_single<'input>(
     doc: &Document<'input>,
     title_node: &Node<'input>,
-) -> Result<Vec<ParsedChapter<'input>>> {
+) -> Result<Vec<ParsedChapter>> {
     /// Selects the single chapter next to the `toc-heading`
     #[query::selector]
     static CHAPTER: &str = "html > body > #chapters > div.userstuff";
@@ -176,16 +180,21 @@ fn parse_chapter_single<'input>(
             //     .map(|span| span.as_str());
 
             Ok(vec![ParsedChapter {
-                title: title_node.get_text().ok_or_else(|| {
+                title: title_node.get_text().map(String::from).ok_or_else(|| {
                     anyhow!(
                         "Story detected as having a single chapter, unable to find story title."
                     )
                 })?,
                 summary: None,
                 start_notes: None,
-                content: chapter.get_span_of_children(doc.input()).ok_or_else(|| {
-                    anyhow!("Parser was unable to find chapter content for single chapter story")
-                })?,
+                content: chapter
+                    .get_span_of_children(doc.input())
+                    .map(span_as_range)
+                    .ok_or_else(|| {
+                        anyhow!(
+                            "Parser was unable to find chapter content for single chapter story"
+                        )
+                    })?,
                 end_notes: None,
             }])
         }
@@ -194,17 +203,17 @@ fn parse_chapter_single<'input>(
 }
 
 #[derive(Debug, Default)]
-struct MultiState<'input> {
-    title: Option<&'input str>,
-    summary: Option<&'input str>,
-    start_notes: Option<Span<'input>>,
-    content: Option<Span<'input>>,
-    end_notes: Option<Span<'input>>,
+struct MultiState {
+    title: Option<String>,
+    summary: Option<String>,
+    start_notes: Option<Range>,
+    content: Option<Range>,
+    end_notes: Option<Range>,
 }
 
-impl<'input> MultiState<'input> {
+impl MultiState {
     #[inline]
-    fn build(&mut self) -> Option<ParsedChapter<'input>> {
+    fn build(&mut self) -> Option<ParsedChapter> {
         self.title.take().and_then(|title| {
             self.content.take().map(|content| ParsedChapter {
                 title,
@@ -221,7 +230,7 @@ impl<'input> MultiState<'input> {
 fn parse_chapters_multi<'input>(
     doc: &Document<'input>,
     chapter_node: Node<'input>,
-) -> Result<Vec<ParsedChapter<'input>>> {
+) -> Result<Vec<ParsedChapter>> {
     let (mut chapters, mut state) = chapter_node
         .children
         .iter()
@@ -248,6 +257,7 @@ fn parse_chapters_multi<'input>(
                         state.title = Some(
                             node.get_child_by_tag("h2")
                                 .and_then(Node::get_text)
+                                .map(String::from)
                                 .ok_or_else(|| anyhow!("Unable to get chapter title"))?,
                         );
 
@@ -273,18 +283,19 @@ fn parse_chapters_multi<'input>(
                             },
                         );
 
-                        state.summary = nodes.0;
-                        state.start_notes = nodes.1;
+                        state.summary = nodes.0.map(String::from);
+                        state.start_notes = nodes.1.map(span_as_range);
                     }
                     // chapter
                     "userstuff" => {
-                        state.content = node.get_span_of_children(doc.input());
+                        state.content = node.get_span_of_children(doc.input()).map(span_as_range);
                     }
                     // chapter end note
                     "meta" => {
                         state.end_notes = node
                             .get_child_by_tag("blockquote")
-                            .and_then(|node| node.get_span_of_children(doc.input()));
+                            .and_then(|node| node.get_span_of_children(doc.input()))
+                            .map(span_as_range);
                     }
                     _ => {}
                 }
@@ -298,4 +309,15 @@ fn parse_chapters_multi<'input>(
     }
 
     Ok(chapters)
+}
+
+#[inline]
+fn span_as_range(span: Span<'_>) -> Range {
+    let start = span.start();
+    let end = span.end();
+
+    Range {
+        start: start as u64,
+        end: end as u64,
+    }
 }

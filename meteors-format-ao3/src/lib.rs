@@ -10,50 +10,40 @@ use {
         models::proto::{Range, Rating},
         prelude::*,
     },
-    query::{Document, Span},
+    query::Document,
     std::convert::TryFrom,
 };
 
 #[derive(Debug, PartialEq)]
-pub struct ParsedInfo<'input> {
-    pub title: &'input str,
-    pub authors: Vec<&'input str>,
-    pub summary: &'input str,
+pub struct ParsedInfo {
+    pub title: String,
+    pub authors: Vec<String>,
+    pub summary: String,
 }
 
 #[derive(Debug, PartialEq)]
-pub struct ParsedMeta<'input> {
+pub struct ParsedMeta {
     pub rating: Rating,
-    pub categories: Vec<&'input str>,
-    pub origins: Vec<&'input str>,
-    pub warnings: Vec<&'input str>,
-    pub pairings: Vec<&'input str>,
-    pub characters: Vec<&'input str>,
-    pub generals: Vec<&'input str>,
+    pub categories: Vec<String>,
+    pub origins: Vec<String>,
+    pub warnings: Vec<String>,
+    pub pairings: Vec<String>,
+    pub characters: Vec<String>,
+    pub generals: Vec<String>,
 }
 
 #[derive(Debug, PartialEq)]
-pub struct ParsedChapters<'input> {
-    pub chapters: Vec<ParsedChapter<'input>>,
+pub struct ParsedChapters {
+    pub chapters: Vec<ParsedChapter>,
 }
 
 #[derive(Debug, PartialEq)]
-pub struct ParsedChapter<'input> {
-    pub title: &'input str,
-    pub summary: Option<&'input str>,
-    pub start_notes: Option<Span<'input>>,
-    pub content: Span<'input>,
-    pub end_notes: Option<Span<'input>>,
-}
-
-pub fn span_as_range(span: Span<'_>) -> Range {
-    let start = span.start();
-    let end = span.end();
-
-    Range {
-        start: start as u64,
-        end: end as u64,
-    }
+pub struct ParsedChapter {
+    pub title: String,
+    pub summary: Option<String>,
+    pub start_notes: Option<Range>,
+    pub content: Range,
+    pub end_notes: Option<Range>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -63,10 +53,7 @@ pub enum FileKind {
     Gztar,
 }
 
-pub fn parse(
-    kind: FileKind,
-    input: &str,
-) -> Result<(ParsedInfo<'_>, ParsedMeta<'_>, ParsedChapters<'_>)> {
+pub fn parse(kind: FileKind, input: &str) -> Result<(ParsedInfo, ParsedMeta, ParsedChapters)> {
     match kind {
         FileKind::Epub => todo!(),
         FileKind::Html => {

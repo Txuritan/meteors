@@ -8,6 +8,12 @@ pub struct Range {
     pub end: u64,
 }
 
+impl Range {
+    pub fn new(start: u64, end: u64) -> Self {
+        Self { start, end }
+    }
+}
+
 #[derive(Clone, PartialEq, prost::Message)]
 pub struct Index {
     #[prost(btree_map = "string, message", tag = "1")]

@@ -70,7 +70,7 @@ impl Database {
         Ok(database)
     }
 
-    pub fn get_default<K>(map: &mut BTreeMap<String, Entity>, value: &str, key: K) -> String
+    pub fn get_default<K>(map: &mut BTreeMap<String, Entity>, value: String, key: K) -> String
     where
         K: FnOnce(&BTreeMap<String, Entity>) -> String,
     {
@@ -82,7 +82,7 @@ impl Database {
             map.insert(
                 key.clone(),
                 Entity {
-                    text: value.to_string(),
+                    text: value,
                 },
             );
 

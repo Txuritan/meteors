@@ -136,7 +136,7 @@ fn add_to_index(
     db: &mut Database,
     name: &str,
     hash: u64,
-    parsed: (ParsedInfo<'_>, ParsedMeta<'_>, ParsedChapters<'_>),
+    parsed: (ParsedInfo, ParsedMeta, ParsedChapters),
 ) {
     let (info, meta, chapters) = parsed;
 
@@ -149,10 +149,10 @@ fn add_to_index(
             .into_iter()
             .map(|chapter| StoryChapter {
                 title: chapter.title.to_string(),
-                content: format_ao3::span_as_range(chapter.content),
+                content: chapter.content,
                 summary: chapter.summary.map(|s| s.to_string()),
-                start_notes: chapter.start_notes.map(format_ao3::span_as_range),
-                end_notes: chapter.end_notes.map(format_ao3::span_as_range),
+                start_notes: chapter.start_notes,
+                end_notes: chapter.end_notes,
             })
             .collect(),
         info: StoryInfo {
@@ -172,7 +172,7 @@ fn add_to_index(
     };
 }
 
-fn values_to_keys(vec: Vec<&str>, map: &mut BTreeMap<String, Entity>) -> Vec<String> {
+fn values_to_keys(vec: Vec<String>, map: &mut BTreeMap<String, Entity>) -> Vec<String> {
     vec.into_iter()
         .map(|name| Database::get_default(map, name, new_id))
         .collect()
