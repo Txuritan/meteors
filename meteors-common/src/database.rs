@@ -79,12 +79,7 @@ impl Database {
         } else {
             let key = key(&*map);
 
-            map.insert(
-                key.clone(),
-                Entity {
-                    text: value,
-                },
-            );
+            map.insert(key.clone(), Entity { text: value });
 
             key
         }

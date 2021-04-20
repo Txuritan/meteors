@@ -53,11 +53,13 @@ pub enum FileKind {
     Gztar,
 }
 
-pub fn parse(kind: FileKind, input: &str) -> Result<(ParsedInfo, ParsedMeta, ParsedChapters)> {
+pub fn parse(kind: FileKind, bytes: Vec<u8>) -> Result<(ParsedInfo, ParsedMeta, ParsedChapters)> {
     match kind {
         FileKind::Epub => todo!(),
         FileKind::Html => {
-            let doc = Document::try_from(input)?;
+            let text = String::from_utf8(bytes)?;
+
+            let doc = Document::try_from(text.as_str())?;
 
             let info = html::parse_info(&doc);
             let meta = html::parse_meta(&doc);
