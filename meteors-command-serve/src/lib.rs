@@ -32,14 +32,7 @@ pub fn command() -> Command {
             "Sets the port that the server will listen to requests on [default: 8723]",
         ))
         .action(|ctx| {
-            // TODO: make this a indented log
-            if let Err(err) = run(ctx) {
-                error!("{} unable to run command `serve`", "+".bright_black());
-
-                for cause in err.chain() {
-                    error!("{} {:?}", "+".bright_black(), cause);
-                }
-            }
+            common::action("serve", ctx, run);
         })
 }
 

@@ -2,7 +2,7 @@ use {
     common::{
         database::Database,
         models::{
-            proto::{Entity, Index, Range, Rating, StoryMeta},
+            proto::{Entity, Index, Rating, StoryMeta},
             StoryFull, StoryFullMeta,
         },
         prelude::*,
@@ -10,7 +10,7 @@ use {
     std::{convert::TryInto as _, fs::File, io::Read as _},
 };
 
-pub fn get_chapter_body(db: &Database, id: &str, chapter: usize) -> Result<String> {
+pub fn get_chapter_body(db: &Database, id: &str, number: usize) -> Result<String> {
     let story = db
         .index
         .stories
@@ -25,20 +25,22 @@ pub fn get_chapter_body(db: &Database, id: &str, chapter: usize) -> Result<Strin
 
     let _ = file.read_to_string(&mut contents)?;
 
-    let range = story.chapters.get(chapter - 1).ok_or_else(|| {
+    let chapter = story.chapters.get(number - 1).ok_or_else(|| {
         anyhow!(
             "chapter `{}` not found, chapters: {}",
-            chapter,
+            number,
             story.chapters.len()
         )
     })?;
 
+    let content = &chapter.content;
+
     Ok(contents
-        .get((range.start.try_into()?)..(range.end.try_into()?))
+        .get((content.start.try_into()?)..(content.end.try_into()?))
         .ok_or_else(|| {
             anyhow::anyhow!(
                 "chapter `{}` not found in chapter index for `{}`",
-                chapter,
+                number,
                 id
             )
         })?
@@ -91,11 +93,7 @@ pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, 
         StoryFull {
             file_name: story_ref.file_name.clone(),
             length: story_ref.length.try_into()?,
-            chapters: story_ref
-                .chapters
-                .iter()
-                .map(Range::to_std)
-                .collect::<Result<Vec<_>>>()?,
+            chapters: story_ref.chapters.clone(),
             info: story_ref.info.clone(),
             meta: StoryFullMeta {
                 rating: Rating::from(story_ref.meta.rating),

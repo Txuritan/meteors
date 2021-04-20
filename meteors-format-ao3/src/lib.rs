@@ -6,7 +6,10 @@ pub mod gztar;
 pub mod html;
 
 use {
-    common::{models::proto::Rating, prelude::*},
+    common::{
+        models::proto::{Range, Rating},
+        prelude::*,
+    },
     query::{Document, Span},
     std::convert::TryFrom,
 };
@@ -41,6 +44,16 @@ pub struct ParsedChapter<'input> {
     pub start_notes: Option<Span<'input>>,
     pub content: Span<'input>,
     pub end_notes: Option<Span<'input>>,
+}
+
+pub fn span_as_range(span: Span<'_>) -> Range {
+    let start = span.start();
+    let end = span.end();
+
+    Range {
+        start: start as u64,
+        end: end as u64,
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

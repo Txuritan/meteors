@@ -2,7 +2,7 @@ pub mod proto;
 
 use {
     crate::{
-        models::proto::{Entity, Rating, StoryInfo},
+        models::proto::{Entity, Rating, StoryChapter, StoryInfo},
         prelude::*,
     },
     std::{convert::TryInto as _, ops::Range},
@@ -13,7 +13,7 @@ use {
 pub struct StoryFull {
     pub file_name: String,
     pub length: usize,
-    pub chapters: Vec<Range<usize>>,
+    pub chapters: Vec<StoryChapter>,
 
     pub info: StoryInfo,
 

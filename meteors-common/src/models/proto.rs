@@ -1,6 +1,14 @@
 use std::collections::BTreeMap;
 
 #[derive(Clone, PartialEq, prost::Message)]
+pub struct Range {
+    #[prost(uint64, tag = "1")]
+    pub start: u64,
+    #[prost(uint64, tag = "2")]
+    pub end: u64,
+}
+
+#[derive(Clone, PartialEq, prost::Message)]
 pub struct Index {
     #[prost(btree_map = "string, message", tag = "1")]
     pub stories: BTreeMap<String, Story>,
@@ -21,27 +29,19 @@ pub struct Index {
 }
 
 #[derive(Clone, PartialEq, prost::Message)]
-pub struct Range {
-    #[prost(uint32, tag = "1")]
-    pub start: u32,
-    #[prost(uint32, tag = "2")]
-    pub end: u32,
-}
-
-#[derive(Clone, PartialEq, prost::Message)]
 pub struct Story {
     #[prost(string, tag = "1")]
     pub file_name: String,
     #[prost(uint64, tag = "2")]
     pub file_hash: u64,
-    #[prost(uint32, tag = "3")]
-    pub length: u32,
-    #[prost(message, repeated, tag = "4")]
-    pub chapters: Vec<Range>,
-    #[prost(message, required, tag = "5")]
+    #[prost(uint64, tag = "3")]
+    pub length: u64,
+    #[prost(message, required, tag = "4")]
     pub info: StoryInfo,
-    #[prost(message, required, tag = "6")]
+    #[prost(message, required, tag = "5")]
     pub meta: StoryMeta,
+    #[prost(message, repeated, tag = "6")]
+    pub chapters: Vec<StoryChapter>,
 }
 
 #[derive(Clone, PartialEq, prost::Message)]
@@ -70,6 +70,20 @@ pub struct StoryMeta {
     pub characters: Vec<String>,
     #[prost(message, repeated, tag = "8")]
     pub generals: Vec<String>,
+}
+
+#[derive(Clone, PartialEq, prost::Message)]
+pub struct StoryChapter {
+    #[prost(string, tag = "1")]
+    pub title: String,
+    #[prost(message, required, tag = "2")]
+    pub content: Range,
+    #[prost(string, optional, tag = "3")]
+    pub summary: Option<String>,
+    #[prost(message, optional, tag = "4")]
+    pub start_notes: Option<Range>,
+    #[prost(message, optional, tag = "5")]
+    pub end_notes: Option<Range>,
 }
 
 #[derive(Clone, PartialEq, prost::Message)]

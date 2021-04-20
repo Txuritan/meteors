@@ -1,5 +1,8 @@
 use {
-    crate::{models::proto::Index, prelude::*},
+    crate::{
+        models::proto::{Entity, Index},
+        prelude::*,
+    },
     flate2::read::GzDecoder,
     prost::Message,
     std::{collections::BTreeMap, env, fs::File, io::Read as _, path::PathBuf},
@@ -65,5 +68,25 @@ impl Database {
         };
 
         Ok(database)
+    }
+
+    pub fn get_default<K>(map: &mut BTreeMap<String, Entity>, value: &str, key: K) -> String
+    where
+        K: FnOnce(&BTreeMap<String, Entity>) -> String,
+    {
+        if let Some((key, _)) = map.iter().find(|(_, v)| v.text == value) {
+            key.clone()
+        } else {
+            let key = key(&*map);
+
+            map.insert(
+                key.clone(),
+                Entity {
+                    text: value.to_string(),
+                },
+            );
+
+            key
+        }
     }
 }
