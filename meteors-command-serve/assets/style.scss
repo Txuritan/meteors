@@ -1,3 +1,5 @@
+@import "./rfs.scss";
+
 // Cool Colors
 $navy:  #001F3F;
 $blue:  #0074D9;
@@ -30,18 +32,18 @@ html {
     margin: 0 auto;
 
     &.slim {
-        max-width: 960px;
+        @include rfs(60rem, max-width);
     }
 
     &.wide {
-        max-width: 1344px;
+        @include rfs(84rem, max-width);
 
         body {
             aside {
-                max-width: 384px;
+                @include rfs(24rem, max-width);
             }
             main {
-                max-width: 960px;
+                @include rfs(60rem, max-width);
             }
         }
     }
@@ -82,7 +84,7 @@ html.dark {
 
 hr {
     border: none;
-    height: 1px;
+    @include rfs(0.0625rem, height);
 }
 html.light {
     hr {
@@ -104,8 +106,8 @@ ul {
 button {
     background-color: transparent;
     font-family: Consolas, Menlo, Monaco, monospace, serif;
-    font-size: 12px;
-    margin-top: 5px;
+    @include font-size(0.75rem);
+    @include margin-top(0.3125rem);
     &:hover {
         cursor: pointer;
         text-decoration: line-through;
@@ -113,12 +115,12 @@ button {
 }
 html.light {
     button {
-        border: 1px solid $black;
+        border: 0.0625rem solid $black;
     }
 }
 html.dark {
     button {
-        border: 1px solid $silver;
+        border: 0.0625rem solid $silver;
     }
 }
 
@@ -126,20 +128,20 @@ textarea,
 input[type="number"],
 input[type="password"],
 input[type="text"]  {
-    border-width: 0px;
+    border-width: 0rem;
     font-family: Consolas, Menlo, Monaco, monospace, serif;
-    font-size: 1rem;
-    margin-left: 5px;
+    @include font-size(1rem);
+    @include margin-left(0.3125rem);
     &:disabled {
         &::placeholder {
             font-family: Consolas, Menlo, Monaco, monospace, serif;
-            font-size: 1rem;
+            @include font-size(1rem);
             text-decoration: line-through;
         }
     }
     &::placeholder {
         font-family: Consolas, Menlo, Monaco, monospace, serif;
-        font-size: 1rem;
+        @include font-size(1rem);
     }
 }
 html.light {
@@ -147,7 +149,7 @@ html.light {
     input[type="number"],
     input[type="password"],
     input[type="text"]  {
-        border-bottom: 1px solid $black;
+        border-bottom: 0.0625rem solid $black;
         color: $black;
         &:disabled {
             background-color: $white;
@@ -164,7 +166,7 @@ html.dark {
     input[type="password"],
     input[type="text"]  {
         background-color: $black;
-        border-bottom: 1px solid $silver;
+        border-bottom: 0.0625rem solid $silver;
         color: $silver;
         &:disabled {
             background-color: $black;
@@ -178,14 +180,14 @@ html.dark {
 
 nav {
     display: flex;
-    line-height: 24px;
+    @include rfs(1.5em, line-height);
     width: 100%;
     .brand {
         font-weight: bold;
-        margin-right: 15px;
+        @include margin-right(0.9375rem);
     }
     .item {
-        margin-right: 10px;
+        @include margin-right(0.625rem);
     }
     .spacer {
         flex: 1 auto;
@@ -207,9 +209,9 @@ html.dark {
 }
 
 article.story {
-    line-height: 24px;
-    margin-bottom: 1rem;
-    margin-top: 1rem;
+    @include rfs(1.5em, line-height);
+    @include margin-bottom(1rem);
+    @include margin-top(1rem);
     header {
         display: flex;
         flex-direction: row;
@@ -226,18 +228,19 @@ article.story {
     }
     .summary {
         p {
-            &:first-child {
-                margin-top: 0;
-            }
-            &:last-child {
-                margin-bottom: 0;
-            }
+            @include margin-bottom(0.5rem);
+            @include margin-top(0.5rem);
         }
     }
     .origins, .tags, .meta {
         display: block;
-        margin-bottom: 0.2rem;
-        margin-top: 0.25rem;
+        @include margin-bottom(0.5rem);
+        @include margin-top(0.5rem);
+    }
+    .origins, .tags {
+        &:hover {
+            cursor: pointer;
+        }
     }
 }
 html.light, html.dark {
