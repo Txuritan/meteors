@@ -134,7 +134,7 @@ where
 
 fn any_by_text(full: &BTreeMap<String, Entity>, refs: &[String], text: &str) -> bool {
     refs.iter().map(|id| full.get(id)).any(|a| match a {
-        Some(entity) => entity.text == text,
+        Some(entity) => entity.text.to_lowercase() == text.to_lowercase(),
         None => false,
     })
 }
