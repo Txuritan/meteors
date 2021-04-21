@@ -315,8 +315,10 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "ctrlc",
+ "form_urlencoded",
  "meteors-common",
  "path-tree",
+ "percent-encoding",
  "qstring",
  "sailfish",
  "seahorse",

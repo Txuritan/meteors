@@ -3,7 +3,7 @@
         <div class="left">
             <span class="rating <%= &rating.class() %>"><%= &rating.symbol() %></span> <a href="/story/<%= id %>/1<%= query %>" class="title"><%= &info.title %></a> by
             <% for (i, author) in authors.iter().enumerate() { %>
-                <a><%= &author.text %></a><% if i != (&authors.len() - 1) { %>,<% } %>
+                <a href="/search?search=<%- crate::filters::percent_encode(&author.text) %>"><%= &author.text %></a><% if i != (&authors.len() - 1) { %>,<% } %>
             <% } %>
         </div>
         <p class="right">
