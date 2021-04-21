@@ -58,11 +58,15 @@ impl<'s, S> Context<'s, S> {
     }
 
     pub fn rebuild_query(&self) -> Cow<'static, str> {
-        Cow::from(if self.raw_query.is_empty() {
-            String::new()
+        if self.raw_query.is_empty() {
+            Cow::from(String::new())
         } else {
-            self.raw_query.to_string()
-        })
+            let mut parsed = QString::from(self.raw_query).into_pairs();
+
+            parsed.retain(|(k, _)| k != "search");
+
+            Cow::from(format!("?{}", QString::new(parsed)))
+        }
     }
 }
 
