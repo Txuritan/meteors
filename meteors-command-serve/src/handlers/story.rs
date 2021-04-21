@@ -10,7 +10,7 @@ use {
 pub fn story(ctx: &Context<'_, Database>) -> Result<Response> {
     let db = ctx.state();
 
-    let theme = ctx.query("theme").unwrap_or("light");
+    let theme = ctx.query("theme").unwrap_or_else(|| "light".into());
 
     let id = ctx
         .param("id")

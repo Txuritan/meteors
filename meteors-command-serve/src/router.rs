@@ -33,7 +33,7 @@ pub type Response = tiny_http::Response<Cursor<Vec<u8>>>;
 pub struct Context<'s, S> {
     state: Arc<S>,
     params: Vec<(&'s str, &'s str)>,
-    query: Vec<(&'s str, &'s str)>,
+    query: Vec<(Cow<'s, str>, Cow<'s, str>)>,
     raw_query: &'s str,
 
     pub headers: &'s [Header],
@@ -50,11 +50,11 @@ impl<'s, S> Context<'s, S> {
             .find_map(|(k, v)| (*k == key).then(|| *v))
     }
 
-    pub fn query(&self, key: &str) -> Option<&'s str> {
+    pub fn query(&self, key: &str) -> Option<Cow<'s, str>> {
         self.query
             .iter()
             .find(|(k, _)| *k == key)
-            .map(|(_, value)| *value)
+            .map(|(_, value)| value.clone())
     }
 
     pub fn rebuild_query(&self) -> Cow<'static, str> {
@@ -153,7 +153,7 @@ impl<S> Router<S> {
 
         let url = request.url();
         let (url, raw_query) = url.split_at(url.find('?').unwrap_or_else(|| url.len()));
-        let query = QString::from(raw_query);
+        let query = form_urlencoded::parse(raw_query.trim_start_matches('?').as_bytes()).collect::<Vec<_>>();
 
         let method = Method::from(request.method());
 
@@ -168,8 +168,6 @@ impl<S> Router<S> {
         );
 
         let state = Arc::clone(&self.state);
-
-        let query = query.to_pairs();
 
         let response = self
             .tree
