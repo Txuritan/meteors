@@ -61,7 +61,7 @@ impl<'s, S> Context<'s, S> {
         Cow::from(if self.raw_query.is_empty() {
             String::new()
         } else {
-            format!("?{}", self.raw_query)
+            self.raw_query.to_string()
         })
     }
 }
