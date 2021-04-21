@@ -106,6 +106,7 @@ where
     }
 }
 
+#[allow(dead_code)]
 pub fn post<R, S>(route: R) -> Handler<S>
 where
     R: (for<'r> Route<'r, S>) + Send + Sync,

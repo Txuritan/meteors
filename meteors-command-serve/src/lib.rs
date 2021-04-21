@@ -6,7 +6,7 @@ mod utils;
 mod views;
 
 use {
-    crate::router::{get, post, Router},
+    crate::router::{get, Router},
     common::{database::Database, prelude::*},
     seahorse::{Command, Context, Flag, FlagType},
     std::{
@@ -61,7 +61,7 @@ fn run(ctx: &Context) -> Result<()> {
         Router::new(database)
             .on("/", get(handlers::index))
             .on("/story/:id/:chapter", get(handlers::story))
-            .on("/search", post(handlers::search))
+            .on("/search", get(handlers::search))
             .on("/style.css", get(handlers::style)),
     );
 
