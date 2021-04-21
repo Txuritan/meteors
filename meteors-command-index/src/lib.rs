@@ -34,6 +34,7 @@ pub fn command() -> Command {
 //   add parsed data to index removing old data, and id to list
 // remove id kv pairs that are not in the id list
 // write updated index
+#[allow(clippy::needless_collect)] // clippy doesn't detect that the keys are being removed
 fn run(_ctx: &Context) -> Result<()> {
     debug!("{} building index", "+".bright_black());
 
@@ -49,6 +50,30 @@ fn run(_ctx: &Context) -> Result<()> {
 
     for entry in FileIter(fs::read_dir(&database.data_path)?) {
         handle_entry(&mut database, &mut known_ids, entry?)?;
+    }
+
+    let index_keys = database.index.stories.keys().cloned().collect::<Vec<_>>();
+
+    for id in index_keys
+        .into_iter()
+        .filter(|key| !known_ids.contains(&key))
+    {
+        match database.index.stories.remove(&id) {
+            Some(story) => {
+                debug!(
+                    "  {} removing missing story: {}",
+                    "|".bright_black(),
+                    story.file_name.bright_green(),
+                );
+            }
+            None => {
+                warn!(
+                    "  {} removing nonexistent story with id `{}`",
+                    "|".bright_black(),
+                    id.bright_blue(),
+                );
+            }
+        }
     }
 
     debug!("{} {} done", "+".bright_black(), "+".bright_black(),);
