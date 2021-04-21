@@ -44,7 +44,11 @@ impl Logger {
             self.pid.bright_purple(),
         )?;
 
-        write!(&mut out, "{: <21} ", record.target().trim_start_matches("meteors_").bright_red())?;
+        write!(
+            &mut out,
+            "{: <21} ",
+            record.target().trim_start_matches("meteors_").bright_red()
+        )?;
 
         #[allow(clippy::write_literal)]
         match record.level() {
