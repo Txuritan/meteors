@@ -10,8 +10,6 @@ use {
     std::borrow::Cow,
 };
 
-static CSS: &str = include_str!("../assets/style.css");
-
 #[derive(TemplateOnce)]
 #[template(path = "pages/index.stpl")]
 pub struct IndexPage<'s> {
@@ -56,7 +54,6 @@ pub struct Layout<B>
 where
     B: TemplateOnce,
 {
-    css: &'static str,
     title: String,
     theme: String,
     query: Cow<'static, str>,
@@ -74,7 +71,6 @@ where
         T: ToString,
     {
         Self {
-            css: CSS,
             title: title.to_string(),
             theme: theme.to_string(),
             query,

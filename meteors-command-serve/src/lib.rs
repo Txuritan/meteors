@@ -61,7 +61,8 @@ fn run(ctx: &Context) -> Result<()> {
         Router::new(database)
             .on("/", get(handlers::index))
             .on("/story/:id/:chapter", get(handlers::story))
-            .on("/search", post(handlers::search)),
+            .on("/search", post(handlers::search))
+            .on("/style.css", get(handlers::style)),
     );
 
     let server =
