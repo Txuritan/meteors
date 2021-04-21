@@ -28,16 +28,32 @@ $white:  #FFFFFF;
 html {
     font-family: Consolas, Menlo, Monaco, monospace, serif;
     margin: 0 auto;
-    max-width: 960px;
+
+    &.slim {
+        max-width: 960px;
+    }
+
+    &.wide {
+        max-width: 1344px;
+
+        body {
+            aside {
+                max-width: 384px;
+            }
+            main {
+                max-width: 960px;
+            }
+        }
+    }
 }
 html.light {
-    html, body {
+    body {
         background-color: $white;
         color: $black;
     }
 }
 html.dark {
-    html, body {
+    body {
         background-color: $black;
         color: $silver;
     }

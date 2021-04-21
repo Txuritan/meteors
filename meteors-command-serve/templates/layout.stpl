@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html class="<%= theme %>">
+<html class="slim <%= theme %>">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= title %> | local archive</title>
-    <link href="data:;base64,iVBORw0KGgo=">
     <style><%= css %></style>
 </head>
 
