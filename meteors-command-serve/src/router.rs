@@ -153,7 +153,8 @@ impl<S> Router<S> {
 
         let url = request.url();
         let (url, raw_query) = url.split_at(url.find('?').unwrap_or_else(|| url.len()));
-        let query = form_urlencoded::parse(raw_query.trim_start_matches('?').as_bytes()).collect::<Vec<_>>();
+        let query = form_urlencoded::parse(raw_query.trim_start_matches('?').as_bytes())
+            .collect::<Vec<_>>();
 
         let method = Method::from(request.method());
 

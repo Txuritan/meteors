@@ -10,6 +10,11 @@ impl<B: AsRef<[u8]>> Render for PercentEncode<B> {
     fn render(&self, b: &mut Buffer) -> Result<(), RenderError> {
         use std::fmt::Write;
 
-        write!(b, "{}", percent_encoding::percent_encode(self.0.as_ref(), &percent_encoding::CONTROLS)).map_err(RenderError::from)
+        write!(
+            b,
+            "{}",
+            percent_encoding::percent_encode(self.0.as_ref(), &percent_encoding::CONTROLS)
+        )
+        .map_err(RenderError::from)
     }
 }

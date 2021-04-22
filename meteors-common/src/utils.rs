@@ -2,9 +2,11 @@ use {
     crate::prelude::*,
     flate2::{read::GzDecoder, write::GzEncoder},
     rand::{rngs::StdRng, Rng as _, SeedableRng as _},
-    std::{io::{Read, Write}, fs::{self, DirEntry}},
+    std::{
+        fs::{self, DirEntry},
+        io::{Read, Write},
+    },
 };
-
 
 pub struct FileIter(fs::ReadDir);
 
@@ -39,7 +41,6 @@ impl Iterator for FileIter {
         }
     }
 }
-
 
 pub enum Reader<IO>
 where

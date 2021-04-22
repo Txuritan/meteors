@@ -2,18 +2,29 @@ use {
     crate::{
         models::proto::{Entity, Index},
         prelude::*,
+        utils::FileIter,
     },
     flate2::read::GzDecoder,
+    fs2::FileExt as _,
+    memmap2::Mmap,
     prost::Message,
-    std::{collections::BTreeMap, env, fs::File, io::Read as _, path::PathBuf},
+    std::{
+        collections::BTreeMap,
+        env,
+        ffi::OsStr,
+        fs::{self, File},
+        io::Read as _,
+        path::PathBuf,
+    },
 };
 
-#[rustfmt::skip]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Database {
     pub index: Index,
 
     pub children: Vec<String>,
+
+    pub lock_maps: BTreeMap<String, MappedFile>,
 
     pub data_path: PathBuf,
     pub index_path: PathBuf,
@@ -42,6 +53,8 @@ impl Database {
 
                 children: vec![],
 
+                lock_maps: BTreeMap::new(),
+
                 data_path,
                 index_path,
             }
@@ -62,12 +75,62 @@ impl Database {
 
                 children: vec![],
 
+                lock_maps: BTreeMap::new(),
+
                 data_path,
                 index_path,
             }
         };
 
         Ok(database)
+    }
+
+    pub fn lock_data(&mut self) -> Result<()> {
+        for entry in FileIter::new(fs::read_dir(&self.data_path)?) {
+            let entry = entry?;
+            let path = entry.path();
+
+            let name = path
+                .file_name()
+                .and_then(OsStr::to_str)
+                .ok_or_else(|| anyhow!("File `{}` does not have a file name", path.display()))?;
+
+            let id = self
+                .index
+                .stories
+                .iter()
+                .find(|(_, story)| story.file_name == name)
+                .map(|(id, _)| id);
+
+            if let Some(id) = id {
+                let file = File::open(&path)?;
+
+                file.try_lock_exclusive()
+                    .with_context(|| format!("Unable to lock `{}`", name))?;
+
+                let map = unsafe {
+                    Mmap::map(&file).with_context(|| format!("Unable to memory map `{}`", name))?
+                };
+
+                self.lock_maps.insert(id.clone(), MappedFile { name: name.to_string(), file, map });
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn unlock_data(&mut self) -> Result<()> {
+        for id in self.index.stories.keys() {
+            if let Some(mapped) = self.lock_maps.remove(id) {
+                let MappedFile { name, file, map } = mapped;
+
+                drop(map);
+
+                file.unlock().with_context(|| format!("Unable to unlock `{}`", name))?;
+            }
+        }
+
+        Ok(())
     }
 
     pub fn get_default<K>(map: &mut BTreeMap<String, Entity>, value: String, key: K) -> String
@@ -84,4 +147,12 @@ impl Database {
             key
         }
     }
+}
+
+#[doc(hidden)]
+#[derive(Debug)]
+pub struct MappedFile {
+    name: String,
+    file: File,
+    map: Mmap,
 }
