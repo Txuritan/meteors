@@ -7,45 +7,8 @@ use {
         },
         prelude::*,
     },
-    std::{convert::TryInto as _, fs::File, io::Read as _},
+    std::convert::TryInto as _,
 };
-
-pub fn get_chapter_body(db: &Database, id: &str, number: usize) -> Result<String> {
-    let story = db
-        .index
-        .stories
-        .get(id)
-        .ok_or_else(|| anyhow!("unable to find story in index"))?;
-
-    let path = db.data_path.join(&story.file_name);
-
-    let mut file = File::open(&path)?;
-
-    let mut contents = String::with_capacity(story.length.try_into()?);
-
-    let _ = file.read_to_string(&mut contents)?;
-
-    let chapter = story.chapters.get(number - 1).ok_or_else(|| {
-        anyhow!(
-            "chapter `{}` not found, chapters: {}",
-            number,
-            story.chapters.len()
-        )
-    })?;
-
-    let content = &chapter.content;
-
-    Ok(contents
-        .get((content.start.try_into()?)..(content.end.try_into()?))
-        .ok_or_else(|| {
-            anyhow::anyhow!(
-                "chapter `{}` not found in chapter index for `{}`",
-                number,
-                id
-            )
-        })?
-        .to_owned())
-}
 
 #[allow(clippy::ptr_arg)]
 pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, StoryFull)> {

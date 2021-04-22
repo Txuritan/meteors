@@ -10,6 +10,7 @@ use {
     prost::Message,
     std::{
         collections::BTreeMap,
+        convert::TryInto as _,
         env,
         ffi::OsStr,
         fs::{self, File},
@@ -112,7 +113,14 @@ impl Database {
                     Mmap::map(&file).with_context(|| format!("Unable to memory map `{}`", name))?
                 };
 
-                self.lock_maps.insert(id.clone(), MappedFile { name: name.to_string(), file, map });
+                self.lock_maps.insert(
+                    id.clone(),
+                    MappedFile {
+                        name: name.to_string(),
+                        file,
+                        map,
+                    },
+                );
             }
         }
 
@@ -126,7 +134,8 @@ impl Database {
 
                 drop(map);
 
-                file.unlock().with_context(|| format!("Unable to unlock `{}`", name))?;
+                file.unlock()
+                    .with_context(|| format!("Unable to unlock `{}`", name))?;
             }
         }
 
@@ -145,6 +154,41 @@ impl Database {
             map.insert(key.clone(), Entity { text: value });
 
             key
+        }
+    }
+
+    pub fn get_chapter_body(&self, id: &str, number: usize) -> Result<String> {
+        let story = self
+            .index
+            .stories
+            .get(id)
+            .ok_or_else(|| anyhow!("unable to find story in index"))?;
+
+        if let Some(mapped) = self.lock_maps.get(id) {
+            let contents = mapped.map.as_ref();
+
+            let chapter = story.chapters.get(number - 1).ok_or_else(|| {
+                anyhow!(
+                    "chapter `{}` not found, chapters: {}",
+                    number,
+                    story.chapters.len()
+                )
+            })?;
+
+            let content = &chapter.content;
+            let range = (content.start.try_into()?)..(content.end.try_into()?);
+
+            let sliced = contents.get(range).ok_or_else(|| {
+                anyhow!(
+                    "chapter `{}` not found in chapter index for `{}`",
+                    number,
+                    id,
+                )
+            })?;
+
+            Ok(String::from_utf8(sliced.to_vec())?)
+        } else {
+            bail!("unable to find story in locked mapped index")
         }
     }
 }

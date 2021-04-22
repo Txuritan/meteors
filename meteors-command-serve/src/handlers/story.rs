@@ -22,7 +22,7 @@ pub fn story(ctx: &Context<'_, Database>) -> Result<Response> {
         .and_then(|s| s.parse().map_err(anyhow::Error::from))?;
 
     let (_, story) = utils::get_story_full(db, &id)?;
-    let chapter = utils::get_chapter_body(db, &id, index)?;
+    let chapter = db.get_chapter_body(&id, index)?;
 
     let query = ctx.rebuild_query();
 
