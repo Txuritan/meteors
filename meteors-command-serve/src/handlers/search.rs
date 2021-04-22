@@ -8,7 +8,10 @@ use {
 };
 
 pub fn search(ctx: &Context<'_, Database>) -> Result<Response> {
-    let db = ctx.state();
+    let db = ctx
+        .state
+        .read()
+        .map_err(|err| anyhow!("Unable to get read lock on the database: {:?}", err))?;
 
     let theme = ctx.query("theme").unwrap_or_else(|| "light".into());
 
@@ -16,14 +19,14 @@ pub fn search(ctx: &Context<'_, Database>) -> Result<Response> {
         .query("search")
         .ok_or_else(|| anyhow!("search query string not found in url"))?;
 
-    let ids = search::search(db, &query);
+    let ids = search::search(&*db, &query);
 
     let query = ctx.rebuild_query();
 
     let stories = ids
         .iter()
         .map(|id| {
-            utils::get_story_full(db, id)
+            utils::get_story_full(&*db, id)
                 .and_then(|(id, story)| StoryCard::new(&id, story, query.clone()))
         })
         .collect::<Result<Vec<_>>>()?;

@@ -8,7 +8,10 @@ use {
 };
 
 pub fn story(ctx: &Context<'_, Database>) -> Result<Response> {
-    let db = ctx.state();
+    let db = ctx
+        .state
+        .read()
+        .map_err(|err| anyhow!("Unable to get read lock on the database: {:?}", err))?;
 
     let theme = ctx.query("theme").unwrap_or_else(|| "light".into());
 
@@ -21,7 +24,7 @@ pub fn story(ctx: &Context<'_, Database>) -> Result<Response> {
         .ok_or_else(|| anyhow!("no story id was found is the request uri"))
         .and_then(|s| s.parse().map_err(anyhow::Error::from))?;
 
-    let (_, story) = utils::get_story_full(db, &id)?;
+    let (_, story) = utils::get_story_full(&*db, &id)?;
     let chapter = db.get_chapter_body(&id, index)?;
 
     let query = ctx.rebuild_query();

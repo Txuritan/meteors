@@ -8,7 +8,10 @@ use {
 };
 
 pub fn index(ctx: &Context<'_, Database>) -> Result<Response> {
-    let db = ctx.state();
+    let db = ctx
+        .state
+        .read()
+        .map_err(|err| anyhow!("Unable to get read lock on the database: {:?}", err))?;
 
     let theme = ctx.query("theme").unwrap_or_else(|| "light".into());
 
@@ -19,7 +22,7 @@ pub fn index(ctx: &Context<'_, Database>) -> Result<Response> {
         .stories
         .keys()
         .map(|id| {
-            utils::get_story_full(db, id)
+            utils::get_story_full(&*db, id)
                 .and_then(|(id, story)| StoryCard::new(&id, story, query.clone()))
         })
         .collect::<Result<Vec<StoryCard<'_>>>>()?;

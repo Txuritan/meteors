@@ -14,7 +14,7 @@ use {
         net::{Ipv4Addr, SocketAddr},
         sync::{
             atomic::{AtomicBool, Ordering},
-            Arc,
+            Arc, RwLock,
         },
         thread,
         time::Duration,
@@ -56,10 +56,16 @@ fn run(ctx: &Context) -> Result<()> {
     )
         .into();
 
-    let database = Database::open()?;
+    let database = Arc::new(RwLock::new({
+        let mut db = Database::open()?;
+
+        db.lock_data()?;
+
+        db
+    }));
 
     let router = Arc::new(
-        Router::new(database)
+        Router::new(database.clone())
             .on("/", get(handlers::index))
             .on("/story/:id/:chapter", get(handlers::story))
             .on("/search", get(handlers::search))
@@ -114,6 +120,12 @@ fn run(ctx: &Context) -> Result<()> {
             error!("{} unable to join server thread", "+".bright_black());
         }
     }
+
+    let mut db = database
+        .write()
+        .map_err(|err| anyhow!("Unable to get write lock on database: {:?}", err))?;
+
+    db.unlock_data()?;
 
     Ok(())
 }

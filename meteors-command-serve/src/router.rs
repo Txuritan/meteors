@@ -3,7 +3,13 @@ use {
     common::prelude::*,
     path_tree::PathTree,
     qstring::QString,
-    std::{borrow::Cow, collections::BTreeMap, io::Cursor, sync::Arc, time::Instant},
+    std::{
+        borrow::Cow,
+        collections::BTreeMap,
+        io::Cursor,
+        sync::{Arc, RwLock},
+        time::Instant,
+    },
 };
 
 pub use tiny_http::{Header, HeaderField, Request, StatusCode};
@@ -31,19 +37,15 @@ macro_rules! res {
 pub type Response = tiny_http::Response<Cursor<Vec<u8>>>;
 
 pub struct Context<'s, S> {
-    state: Arc<S>,
     params: Vec<(&'s str, &'s str)>,
     query: Vec<(Cow<'s, str>, Cow<'s, str>)>,
     raw_query: &'s str,
 
+    pub state: Arc<RwLock<S>>,
     pub headers: &'s [Header],
 }
 
 impl<'s, S> Context<'s, S> {
-    pub fn state(&self) -> &S {
-        &self.state
-    }
-
     pub fn param(&self, key: &str) -> Option<&'s str> {
         self.params
             .iter()
@@ -123,14 +125,14 @@ where
 
 pub struct Router<S> {
     tree: BTreeMap<Method, PathTree<Boxed<S>>>,
-    state: Arc<S>,
+    state: Arc<RwLock<S>>,
 }
 
 impl<S> Router<S> {
-    pub fn new(state: S) -> Self {
+    pub fn new(state: Arc<RwLock<S>>) -> Self {
         Self {
             tree: BTreeMap::new(),
-            state: Arc::new(state),
+            state,
         }
     }
 
