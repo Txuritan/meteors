@@ -3,7 +3,7 @@ use {
         database::Database,
         models::proto::{Entity, Index, Rating, Story, StoryChapter, StoryInfo, StoryMeta},
         prelude::*,
-        utils, Message,
+        utils::{self, FileIter}, Message,
     },
     flate2::{write::GzEncoder, Compression},
     format_ao3::{FileKind, ParsedChapters, ParsedInfo, ParsedMeta},
@@ -48,7 +48,7 @@ fn run(_ctx: &Context) -> Result<()> {
         "+".bright_black(),
     );
 
-    for entry in FileIter(fs::read_dir(&database.data_path)?) {
+    for entry in FileIter::new(fs::read_dir(&database.data_path)?) {
         handle_entry(&mut database, &mut known_ids, entry?)?;
     }
 
@@ -228,34 +228,6 @@ fn new_id<V>(map: &BTreeMap<String, V>) -> String {
 
         if !map.contains_key(&id) {
             return id;
-        }
-    }
-}
-
-struct FileIter(fs::ReadDir);
-
-impl Iterator for FileIter {
-    type Item = Result<DirEntry>;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(entry) = self.0.next() {
-            let entry = match entry {
-                Ok(entry) => entry,
-                Err(err) => return Some(Err(err.into())),
-            };
-
-            let meta = match entry.metadata() {
-                Ok(meta) => meta,
-                Err(err) => return Some(Err(err.into())),
-            };
-
-            if meta.is_file() {
-                Some(Ok(entry))
-            } else {
-                None
-            }
-        } else {
-            None
         }
     }
 }

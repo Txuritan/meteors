@@ -1,8 +1,45 @@
 use {
+    crate::prelude::*,
     flate2::{read::GzDecoder, write::GzEncoder},
     rand::{rngs::StdRng, Rng as _, SeedableRng as _},
-    std::io::{Read, Write},
+    std::{io::{Read, Write}, fs::{self, DirEntry}},
 };
+
+
+pub struct FileIter(fs::ReadDir);
+
+impl FileIter {
+    pub fn new(iter: fs::ReadDir) -> FileIter {
+        FileIter(iter)
+    }
+}
+
+impl Iterator for FileIter {
+    type Item = Result<DirEntry>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(entry) = self.0.next() {
+            let entry = match entry {
+                Ok(entry) => entry,
+                Err(err) => return Some(Err(err.into())),
+            };
+
+            let meta = match entry.metadata() {
+                Ok(meta) => meta,
+                Err(err) => return Some(Err(err.into())),
+            };
+
+            if meta.is_file() {
+                Some(Ok(entry))
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+}
+
 
 pub enum Reader<IO>
 where
