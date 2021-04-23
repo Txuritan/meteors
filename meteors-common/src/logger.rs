@@ -3,11 +3,15 @@ use {
     chrono::Utc,
     log::{Level, LevelFilter, Log, Metadata, Record},
     owo_colors::OwoColorize as _,
-    std::io::{self, Stdout, Write as _},
+    std::{
+        env,
+        io::{self, Stdout, Write as _},
+    },
 };
 
 pub fn init() -> Result<()> {
     log::set_boxed_logger(Box::new(Logger {
+        bypass: env::var("METEORS_LOG_ALL").is_ok(),
         pid: std::process::id(),
         out: io::stdout(),
         level: LevelFilter::Trace,
@@ -18,6 +22,7 @@ pub fn init() -> Result<()> {
 }
 
 pub struct Logger {
+    bypass: bool,
     pid: u32,
     out: Stdout,
     level: LevelFilter,
@@ -67,7 +72,7 @@ impl Logger {
 
 impl Log for Logger {
     fn enabled(&self, metadata: &Metadata<'_>) -> bool {
-        metadata.level() <= self.level
+        self.bypass | (metadata.level() <= self.level)
     }
 
     fn log(&self, record: &Record<'_>) {

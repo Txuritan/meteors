@@ -59,6 +59,12 @@ fn run(ctx: &Context) -> Result<()> {
     let database = Arc::new(RwLock::new({
         let mut db = Database::open()?;
 
+        trace!(
+            "{} with {} stories",
+            "+".bright_black(),
+            db.index.stories.len().bright_purple(),
+        );
+
         db.lock_data()?;
 
         db

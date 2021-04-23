@@ -77,7 +77,13 @@ fn run(_ctx: &Context) -> Result<()> {
         }
     }
 
-    debug!("{} {} done", "+".bright_black(), "+".bright_black(),);
+    debug!("{} {} done", "+".bright_black(), "+".bright_black());
+
+    trace!(
+        "{} found {} stories",
+        "+".bright_black(),
+        database.index.stories.len().bright_purple(),
+    );
 
     write_index(&database)?;
 
