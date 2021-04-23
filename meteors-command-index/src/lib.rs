@@ -1,7 +1,7 @@
 use {
     common::{
         database::Database,
-        models::proto::{Entity, Index, Rating, Story, StoryChapter, StoryInfo, StoryMeta},
+        models::proto::{Entity, Index, story, Story},
         prelude::*,
         utils::{self, FileIter},
         Message,
@@ -160,7 +160,11 @@ where
             name.bright_green(),
         );
 
-        Ok(Some((new_id(&db.index.stories), hash, bytes)))
+        let id = new_id(&db.index.stories);
+
+        known_ids.push(id.clone());
+
+        Ok(Some((id, hash, bytes)))
     }
 }
 
@@ -176,24 +180,23 @@ fn add_to_index(
     let story = Story {
         file_name: name.to_string(),
         file_hash: hash,
-        length: chapters.chapters.len() as u64,
         chapters: chapters
             .chapters
             .into_iter()
-            .map(|chapter| StoryChapter {
+            .map(|chapter| story::Chapter {
                 title: chapter.title.to_string(),
-                content: chapter.content,
+                content: Some(chapter.content),
                 summary: chapter.summary,
                 start_notes: chapter.start_notes,
                 end_notes: chapter.end_notes,
             })
             .collect(),
-        info: StoryInfo {
+        info: Some(story::Info {
             title: info.title.to_string(),
             summary: info.summary.to_string(),
-        },
-        meta: StoryMeta {
-            rating: Rating::to(meta.rating),
+        }),
+        meta: Some(story::Meta {
+            rating: story::meta::Rating::to(meta.rating),
             authors: values_to_keys(info.authors, &mut db.index.authors),
             categories: values_to_keys(meta.categories, &mut db.index.categories),
             origins: values_to_keys(meta.origins, &mut db.index.origins),
@@ -201,7 +204,7 @@ fn add_to_index(
             pairings: values_to_keys(meta.pairings, &mut db.index.pairings),
             characters: values_to_keys(meta.characters, &mut db.index.characters),
             generals: values_to_keys(meta.generals, &mut db.index.generals),
-        },
+        }),
     };
 
     db.index.stories.insert(id, story);

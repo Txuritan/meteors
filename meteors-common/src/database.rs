@@ -175,7 +175,7 @@ impl Database {
                 )
             })?;
 
-            let content = &chapter.content;
+            let content = &chapter.content();
             let range = (content.start.try_into()?)..(content.end.try_into()?);
 
             let sliced = contents.get(range).ok_or_else(|| {

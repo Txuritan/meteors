@@ -7,7 +7,7 @@ pub mod html;
 
 use {
     common::{
-        models::proto::{Range, Rating},
+        models::proto::{Range, story::meta::Rating},
         prelude::*,
     },
     query::Document,

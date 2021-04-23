@@ -1,8 +1,8 @@
 use {
     common::{
         models::{
-            proto::{Entity, Rating, StoryInfo},
-            StoryFull, StoryFullMeta,
+            proto::Entity,
+            Story, story,
         },
         prelude::*,
     },
@@ -104,9 +104,9 @@ pub struct StoryCard<'s> {
     id: &'s str,
 
     chapters: usize,
-    info: StoryInfo,
+    info: story::Info,
 
-    rating: Rating,
+    rating: story::meta::Rating,
     categories: Vec<Entity>,
     authors: Vec<Entity>,
 
@@ -117,8 +117,8 @@ pub struct StoryCard<'s> {
 }
 
 impl<'s> StoryCard<'s> {
-    pub fn new(id: &'s str, story: StoryFull, query: Cow<'static, str>) -> Result<Self> {
-        let StoryFullMeta {
+    pub fn new(id: &'s str, story: Story, query: Cow<'static, str>) -> Result<Self> {
+        let story::Meta {
             rating,
             authors,
             categories,

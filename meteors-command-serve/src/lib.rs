@@ -1,6 +1,7 @@
 mod handlers;
 
 mod filters;
+mod models;
 mod router;
 mod search;
 mod utils;
