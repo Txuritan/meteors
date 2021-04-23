@@ -164,6 +164,10 @@ impl<'s> StoryCard<'s> {
             tags.push((kind, entity));
         }
     }
+
+    pub fn title(&self) -> &str {
+        &self.info.title
+    }
 }
 
 #[derive(TemplateOnce)]

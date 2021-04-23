@@ -17,7 +17,7 @@ pub fn index(ctx: &Context<'_, Database>) -> Result<Response> {
 
     let query = ctx.rebuild_query();
 
-    let stories = db
+    let mut stories = db
         .index
         .stories
         .keys()
@@ -26,6 +26,8 @@ pub fn index(ctx: &Context<'_, Database>) -> Result<Response> {
                 .and_then(|(id, story)| StoryCard::new(&id, story, query.clone()))
         })
         .collect::<Result<Vec<StoryCard<'_>>>>()?;
+
+    stories.sort_by(|a, b| a.title().cmp(b.title()));
 
     let body = Layout::new("home", theme, query, IndexPage::new(stories));
 

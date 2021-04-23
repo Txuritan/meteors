@@ -23,13 +23,15 @@ pub fn search(ctx: &Context<'_, Database>) -> Result<Response> {
 
     let query = ctx.rebuild_query();
 
-    let stories = ids
+    let mut stories = ids
         .iter()
         .map(|id| {
             utils::get_story_full(&*db, id)
                 .and_then(|(id, story)| StoryCard::new(&id, story, query.clone()))
         })
         .collect::<Result<Vec<_>>>()?;
+
+    stories.sort_by(|a, b| a.title().cmp(b.title()));
 
     let body = Layout::new("search", theme, query, IndexPage::new(stories));
 
