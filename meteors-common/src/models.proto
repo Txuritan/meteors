@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package models.proto;
+
+message Range {
+    uint64 start = 1;
+    uint64 end = 2;
+}
+
+message Entity {
+    string text = 1;
+}
+
+message Index {
+    map<string, Story> stories = 1;
+    map<string, Entity> categories = 2;
+    map<string, Entity> authors = 3;
+    map<string, Entity> origins = 4;
+    map<string, Entity> warnings = 5;
+    map<string, Entity> pairings = 6;
+    map<string, Entity> characters = 7;
+    map<string, Entity> generals = 8;
+}
+
+message Story {
+    string file_name = 1;
+    uint64 file_hash = 2;
+
+    message Info {
+        string title = 1;
+        string summary = 2;
+    }
+    Info info = 3;                          // this will always be `Some`
+
+    message Meta {
+        enum Rating {
+            EXPLICIT = 0;
+            MATURE = 1;
+            TEEN = 2;
+            GENERAL = 3;
+            NOT_RATED = 4;
+            UNKNOWN = 5;
+        }
+        Rating rating = 1;
+
+        repeated string authors = 2;
+        repeated string categories = 3;
+        repeated string origins = 4;
+        repeated string warnings = 5;
+        repeated string pairings = 6;
+        repeated string characters = 7;
+        repeated string generals = 8;
+    }
+    Meta meta = 4;                          // this will always be `Some`
+
+    message Chapter {
+        string title = 1;
+        Range content = 2;                  // this will always be `Some`
+        optional string summary = 3;        // this may be `Some`
+        Range start_notes = 4;              // this may be `Some`
+        Range end_notes = 5;                // this may be `Some`
+    }
+    repeated Chapter chapters = 5;          // this will always be `Some`
+}

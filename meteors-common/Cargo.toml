@@ -19,3 +19,6 @@ memmap2 = "0.2"
 owo-colors = "2.0"
 prost = "0.7"
 rand = "0.8"
+
+[build-dependencies]
+prost-build = "0.7"

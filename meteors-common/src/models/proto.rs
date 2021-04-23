@@ -1,5 +1,9 @@
 use std::collections::BTreeMap;
 
+pub mod new {
+    include!(concat!(env!("OUT_DIR"), "/models.proto.rs"));
+}
+
 #[derive(Clone, PartialEq, prost::Message)]
 pub struct Range {
     #[prost(uint64, tag = "1")]
