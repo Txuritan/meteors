@@ -1,7 +1,7 @@
 use {
     crate::{ParsedChapter, ParsedChapters, ParsedInfo, ParsedMeta},
     common::{
-        models::proto::{Range, story::meta::Rating},
+        models::proto::{story::meta::Rating, Range},
         prelude::*,
     },
     query::{Document, Node, Span},

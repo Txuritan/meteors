@@ -3,7 +3,7 @@ use {
         html::{parse_chapters, parse_info, parse_meta},
         ParsedChapter, ParsedChapters, ParsedInfo, ParsedMeta,
     },
-    common::models::proto::{Range, story::meta::Rating},
+    common::models::proto::{story::meta::Rating, Range},
     query::Document,
     std::convert::TryFrom as _,
 };

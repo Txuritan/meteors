@@ -1,12 +1,10 @@
-use {
-    common::{
-        database::Database,
-        models::{
-            proto::{self, Entity, Index},
-            Story, story,
-        },
-        prelude::*,
+use common::{
+    database::Database,
+    models::{
+        proto::{self, Entity, Index},
+        story, Story,
     },
+    prelude::*,
 };
 
 #[allow(clippy::ptr_arg)]
@@ -57,7 +55,10 @@ pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, 
             file_name: story_ref.file_name.clone(),
             file_hash: story_ref.file_hash,
             chapters: story_ref.chapters.clone(),
-            info: story::Info { title: info.title.clone(), summary: info.summary.clone() },
+            info: story::Info {
+                title: info.title.clone(),
+                summary: info.summary.clone(),
+            },
             meta: story::Meta {
                 rating: meta.rating(),
                 categories: values(&index, meta, &Kind::Categories).context("categories")?,

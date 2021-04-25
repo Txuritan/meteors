@@ -17,16 +17,11 @@ macro_rules! model_some {
 }
 
 impl Story {
-    model_some!(
-        info: story::Info,
-        meta: story::Meta,
-    );
+    model_some!(info: story::Info, meta: story::Meta,);
 }
 
 impl story::Chapter {
-    model_some!(
-        content: Range,
-    );
+    model_some!(content: Range,);
 }
 
 impl story::meta::Rating {

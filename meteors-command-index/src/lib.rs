@@ -1,7 +1,7 @@
 use {
     common::{
         database::Database,
-        models::proto::{Entity, Meteors, story, Story},
+        models::proto::{story, Entity, Meteors, Story},
         prelude::*,
         utils::{self, FileIter},
         Message,

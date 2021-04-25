@@ -1,6 +1,6 @@
 use {
     crate::{
-        models::proto::{settings, Entity, Meteors, Settings, Index},
+        models::proto::{settings, Entity, Index, Meteors, Settings},
         prelude::*,
         utils::FileIter,
     },
@@ -15,8 +15,8 @@ use {
         ffi::OsStr,
         fs::{self, File},
         io::Read as _,
-        path::PathBuf,
         mem,
+        path::PathBuf,
     },
 };
 
@@ -103,11 +103,17 @@ impl Database {
     }
 
     pub fn settings(&self) -> &Settings {
-        self.inner.settings.as_ref().unwrap_or_else(|| unreachable!())
+        self.inner
+            .settings
+            .as_ref()
+            .unwrap_or_else(|| unreachable!())
     }
 
     pub fn settings_mut(&mut self) -> &mut Settings {
-        self.inner.settings.as_mut().unwrap_or_else(|| unreachable!())
+        self.inner
+            .settings
+            .as_mut()
+            .unwrap_or_else(|| unreachable!())
     }
 
     pub fn lock_data(&mut self) -> Result<()> {

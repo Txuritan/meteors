@@ -1,9 +1,6 @@
 use {
     common::{
-        models::{
-            proto::Entity,
-            Story, story,
-        },
+        models::{proto::Entity, story, Story},
         prelude::*,
     },
     sailfish::TemplateOnce,

@@ -1,6 +1,6 @@
 pub mod proto;
 
-pub use crate::models::proto::{Range, Entity, story::meta::Rating};
+pub use crate::models::proto::{story::meta::Rating, Entity, Range};
 
 #[derive(Clone, PartialEq)]
 pub struct Story {
@@ -14,7 +14,7 @@ pub struct Story {
 pub mod story {
     use crate::models::{Entity, Rating};
 
-    pub use crate::models::proto::story::{Chapter, Info, meta};
+    pub use crate::models::proto::story::{meta, Chapter, Info};
 
     #[derive(Clone, PartialEq)]
     pub struct Meta {
