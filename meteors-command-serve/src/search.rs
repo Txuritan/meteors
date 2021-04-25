@@ -9,14 +9,14 @@ use {
 macro_rules! help {
     (bound; $db:ident, $iter:ident, $text:ident, $var:ident, $mem:ident) => {{
         BoundIter::$var(
-            $iter.filter(move |(_, s)| any_by_text(&$db.index.$mem, &s.meta().$mem, &$text)),
+            $iter.filter(move |(_, s)| any_by_text(&$db.index().$mem, &s.meta().$mem, &$text)),
         )
     }};
     (retain; $db:ident, $stories:ident, $include:ident, $text:ident, $mem:ident) => {{
         $stories.retain(|id| {
-            let story = $db.index.stories.get(id).unwrap();
+            let story = $db.index().stories.get(id).unwrap();
 
-            !(&$include ^ any_by_text(&$db.index.$mem, &story.meta().$mem, &$text))
+            !(&$include ^ any_by_text(&$db.index().$mem, &story.meta().$mem, &$text))
         });
     }};
 }
@@ -60,7 +60,7 @@ pub fn search(database: &Database, text: &str) -> Vec<String> {
     let mut bounds_iter = bounds.into_iter();
 
     if let Some(bound) = bounds_iter.next() {
-        let story_iter = database.index.stories.iter();
+        let story_iter = database.index().stories.iter();
 
         let (include, iter) = match bound {
             Bound::Author { include, text } => (
@@ -124,7 +124,7 @@ where
     } else {
         let ids = ids.map(|(id, _)| id).collect::<Vec<_>>();
 
-        for id in database.index.stories.iter().map(|(id, _)| id) {
+        for id in database.index().stories.iter().map(|(id, _)| id) {
             if !ids.contains(&id) {
                 stories.push(id.clone());
             }

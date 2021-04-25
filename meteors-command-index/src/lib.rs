@@ -1,7 +1,7 @@
 use {
     common::{
         database::Database,
-        models::proto::{Entity, Index, story, Story},
+        models::proto::{Entity, Meteors, story, Story},
         prelude::*,
         utils::{self, FileIter},
         Message,
@@ -53,13 +53,15 @@ fn run(_ctx: &Context) -> Result<()> {
         handle_entry(&mut database, &mut known_ids, entry?)?;
     }
 
-    let index_keys = database.index.stories.keys().cloned().collect::<Vec<_>>();
+    let index = database.index_mut();
+
+    let index_keys = index.stories.keys().cloned().collect::<Vec<_>>();
 
     for id in index_keys
         .into_iter()
         .filter(|key| !known_ids.contains(&key))
     {
-        match database.index.stories.remove(&id) {
+        match index.stories.remove(&id) {
             Some(story) => {
                 debug!(
                     "  {} removing missing story: {}",
@@ -82,7 +84,7 @@ fn run(_ctx: &Context) -> Result<()> {
     trace!(
         "{} found {} stories",
         "+".bright_black(),
-        database.index.stories.len().bright_purple(),
+        index.stories.len().bright_purple(),
     );
 
     write_index(&database)?;
@@ -131,7 +133,9 @@ where
 
     let hash = xxhash_rust::xxh3::xxh3_64(&bytes[..]);
 
-    let possible = db.index.stories.iter().find(|(_, v)| v.file_name == name);
+    let index = db.index();
+
+    let possible = index.stories.iter().find(|(_, v)| v.file_name == name);
 
     if let Some((id, story)) = possible {
         known_ids.push(id.clone());
@@ -160,7 +164,7 @@ where
             name.bright_green(),
         );
 
-        let id = new_id(&db.index.stories);
+        let id = new_id(&index.stories);
 
         known_ids.push(id.clone());
 
@@ -176,6 +180,8 @@ fn add_to_index(
     parsed: (ParsedInfo, ParsedMeta, ParsedChapters),
 ) {
     let (info, meta, chapters) = parsed;
+
+    let index = db.index_mut();
 
     let story = Story {
         file_name: name.to_string(),
@@ -197,17 +203,17 @@ fn add_to_index(
         }),
         meta: Some(story::Meta {
             rating: story::meta::Rating::to(meta.rating),
-            authors: values_to_keys(info.authors, &mut db.index.authors),
-            categories: values_to_keys(meta.categories, &mut db.index.categories),
-            origins: values_to_keys(meta.origins, &mut db.index.origins),
-            warnings: values_to_keys(meta.warnings, &mut db.index.warnings),
-            pairings: values_to_keys(meta.pairings, &mut db.index.pairings),
-            characters: values_to_keys(meta.characters, &mut db.index.characters),
-            generals: values_to_keys(meta.generals, &mut db.index.generals),
+            authors: values_to_keys(info.authors, &mut index.authors),
+            categories: values_to_keys(meta.categories, &mut index.categories),
+            origins: values_to_keys(meta.origins, &mut index.origins),
+            warnings: values_to_keys(meta.warnings, &mut index.warnings),
+            pairings: values_to_keys(meta.pairings, &mut index.pairings),
+            characters: values_to_keys(meta.characters, &mut index.characters),
+            generals: values_to_keys(meta.generals, &mut index.generals),
         }),
     };
 
-    db.index.stories.insert(id, story);
+    index.stories.insert(id, story);
 }
 
 fn values_to_keys(vec: Vec<String>, map: &mut BTreeMap<String, Entity>) -> Vec<String> {
@@ -221,7 +227,7 @@ fn write_index(db: &Database) -> Result<()> {
 
     let mut buf = Vec::new();
 
-    <Index as Message>::encode(&db.index, &mut buf)?;
+    <Meteors as Message>::encode(&db.inner, &mut buf)?;
 
     let mut encoder = GzEncoder::new(File::create(&db.index_path)?, Compression::best());
 

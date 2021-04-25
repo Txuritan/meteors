@@ -41,13 +41,13 @@ pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, 
             .collect::<Result<Vec<_>>>()
     }
 
-    let story_ref = db
-        .index
+    let index = db.index();
+
+    let story_ref = index
         .stories
         .get(id)
         .ok_or_else(|| anyhow!("story with id `{}` does not exist", id))?;
 
-    let index = &db.index;
     let info = &story_ref.info();
     let meta = &story_ref.meta();
 

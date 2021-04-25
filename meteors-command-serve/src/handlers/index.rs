@@ -18,7 +18,7 @@ pub fn index(ctx: &Context<'_, Database>) -> Result<Response> {
     let query = ctx.rebuild_query();
 
     let mut stories = db
-        .index
+        .index()
         .stories
         .keys()
         .map(|id| {

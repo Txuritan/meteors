@@ -63,7 +63,7 @@ fn run(ctx: &Context) -> Result<()> {
         trace!(
             "{} with {} stories",
             "+".bright_black(),
-            db.index.stories.len().bright_purple(),
+            db.index().stories.len().bright_purple(),
         );
 
         db.lock_data()?;
