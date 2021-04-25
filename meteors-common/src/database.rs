@@ -24,12 +24,10 @@ use {
 pub struct Database {
     pub inner: Meteors,
 
-    pub children: Vec<String>,
-
-    pub lock_maps: BTreeMap<String, MappedFile>,
-
     pub data_path: PathBuf,
     pub index_path: PathBuf,
+
+    lock_maps: BTreeMap<String, MappedFile>,
 }
 
 impl Database {
@@ -53,12 +51,10 @@ impl Database {
             Self {
                 inner,
 
-                children: vec![],
-
-                lock_maps: BTreeMap::new(),
-
                 data_path,
                 index_path,
+
+                lock_maps: BTreeMap::new(),
             }
         } else {
             debug!("{} not found, creating", "+".bright_black());
@@ -82,12 +78,10 @@ impl Database {
                     }),
                 },
 
-                children: vec![],
-
-                lock_maps: BTreeMap::new(),
-
                 data_path,
                 index_path,
+
+                lock_maps: BTreeMap::new(),
             }
         };
 
@@ -231,9 +225,8 @@ impl Database {
     }
 }
 
-#[doc(hidden)]
 #[derive(Debug)]
-pub struct MappedFile {
+struct MappedFile {
     name: String,
     file: File,
     map: Mmap,
