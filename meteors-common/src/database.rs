@@ -1,6 +1,6 @@
 use {
     crate::{
-        models::proto::{Entity, Index},
+        models::proto::{settings, Entity, Meteors, Settings, Index},
         prelude::*,
         utils::FileIter,
     },
@@ -16,12 +16,13 @@ use {
         fs::{self, File},
         io::Read as _,
         path::PathBuf,
+        mem,
     },
 };
 
 #[derive(Debug)]
 pub struct Database {
-    pub index: Index,
+    pub inner: Meteors,
 
     pub children: Vec<String>,
 
@@ -36,7 +37,7 @@ impl Database {
         let cur = env::current_dir()?.canonicalize()?;
 
         let data_path = cur.join("data");
-        let index_path = cur.join("index.pb.gz");
+        let index_path = cur.join("meteors.pb.gz");
 
         let database = if index_path.exists() {
             debug!("{} found existing", "+".bright_black());
@@ -47,10 +48,10 @@ impl Database {
 
             decoder.read_to_end(&mut bytes)?;
 
-            let index = <Index as Message>::decode(&bytes[..])?;
+            let inner = <Meteors as Message>::decode(&bytes[..])?;
 
             Self {
-                index,
+                inner,
 
                 children: vec![],
 
@@ -63,15 +64,22 @@ impl Database {
             debug!("{} not found, creating", "+".bright_black());
 
             Self {
-                index: Index {
-                    stories: BTreeMap::new(),
-                    categories: BTreeMap::new(),
-                    authors: BTreeMap::new(),
-                    origins: BTreeMap::new(),
-                    warnings: BTreeMap::new(),
-                    pairings: BTreeMap::new(),
-                    characters: BTreeMap::new(),
-                    generals: BTreeMap::new(),
+                inner: Meteors {
+                    index: Some(Index {
+                        stories: BTreeMap::new(),
+                        categories: BTreeMap::new(),
+                        authors: BTreeMap::new(),
+                        origins: BTreeMap::new(),
+                        warnings: BTreeMap::new(),
+                        pairings: BTreeMap::new(),
+                        characters: BTreeMap::new(),
+                        generals: BTreeMap::new(),
+                    }),
+                    settings: Some(Settings {
+                        theme: settings::Theme::Light as i32,
+                        sync_key: String::new(),
+                        nodes: vec![],
+                    }),
                 },
 
                 children: vec![],
@@ -86,7 +94,25 @@ impl Database {
         Ok(database)
     }
 
+    pub fn index(&self) -> &Index {
+        self.inner.index.as_ref().unwrap_or_else(|| unreachable!())
+    }
+
+    pub fn index_mut(&mut self) -> &mut Index {
+        self.inner.index.as_mut().unwrap_or_else(|| unreachable!())
+    }
+
+    pub fn settings(&self) -> &Settings {
+        self.inner.settings.as_ref().unwrap_or_else(|| unreachable!())
+    }
+
+    pub fn settings_mut(&mut self) -> &mut Settings {
+        self.inner.settings.as_mut().unwrap_or_else(|| unreachable!())
+    }
+
     pub fn lock_data(&mut self) -> Result<()> {
+        let mut lock_maps = BTreeMap::new();
+
         for entry in FileIter::new(fs::read_dir(&self.data_path)?) {
             let entry = entry?;
             let path = entry.path();
@@ -97,11 +123,11 @@ impl Database {
                 .ok_or_else(|| anyhow!("File `{}` does not have a file name", path.display()))?;
 
             let id = self
-                .index
+                .index()
                 .stories
                 .iter()
                 .find(|(_, story)| story.file_name == name)
-                .map(|(id, _)| id);
+                .map(|(id, _)| id.clone());
 
             if let Some(id) = id {
                 let file = File::open(&path)?;
@@ -113,7 +139,7 @@ impl Database {
                     Mmap::map(&file).with_context(|| format!("Unable to memory map `{}`", name))?
                 };
 
-                self.lock_maps.insert(
+                lock_maps.insert(
                     id.clone(),
                     MappedFile {
                         name: name.to_string(),
@@ -124,12 +150,18 @@ impl Database {
             }
         }
 
+        mem::swap(&mut self.lock_maps, &mut lock_maps);
+
         Ok(())
     }
 
     pub fn unlock_data(&mut self) -> Result<()> {
-        for id in self.index.stories.keys() {
-            if let Some(mapped) = self.lock_maps.remove(id) {
+        let mut lock_maps = BTreeMap::new();
+
+        mem::swap(&mut self.lock_maps, &mut lock_maps);
+
+        for id in self.index().stories.keys().cloned() {
+            if let Some(mapped) = lock_maps.remove(&id) {
                 let MappedFile { name, file, map } = mapped;
 
                 drop(map);
@@ -159,7 +191,7 @@ impl Database {
 
     pub fn get_chapter_body(&self, id: &str, number: usize) -> Result<String> {
         let story = self
-            .index
+            .index()
             .stories
             .get(id)
             .ok_or_else(|| anyhow!("unable to find story in index"))?;

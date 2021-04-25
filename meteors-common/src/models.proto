@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package models.proto;
 
+// custom type used to store `std::ops::Range`
 message Range {
     uint64 start = 1;
     uint64 end = 2;
@@ -9,6 +10,36 @@ message Range {
 
 message Entity {
     string text = 1;
+}
+
+message Meteors {
+    // this will always be `Some`
+    Settings settings = 1;
+    // this will always be `Some`
+    Index index = 2;
+}
+
+message Settings {
+    enum Theme {
+        LIGHT = 0;
+        DARK = 1;
+    }
+    // the theme of the website (default `LIGHT`)
+    // this will always be `Some`
+    Theme theme = 2;
+
+    // this instances sync key
+    string sync_key = 3;
+    message Node {
+        // the name of an instance, used to allow the user to identify which node is what
+        string name = 1;
+        // the key of an instance, this is used for verifiaction
+        string key = 2;
+        // the port of an instance, used for port scanning to find said instance
+        uint32 port = 3;
+    }
+    // other instances that this instance will try to sync with
+    repeated Node nodes = 4;
 }
 
 message Index {
@@ -30,7 +61,8 @@ message Story {
         string title = 1;
         string summary = 2;
     }
-    Info info = 3;                          // this will always be `Some`
+    // this will always be `Some`
+    Info info = 3;
 
     message Meta {
         enum Rating {
@@ -51,14 +83,19 @@ message Story {
         repeated string characters = 7;
         repeated string generals = 8;
     }
-    Meta meta = 4;                          // this will always be `Some`
+    // this will always be `Some`
+    Meta meta = 4;
 
     message Chapter {
         string title = 1;
-        Range content = 2;                  // this will always be `Some`
-        optional string summary = 3;        // this may be `Some`
-        Range start_notes = 4;              // this may be `Some`
-        Range end_notes = 5;                // this may be `Some`
+        // this will always be `Some`
+        Range content = 2;
+        // this may be `Some`
+        optional string summary = 3;
+        // this may be `Some`
+        Range start_notes = 4;
+        // this may be `Some`
+        Range end_notes = 5;
     }
-    repeated Chapter chapters = 5;          // this will always be `Some`
+    repeated Chapter chapters = 5;
 }
