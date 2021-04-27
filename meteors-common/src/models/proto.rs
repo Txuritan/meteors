@@ -20,6 +20,15 @@ impl Story {
     model_some!(info: story::Info, meta: story::Meta,);
 }
 
+impl settings::Theme {
+    pub fn as_class(&self) -> &'static str {
+        match self {
+            settings::Theme::Light => "light",
+            settings::Theme::Dark => "dark",
+        }
+    }
+}
+
 impl story::Chapter {
     model_some!(content: Range,);
 }

@@ -13,8 +13,6 @@ pub fn search(ctx: &Context<'_, Database>) -> Result<Response> {
         .read()
         .map_err(|err| anyhow!("Unable to get read lock on the database: {:?}", err))?;
 
-    let theme = ctx.query("theme").unwrap_or_else(|| "light".into());
-
     let query = ctx
         .query("search")
         .ok_or_else(|| anyhow!("search query string not found in url"))?;
@@ -33,7 +31,12 @@ pub fn search(ctx: &Context<'_, Database>) -> Result<Response> {
 
     stories.sort_by(|a, b| a.title().cmp(b.title()));
 
-    let body = Layout::new("search", theme, query, IndexPage::new(stories));
+    let body = Layout::new(
+        "search",
+        db.settings().theme(),
+        query,
+        IndexPage::new(stories),
+    );
 
     Ok(crate::res!(200; body))
 }

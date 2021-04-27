@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html class="slim <%= theme %>">
+<html class="slim <%= theme.as_class() %>">
 
 <head>
     <meta charset="UTF-8">

@@ -1,6 +1,9 @@
 use {
     common::{
-        models::{proto::Entity, story, Story},
+        models::{
+            proto::{settings::Theme, Entity},
+            story, Story,
+        },
         prelude::*,
     },
     sailfish::TemplateOnce,
@@ -52,7 +55,7 @@ where
     B: TemplateOnce,
 {
     title: String,
-    theme: String,
+    theme: Theme,
     query: Cow<'static, str>,
     body: B,
 }
@@ -62,14 +65,13 @@ where
     B: TemplateOnce,
 {
     #[allow(clippy::needless_pass_by_value)]
-    pub fn new<S, T>(title: S, theme: T, query: Cow<'static, str>, body: B) -> Self
+    pub fn new<S>(title: S, theme: Theme, query: Cow<'static, str>, body: B) -> Self
     where
         S: ToString,
-        T: ToString,
     {
         Self {
             title: title.to_string(),
-            theme: theme.to_string(),
+            theme,
             query,
             body,
         }

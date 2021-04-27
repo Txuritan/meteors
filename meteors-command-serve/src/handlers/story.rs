@@ -13,8 +13,6 @@ pub fn story(ctx: &Context<'_, Database>) -> Result<Response> {
         .read()
         .map_err(|err| anyhow!("Unable to get read lock on the database: {:?}", err))?;
 
-    let theme = ctx.query("theme").unwrap_or_else(|| "light".into());
-
     let id = ctx
         .param("id")
         .map(String::from)
@@ -31,7 +29,7 @@ pub fn story(ctx: &Context<'_, Database>) -> Result<Response> {
 
     let body = Layout::new(
         story.info.title.clone(),
-        theme,
+        db.settings().theme(),
         query.clone(),
         ChapterPage::new(
             StoryCard::new(&id, story, query.clone())?,
