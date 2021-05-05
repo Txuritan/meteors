@@ -1,7 +1,10 @@
-<% let len = stories.len() -1; %>
-<% for (i, story) in stories.into_iter().enumerate() { %>
-    <%- story.render_once()? %>
-    <% if i != len { %>
-        <hr />
-    <% } %>
-<% }  %>
+<% if stories.is_empty() { %>
+<% } else { %>
+    <% let len = stories.len() -1; %>
+    <% for (i, story) in stories.into_iter().enumerate() { %>
+        <%- story.render_once()? %>
+        <% if i != len { %>
+            <hr />
+        <% } %>
+    <% }  %>
+<% } %>
