@@ -14,5 +14,4 @@ common = { path = "../meteors-common", package = "meteors-common" }
 format-ao3 = { path = "../meteors-format-ao3", package = "meteors-format-ao3" }
 
 argh = "0.1"
-flate2 = "1.0"
 xxhash-rust = { version = "0.8", features = [ "xxh3" ] }

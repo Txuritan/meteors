@@ -4,7 +4,7 @@ use {
         prelude::*,
         utils::FileIter,
     },
-    flate2::read::GzDecoder,
+    flate2::{read::GzDecoder, write::GzEncoder, Compression},
     fs2::FileExt as _,
     memmap2::Mmap,
     prost::Message,
@@ -14,7 +14,7 @@ use {
         env,
         ffi::OsStr,
         fs::{self, File},
-        io::Read as _,
+        io::{self, Read as _, Write as _},
         mem,
         path::PathBuf,
     },
@@ -222,6 +222,22 @@ impl Database {
         } else {
             bail!("unable to find story in locked mapped index")
         }
+    }
+
+    pub fn save(&self) -> Result<()> {
+        debug!("{} writing index", "+".bright_black());
+
+        let mut buf = Vec::new();
+
+        <Meteors as Message>::encode(&self.inner, &mut buf)?;
+
+        let mut encoder = GzEncoder::new(File::create(&self.index_path)?, Compression::best());
+
+        io::copy(&mut &buf[..], &mut encoder)?;
+
+        encoder.flush()?;
+
+        Ok(())
     }
 }
 

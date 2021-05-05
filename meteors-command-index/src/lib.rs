@@ -1,18 +1,16 @@
 use {
     common::{
         database::Database,
-        models::proto::{story, Entity, Meteors, Story},
+        models::proto::{story, Entity, Story},
         prelude::*,
         utils::{self, FileIter},
-        Action, Message,
+        Action,
     },
-    flate2::{write::GzEncoder, Compression},
     format_ao3::{FileKind, ParsedChapters, ParsedInfo, ParsedMeta},
     std::{
         collections::BTreeMap,
         ffi::OsStr,
-        fs::{self, DirEntry, File},
-        io::{self, Write as _},
+        fs::{self, DirEntry},
         path::Path,
     },
 };
@@ -87,7 +85,7 @@ impl Action for Command {
             index.stories.len().bright_purple(),
         );
 
-        write_index(&database)?;
+        database.save()?;
 
         Ok(())
     }
@@ -221,22 +219,6 @@ fn values_to_keys(vec: Vec<String>, map: &mut BTreeMap<String, Entity>) -> Vec<S
     vec.into_iter()
         .map(|name| Database::get_default(map, name, new_id))
         .collect()
-}
-
-fn write_index(db: &Database) -> Result<()> {
-    debug!("{} writing index", "+".bright_black());
-
-    let mut buf = Vec::new();
-
-    <Meteors as Message>::encode(&db.inner, &mut buf)?;
-
-    let mut encoder = GzEncoder::new(File::create(&db.index_path)?, Compression::best());
-
-    io::copy(&mut &buf[..], &mut encoder)?;
-
-    encoder.flush()?;
-
-    Ok(())
 }
 
 fn new_id<V>(map: &BTreeMap<String, V>) -> String {

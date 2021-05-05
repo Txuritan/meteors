@@ -34,13 +34,13 @@ pub struct Command {
         default = r#""0.0.0.0".to_owned()"#,
         description = "sets the server's bound IP address"
     )]
-    pub host: String,
+    host: String,
     #[argh(
         option,
         default = "8723",
         description = "sets the port that the server will listen to requests on"
     )]
-    pub port: u16,
+    port: u16,
 }
 
 impl Action for Command {

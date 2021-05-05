@@ -391,7 +391,6 @@ name = "meteors-command-index"
 version = "0.1.0"
 dependencies = [
  "argh",
- "flate2",
  "meteors-common",
  "meteors-format-ao3",
  "xxhash-rust",

@@ -31,12 +31,14 @@ message Settings {
     // this instances sync key
     string sync_key = 3;
     message Node {
-        // the name of an instance, used to allow the user to identify which node is what
+        // the name of an instance node, used to allow the user to identify which node is what
         string name = 1;
-        // the key of an instance, this is used for verifiaction
+        // the key of an instance node, this is used for verifiaction
         string key = 2;
-        // the port of an instance, used for port scanning to find said instance
-        uint32 port = 3;
+        // the host address of an instance, used for communication with said instance node
+        string host = 3;
+        // the port of an instance, used for port scanning to find said instance node
+        uint32 port = 4;
     }
     // other instances that this instance will try to sync with
     repeated Node nodes = 4;
