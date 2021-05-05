@@ -1,18 +1,12 @@
 [package]
-name = "meteors-command-index"
+name = "meteors-command-config"
 version = "0.1.0"
 authors = [ "Txuritan <txuritan@protonmail.com>" ]
 edition = "2018"
-
-license = "MIT"
 
 workspace = ".."
 
 [dependencies]
 common = { path = "../meteors-common", package = "meteors-common" }
 
-format-ao3 = { path = "../meteors-format-ao3", package = "meteors-format-ao3" }
-
 argh = "0.1"
-flate2 = "1.0"
-xxhash-rust = { version = "0.8", features = [ "xxh3" ] }

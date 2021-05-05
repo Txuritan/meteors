@@ -2,6 +2,7 @@
 members = [
     "html-parser",
     "meteors",
+    "meteors-command-config",
     "meteors-command-index",
     "meteors-command-serve",
     "meteors-common",

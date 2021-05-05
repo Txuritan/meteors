@@ -11,10 +11,11 @@ workspace = ".."
 [dependencies]
 common = { path = "../meteors-common", package = "meteors-common" }
 
+command-config = { path = "../meteors-command-config", package = "meteors-command-config" }
 command-index = { path = "../meteors-command-index", package = "meteors-command-index" }
 command-serve = { path = "../meteors-command-serve", package = "meteors-command-serve" }
 
-seahorse = "1.1"
+argh = "0.1"
 
 [build-dependencies]
 embed-resource = "1.3"

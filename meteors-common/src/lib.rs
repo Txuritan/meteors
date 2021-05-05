@@ -28,3 +28,7 @@ pub fn action<T>(name: &'static str, ctx: &T, run: fn(&T) -> anyhow::Result<()>)
         }
     }
 }
+
+pub trait Action {
+    fn run(&self) -> anyhow::Result<()>;
+}

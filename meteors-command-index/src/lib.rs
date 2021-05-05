@@ -4,11 +4,10 @@ use {
         models::proto::{story, Entity, Meteors, Story},
         prelude::*,
         utils::{self, FileIter},
-        Message,
+        Action, Message,
     },
     flate2::{write::GzEncoder, Compression},
     format_ao3::{FileKind, ParsedChapters, ParsedInfo, ParsedMeta},
-    seahorse::{Command, Context},
     std::{
         collections::BTreeMap,
         ffi::OsStr,
@@ -18,78 +17,80 @@ use {
     },
 };
 
-pub fn command() -> Command {
-    Command::new("index")
-        .description("builds or updates meteors' index")
-        .action(|ctx| {
-            common::action("index", ctx, run);
-        })
-}
+#[derive(argh::FromArgs)]
+#[argh(
+    subcommand,
+    name = "index",
+    description = "builds or updates the index"
+)]
+pub struct Command {}
 
-// open index
-// create id list
-// walk data dir
-//   get hash of file
-//   ignore if name and hash is in index, and id to list
-//   parse if not
-//   add parsed data to index removing old data, and id to list
-// remove id kv pairs that are not in the id list
-// write updated index
-#[allow(clippy::needless_collect)] // clippy doesn't detect that the keys are being removed
-fn run(_ctx: &Context) -> Result<()> {
-    debug!("{} building index", "+".bright_black());
+impl Action for Command {
+    // open index
+    // create id list
+    // walk data dir
+    //   get hash of file
+    //   ignore if name and hash is in index, and id to list
+    //   parse if not
+    //   add parsed data to index removing old data, and id to list
+    // remove id kv pairs that are not in the id list
+    // write updated index
+    #[allow(clippy::needless_collect)] // clippy doesn't detect that the keys are being removed
+    fn run(&self) -> Result<()> {
+        debug!("{} building index", "+".bright_black());
 
-    let mut database = Database::open()?;
+        let mut database = Database::open()?;
 
-    let mut known_ids = Vec::new();
+        let mut known_ids = Vec::new();
 
-    debug!(
-        "{} {} checking data",
-        "+".bright_black(),
-        "+".bright_black(),
-    );
+        debug!(
+            "{} {} checking data",
+            "+".bright_black(),
+            "+".bright_black(),
+        );
 
-    for entry in FileIter::new(fs::read_dir(&database.data_path)?) {
-        handle_entry(&mut database, &mut known_ids, entry?)?;
-    }
+        for entry in FileIter::new(fs::read_dir(&database.data_path)?) {
+            handle_entry(&mut database, &mut known_ids, entry?)?;
+        }
 
-    let index = database.index_mut();
+        let index = database.index_mut();
 
-    let index_keys = index.stories.keys().cloned().collect::<Vec<_>>();
+        let index_keys = index.stories.keys().cloned().collect::<Vec<_>>();
 
-    for id in index_keys
-        .into_iter()
-        .filter(|key| !known_ids.contains(&key))
-    {
-        match index.stories.remove(&id) {
-            Some(story) => {
-                debug!(
-                    "  {} removing missing story: {}",
-                    "|".bright_black(),
-                    story.file_name.bright_green(),
-                );
-            }
-            None => {
-                warn!(
-                    "  {} removing nonexistent story with id `{}`",
-                    "|".bright_black(),
-                    id.bright_blue(),
-                );
+        for id in index_keys
+            .into_iter()
+            .filter(|key| !known_ids.contains(&key))
+        {
+            match index.stories.remove(&id) {
+                Some(story) => {
+                    debug!(
+                        "  {} removing missing story: {}",
+                        "|".bright_black(),
+                        story.file_name.bright_green(),
+                    );
+                }
+                None => {
+                    warn!(
+                        "  {} removing nonexistent story with id `{}`",
+                        "|".bright_black(),
+                        id.bright_blue(),
+                    );
+                }
             }
         }
+
+        debug!("{} {} done", "+".bright_black(), "+".bright_black());
+
+        trace!(
+            "{} found {} stories",
+            "+".bright_black(),
+            index.stories.len().bright_purple(),
+        );
+
+        write_index(&database)?;
+
+        Ok(())
     }
-
-    debug!("{} {} done", "+".bright_black(), "+".bright_black());
-
-    trace!(
-        "{} found {} stories",
-        "+".bright_black(),
-        index.stories.len().bright_purple(),
-    );
-
-    write_index(&database)?;
-
-    Ok(())
 }
 
 fn handle_entry(db: &mut Database, known_ids: &mut Vec<String>, entry: DirEntry) -> Result<()> {
