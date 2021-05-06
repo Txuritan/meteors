@@ -1,0 +1,3 @@
+<div class="origins">
+    <span role="list">{{ #for (i, origin) in self.origins.iter().enumerate() }}<wbr /><a  href="/search?search={{ crate::filters::percent_encode(&origin.text).render(writer) }}">{{ &origin.text }}</a><wbr />{{ #if i != (self.origins.len() - 1) }}, {{ /if }}{{ /for }}</span>
+</div>

@@ -11,12 +11,12 @@ pub use {
     std::io::Cursor,
 };
 
-use {crate::views::Layout, sailfish::TemplateOnce};
+// use {crate::views::Layout, sailfish::TemplateOnce};
 
 #[macro_export]
 macro_rules! res {
     (200; $body:expr) => {
-        $crate::router::Response::from_string($crate::handlers::Res::response($body))
+        $crate::router::Response::from_string(::opal::Template::render_into_string($body)?)
             .with_header(
                 ::tiny_http::Header::from_bytes(
                     &b"Content-Type"[..],
@@ -73,27 +73,27 @@ pub fn style(ctx: &Context<'_, Database>) -> Result<Response> {
     ))
 }
 
-pub trait Res {
-    fn response(self) -> String;
-}
+// pub trait Res {
+//     fn response(self) -> String;
+// }
 
-impl<'s> Res for &'s str {
-    fn response(self) -> String {
-        self.to_string()
-    }
-}
+// impl<'s> Res for &'s str {
+//     fn response(self) -> String {
+//         self.to_string()
+//     }
+// }
 
-impl Res for String {
-    fn response(self) -> String {
-        self
-    }
-}
+// impl Res for String {
+//     fn response(self) -> String {
+//         self
+//     }
+// }
 
-impl<I> Res for Layout<I>
-where
-    I: TemplateOnce,
-{
-    fn response(self) -> String {
-        self.render_once().expect("unable to render template")
-    }
-}
+// impl<I> Res for Layout<I>
+// where
+//     I: TemplateOnce,
+// {
+//     fn response(self) -> String {
+//         self.render_once().expect("unable to render template")
+//     }
+// }

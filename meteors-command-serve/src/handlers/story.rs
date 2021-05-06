@@ -1,8 +1,8 @@
 use {
     crate::{
         router::{Context, Response},
+        templates::{pages, partials, Layout, Width},
         utils,
-        views::{ChapterPage, Layout, StoryCard},
     },
     common::{database::Database, prelude::*},
 };
@@ -28,11 +28,12 @@ pub fn story(ctx: &Context<'_, Database>) -> Result<Response> {
     let query = ctx.rebuild_query();
 
     let body = Layout::new(
-        story.info.title.clone(),
+        Width::Slim,
         db.settings().theme(),
+        story.info.title.clone(),
         query.clone(),
-        ChapterPage::new(
-            StoryCard::new(&id, story, query.clone())?,
+        pages::Chapter::new(
+            partials::StoryCard::new(&id, story, query.clone())?,
             &chapter,
             index,
             query,

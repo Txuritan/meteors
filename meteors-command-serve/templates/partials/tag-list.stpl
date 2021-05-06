@@ -1,3 +1,0 @@
-<div class="tags">
-    <span role="list"><% for (i, (kind, tag)) in tags.iter().enumerate() { %><wbr /><a class="tag <%= kind.class() %>" href="/search?search=<%- crate::filters::percent_encode(&tag.text) %>"><%- &tag.text %></a><wbr /><% if i != (&tags.len() - 1) { %>, <% } %><% } %></span>
-</div>

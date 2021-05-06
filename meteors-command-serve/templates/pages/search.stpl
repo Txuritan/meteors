@@ -1,0 +1,37 @@
+<main>
+    <% if stories.is_empty() { %>
+    <% } else { %>
+        <% let len = stories.len() -1; %>
+        <% for (i, story) in stories.into_iter().enumerate() { %>
+            <%- story.render_once()? %>
+            <% if i != len { %>
+                <hr />
+            <% } %>
+        <% }  %>
+    <% } %>
+</main>
+
+<aside>
+    <form action="/" method="get">
+        <button type="submit">Sort and Filter</button>
+        <fieldset>
+            <legend>Include</legend>
+            <details open="open">
+                <summary>Ratings</summary>
+                <span><input type="radio" name="rating" id="general"><label for="general">General (10,759)</label></span>
+                <span><input type="radio" name="rating" id="teen"><label for="teen">Teen (9,447)</label></span>
+                <span><input type="radio" name="rating" id="explicit"><label for="explicit">Explicit (4,965)</label></span>
+                <span><input type="radio" name="rating" id="mature"><label for="mature">Mature (2,832)</label></span>
+                <span><input type="radio" name="rating" id="not-rated"><label for="not-rated">Not Rated (1,816)</label></span>
+            </details>
+            <details open="open">
+                <summary>Warnings</summary>
+                <span><input type="checkbox" id="no-warnings-apply"><label for="no-warnings-apply">No Warnings Apply (17,118)</label></span>
+            </details>
+        </fieldset>
+        <fieldset>
+            <legend>Exclude</legend>
+        </fieldset>
+        <button type="submit"> Sort and Filter</button>
+    </form>
+</aside>

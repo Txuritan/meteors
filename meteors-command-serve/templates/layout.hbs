@@ -1,17 +1,17 @@
 <!DOCTYPE html>
-<html class="slim <%= theme.as_class() %>">
+<html class="{{ self.width.as_class() }} {{ self.theme.as_class() }}">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %> | local archive</title>
+    <title>{{ self.title }} | local archive</title>
     <link rel="stylesheet" href="/style.css">
 </head>
 
 <body>
     <header>
         <nav>
-            <a href="/<%= query %>" class="brand">local archive</a>
+            <a href="/{{ self.query }}" class="brand">local archive</a>
             <div class="spacer"></div>
             <form method="get" action="/search">
                 <input id="search" name="search" type="text" placeholder="search" value="" aria-label="Search" />
@@ -19,9 +19,9 @@
         </nav>
     </header>
     <hr />
-    <main>
-        <%- body.render_once()? %>
-    </main>
+    <section>
+        {{ self.body.render(writer) }}
+    </section>
 </body>
 
 </html>

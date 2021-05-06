@@ -1,8 +1,8 @@
 use {
     crate::{
         router::{Context, Response},
+        templates::{pages, partials, Layout, Width},
         utils,
-        views::{IndexPage, Layout, StoryCard},
     },
     common::{database::Database, prelude::*},
 };
@@ -21,17 +21,18 @@ pub fn index(ctx: &Context<'_, Database>) -> Result<Response> {
         .keys()
         .map(|id| {
             utils::get_story_full(&*db, id)
-                .and_then(|(id, story)| StoryCard::new(&id, story, query.clone()))
+                .and_then(|(id, story)| partials::StoryCard::new(&id, story, query.clone()))
         })
-        .collect::<Result<Vec<StoryCard<'_>>>>()?;
+        .collect::<Result<Vec<partials::StoryCard<'_>>>>()?;
 
     stories.sort_by(|a, b| a.title().cmp(b.title()));
 
     let body = Layout::new(
-        "home",
+        Width::Slim,
         db.settings().theme(),
+        "home",
         query,
-        IndexPage::new(stories),
+        pages::Index::new(stories),
     );
 
     Ok(crate::res!(200; body))

@@ -1,11 +1,12 @@
 mod handlers;
+mod templates;
 
 mod filters;
 mod models;
 mod router;
 mod search;
 mod utils;
-mod views;
+// mod views;
 
 use {
     crate::router::{get, Router},

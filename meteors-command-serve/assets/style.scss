@@ -37,13 +37,22 @@ html {
 
     &.wide {
         @include rfs(84rem, max-width);
+    }
 
-        body {
-            aside {
-                @include rfs(24rem, max-width);
-            }
+    body {
+        section {
+            display: flex;
+            flex-direction: row;
+
             main {
-                @include rfs(60rem, max-width);
+                flex: 60;
+            }
+
+            aside {
+                flex: 24;
+                @include margin-top(1rem);
+                @include margin-bottom(1rem);
+                @include margin-left(1rem);
             }
         }
     }

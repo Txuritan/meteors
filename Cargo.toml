@@ -7,8 +7,10 @@ members = [
     "meteors-command-serve",
     "meteors-common",
     "meteors-format-ao3",
+    "opal",
     "query",
     "query-macros",
+    "xtask",
 ]
 
 [profile.release]

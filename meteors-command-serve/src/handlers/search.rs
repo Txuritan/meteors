@@ -1,8 +1,9 @@
 use {
     crate::{
         router::{Context, Response},
-        search, utils,
-        views::{IndexPage, Layout, StoryCard},
+        search,
+        templates::{pages, partials, Layout, Width},
+        utils,
     },
     common::{database::Database, prelude::*},
 };
@@ -25,17 +26,18 @@ pub fn search(ctx: &Context<'_, Database>) -> Result<Response> {
         .iter()
         .map(|id| {
             utils::get_story_full(&*db, id)
-                .and_then(|(id, story)| StoryCard::new(&id, story, query.clone()))
+                .and_then(|(id, story)| partials::StoryCard::new(&id, story, query.clone()))
         })
         .collect::<Result<Vec<_>>>()?;
 
     stories.sort_by(|a, b| a.title().cmp(b.title()));
 
     let body = Layout::new(
-        "search",
+        Width::Slim,
         db.settings().theme(),
+        "search",
         query,
-        IndexPage::new(stories),
+        pages::Index::new(stories),
     );
 
     Ok(crate::res!(200; body))

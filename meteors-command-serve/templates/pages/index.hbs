@@ -1,0 +1,12 @@
+<main>
+    {{ #if self.stories.is_empty() }}
+    {{ else }}
+        {{ let len = self.stories.len() -1; }}
+        {{ #for (i, story) in self.stories.iter().enumerate() }}
+            {{ story.render(writer) }}
+            {{ #if i != len }}
+                <hr />
+            {{ /if }}
+        {{ /for }}
+    {{ /if }}
+</main>
