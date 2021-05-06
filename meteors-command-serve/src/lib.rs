@@ -6,7 +6,6 @@ mod models;
 mod router;
 mod search;
 mod utils;
-// mod views;
 
 use {
     crate::router::{get, Router},

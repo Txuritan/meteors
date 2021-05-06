@@ -1,4 +1,3 @@
-// use sailfish::runtime::{Buffer, Render, RenderError};
 use {
     opal::Template,
     std::io::{self, Write},
@@ -30,16 +29,3 @@ impl<B: AsRef<[u8]>> Template for PercentEncode<B> {
         len + (len / 2)
     }
 }
-
-// impl<B: AsRef<[u8]>> Render for PercentEncode<B> {
-//     fn render(&self, b: &mut Buffer) -> Result<(), RenderError> {
-//         use std::fmt::Write;
-
-//         write!(
-//             b,
-//             "{}",
-//             percent_encoding::percent_encode(self.0.as_ref(), &percent_encoding::CONTROLS)
-//         )
-//         .map_err(RenderError::from)
-//     }
-// }

@@ -11,8 +11,6 @@ pub use {
     std::io::Cursor,
 };
 
-// use {crate::views::Layout, sailfish::TemplateOnce};
-
 #[macro_export]
 macro_rules! res {
     (200; $body:expr) => {
@@ -72,28 +70,3 @@ pub fn style(ctx: &Context<'_, Database>) -> Result<Response> {
         None,
     ))
 }
-
-// pub trait Res {
-//     fn response(self) -> String;
-// }
-
-// impl<'s> Res for &'s str {
-//     fn response(self) -> String {
-//         self.to_string()
-//     }
-// }
-
-// impl Res for String {
-//     fn response(self) -> String {
-//         self
-//     }
-// }
-
-// impl<I> Res for Layout<I>
-// where
-//     I: TemplateOnce,
-// {
-//     fn response(self) -> String {
-//         self.render_once().expect("unable to render template")
-//     }
-// }
