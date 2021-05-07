@@ -4,7 +4,11 @@ mod story;
 
 pub use {
     crate::{
-        handlers::{index::index, search::search, story::story},
+        handlers::{
+            index::index,
+            search::{search, search_v2},
+            story::story,
+        },
         router::{Context, Header, HeaderField, Response, StatusCode},
     },
     common::{database::Database, prelude::*},

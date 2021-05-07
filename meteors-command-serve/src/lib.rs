@@ -2,7 +2,6 @@ mod handlers;
 mod templates;
 
 mod filters;
-mod models;
 mod router;
 mod search;
 mod utils;
@@ -76,6 +75,7 @@ impl Action for Command {
                 .on("/", get(handlers::index))
                 .on("/story/:id/:chapter", get(handlers::story))
                 .on("/search", get(handlers::search))
+                .on("/search2", get(handlers::search_v2))
                 .on("/style.css", get(handlers::style)),
         );
 

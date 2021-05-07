@@ -1,5 +1,5 @@
 impl<B: Template> ::opal::Template for Layout<B> {
-#[allow(dead_code, clippy::if_same_then_else)]
+#[allow(dead_code, unused_variables, clippy::if_same_then_else)]
     fn size_hint(&self) -> usize {
         let mut hint = 0;hint += 30;
 hint +=  self.width.as_class() .len();

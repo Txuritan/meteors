@@ -38,11 +38,11 @@ pub type Response = tiny_http::Response<Cursor<Vec<u8>>>;
 
 pub struct Context<'s, S> {
     params: Vec<(&'s str, &'s str)>,
-    query: Vec<(Cow<'s, str>, Cow<'s, str>)>,
     raw_query: &'s str,
 
     pub state: Arc<RwLock<S>>,
     pub headers: &'s [Header],
+    pub query: Vec<(Cow<'s, str>, Cow<'s, str>)>,
 }
 
 impl<'s, S> Context<'s, S> {

@@ -34,6 +34,17 @@ impl story::Chapter {
 }
 
 impl story::meta::Rating {
+    pub const fn name(self) -> &'static str {
+        match self {
+            story::meta::Rating::Explicit => "Explicit",
+            story::meta::Rating::Mature => "Mature",
+            story::meta::Rating::Teen => "Teen",
+            story::meta::Rating::General => "General",
+            story::meta::Rating::NotRated => "Not Rated",
+            story::meta::Rating::Unknown => "Unknown",
+        }
+    }
+
     pub const fn class(self) -> &'static str {
         match self {
             story::meta::Rating::Explicit => "explicit",

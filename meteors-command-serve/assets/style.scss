@@ -37,22 +37,21 @@ html {
 
     &.wide {
         @include rfs(84rem, max-width);
-    }
 
-    body {
-        section {
-            display: flex;
-            flex-direction: row;
-
-            main {
-                flex: 60;
-            }
-
-            aside {
-                flex: 24;
-                @include margin-top(1rem);
-                @include margin-bottom(1rem);
-                @include margin-left(1rem);
+        body {
+            section {
+                display: flex;
+                flex-direction: row;
+                aside {
+                    flex: 24;
+                    @include rfs(1.5em, line-height);
+                    @include margin-bottom(1rem);
+                    @include margin-top(1rem);
+                    @include margin-left(1rem);
+                }
+                main {
+                    flex: 60;
+                }
             }
         }
     }
@@ -310,6 +309,31 @@ html.dark {
         }
         .summary {
             color: $silver;
+        }
+    }
+}
+
+form#filter {
+    button {
+        @include font-size(1rem);
+        &:hover {
+            border-color: $blue;
+        }
+    }
+    fieldset {
+        border: 1px solid black;
+        @include margin-bottom(0.5rem);
+        @include margin-top(0.5rem);
+    }
+    details {
+        margin: 3px 0;
+        summary {
+            border-bottom: 1px solid black;
+            margin: 3px 0;
+            padding: 3px 0;
+        }
+        span {
+            display: block;
         }
     }
 }

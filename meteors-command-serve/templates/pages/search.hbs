@@ -1,0 +1,65 @@
+<main>
+    {{ #if self.stories.is_empty() }}
+    {{ else }}
+        {{ let len = self.stories.len() -1; }}
+        {{ #for (i, story) in self.stories.iter().enumerate() }}
+            {{ story.render(writer) }}
+            {{ #if i != len }}
+                <hr />
+            {{ /if }}
+        {{ /for }}
+    {{ /if }}
+</main>
+
+<aside>
+    <form action="/" method="get" id="filter">
+        <button type="submit">Sort and Filter</button>
+        <fieldset>
+            <legend>Include</legend>
+            <details open="open">
+                <summary>Ratings</summary>
+                {{ #for (rating, count) in self.stats.ratings.iter() }}
+                    {{ let encoded = crate::filters::percent_encode(rating.class()); }}
+                    <span>
+                        <input type="radio" name="rating" id="{{ encoded.render(writer) }}">
+                        <label for="{{ encoded.render(writer) }}">{{ rating.name() }} ({{ count }})</label>
+                    </span>
+                {{ /for }}
+            </details>
+            <details open="open">
+                <summary>Warnings</summary>
+                {{ #for (entry, count) in self.stats.warnings.iter() }}
+                    {{ let encoded = crate::filters::percent_encode(&entry.text); }}
+                    <span>
+                        <input type="checkbox" id="{{ encoded.render(writer) }}">
+                        <label for="{{ encoded.render(writer) }}">{{ entry.text }} ({{ count }})</label>
+                    </span>
+                {{ /for }}
+            </details>
+            <details open="open">
+                <summary>Categories</summary>
+                {{ #for (entry, count) in self.stats.categories.iter() }}
+                    {{ let encoded = crate::filters::percent_encode(&entry.text); }}
+                    <span>
+                        <input type="checkbox" id="{{ encoded.render(writer) }}">
+                        <label for="{{ encoded.render(writer) }}">{{ entry.text }} ({{ count }})</label>
+                    </span>
+                {{ /for }}
+            </details>
+            <details open="open">
+                <summary>Origins</summary>
+                {{ #for (entry, count) in self.stats.origins.iter() }}
+                    {{ let encoded = crate::filters::percent_encode(&entry.text); }}
+                    <span>
+                        <input type="checkbox" id="{{ encoded.render(writer) }}">
+                        <label for="{{ encoded.render(writer) }}">{{ entry.text }} ({{ count }})</label>
+                    </span>
+                {{ /for }}
+            </details>
+        </fieldset>
+        <fieldset>
+            <legend>Exclude</legend>
+        </fieldset>
+        <button type="submit"> Sort and Filter</button>
+    </form>
+</aside>

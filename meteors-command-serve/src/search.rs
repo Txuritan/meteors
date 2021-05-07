@@ -1,10 +1,278 @@
 use {
     common::{
         database::Database,
-        models::proto::{Entity, Story},
+        models::proto::{story::meta::Rating, Entity, Index, Story},
     },
-    std::collections::BTreeMap,
+    std::{
+        borrow::{Borrow as _, Cow},
+        collections::{BTreeMap, HashMap},
+        hash::Hash,
+    },
 };
+
+pub fn search_v2<'s>(
+    query: &[(Cow<'s, str>, Cow<'s, str>)],
+    stories: &mut Vec<(&'s String, &'s Story)>,
+) -> Stats<'s> {
+    // modified version of [`Iterator::partition`] to remove [`Default`] bounds
+    #[inline]
+    fn partition<I, B, F>(iter: I, f: F) -> (Vec<B>, Vec<B>)
+    where
+        I: Iterator<Item = B>,
+        F: FnMut(&I::Item) -> bool,
+    {
+        #[inline]
+        fn extend<'a, T, B: Extend<T>>(
+            mut f: impl FnMut(&T) -> bool + 'a,
+            left: &'a mut B,
+            right: &'a mut B,
+        ) -> impl FnMut((), T) + 'a {
+            move |(), x| {
+                if f(&x) {
+                    left.extend(Some(x));
+                } else {
+                    right.extend(Some(x));
+                }
+            }
+        }
+
+        let mut left: Vec<B> = Vec::new();
+        let mut right: Vec<B> = Vec::new();
+
+        iter.fold((), extend(f, &mut left, &mut right));
+
+        (left, right)
+    }
+
+    #[inline]
+    fn fn_filter<'i>((key, _value): &'i &(Cow<'_, str>, Cow<'_, str>)) -> bool {
+        let include = Group::match_include(key.borrow());
+        let exclude = Group::match_exclude(key.borrow());
+
+        include | exclude
+    }
+
+    let (include, exclude) = partition(query.iter().filter(fn_filter), |(key, _value)| {
+        Group::match_include(key.borrow())
+    });
+
+    let include = Group::from(include);
+    let exclude = Group::from(exclude);
+
+    include.filter(stories, true);
+    exclude.filter(stories, false);
+
+    Stats::new(&stories[..])
+}
+
+pub struct Stats<'m> {
+    ratings: Vec<(Rating, usize)>,
+    warnings: Vec<(&'m String, usize)>,
+    categories: Vec<(&'m String, usize)>,
+    origins: Vec<(&'m String, usize)>,
+    characters: Vec<(&'m String, usize)>,
+    generals: Vec<(&'m String, usize)>,
+}
+
+pub struct FilledStats<'m> {
+    pub ratings: Vec<(Rating, usize)>,
+    pub warnings: Vec<(&'m Entity, usize)>,
+    pub categories: Vec<(&'m Entity, usize)>,
+    pub origins: Vec<(&'m Entity, usize)>,
+    pub characters: Vec<(&'m Entity, usize)>,
+    pub generals: Vec<(&'m Entity, usize)>,
+}
+
+impl<'m> Stats<'m> {
+    fn new(stories: &[(&'m String, &'m Story)]) -> Stats<'m> {
+        let mut ratings = HashMap::<Rating, usize>::new();
+
+        let mut warnings = HashMap::<&String, usize>::new();
+        let mut categories = HashMap::<&String, usize>::new();
+        let mut origins = HashMap::<&String, usize>::new();
+        let mut characters = HashMap::<&String, usize>::new();
+        let mut generals = HashMap::<&String, usize>::new();
+
+        fn inc<K>(map: &mut HashMap<K, usize>, entry: K)
+        where
+            K: Eq + Hash,
+        {
+            map.entry(entry)
+                .and_modify(|count| *count += 1)
+                .or_insert(1);
+        }
+
+        for (_, story) in stories {
+            let meta = story.meta();
+
+            inc(&mut ratings, meta.rating());
+
+            let lists = vec![
+                (&mut warnings, &meta.warnings),
+                (&mut categories, &meta.categories),
+                (&mut origins, &meta.origins),
+                (&mut characters, &meta.characters),
+                (&mut generals, &meta.generals),
+            ];
+
+            for (map, list) in lists {
+                for entry in list {
+                    inc(map, entry);
+                }
+            }
+        }
+
+        fn to_top_list<K>(map: HashMap<K, usize>) -> Vec<(K, usize)>
+        where
+            K: Eq + Hash,
+        {
+            let mut list = map.into_iter().collect::<Vec<_>>();
+
+            list.sort_by(|a, b| a.1.cmp(&b.1).reverse());
+
+            list.truncate(10);
+
+            list
+        }
+
+        Stats {
+            ratings: to_top_list(ratings),
+            warnings: to_top_list(warnings),
+            categories: to_top_list(categories),
+            origins: to_top_list(origins),
+            characters: to_top_list(characters),
+            generals: to_top_list(generals),
+        }
+    }
+
+    pub fn fill(self, index: &'m Index) -> Option<FilledStats<'m>> {
+        fn fill<'m>(
+            list: Vec<(&'m String, usize)>,
+            tree: &'m BTreeMap<String, Entity>,
+        ) -> Option<Vec<(&'m Entity, usize)>> {
+            list.into_iter()
+                .map(|(id, count)| tree.get(id).map(|entity| (entity, count)))
+                .collect::<Option<Vec<_>>>()
+        }
+
+        Some(FilledStats {
+            ratings: self.ratings,
+            warnings: fill(self.warnings, &index.warnings)?,
+            categories: fill(self.categories, &index.categories)?,
+            origins: fill(self.origins, &index.origins)?,
+            characters: fill(self.characters, &index.characters)?,
+            generals: fill(self.generals, &index.generals)?,
+        })
+    }
+}
+
+pub enum EntityKind {
+    Origin,
+    Pairing,
+    Character,
+    General,
+}
+
+#[derive(Default)]
+struct Group<'i> {
+    rating: Option<Vec<Cow<'i, str>>>,
+    warnings: Option<Vec<Cow<'i, str>>>,
+    categories: Option<Vec<Cow<'i, str>>>,
+    origins: Option<Vec<Cow<'i, str>>>,
+    characters: Option<Vec<Cow<'i, str>>>,
+    pairings: Option<Vec<Cow<'i, str>>>,
+    generals: Option<Vec<Cow<'i, str>>>,
+}
+
+impl<'i> Group<'i> {
+    #[inline]
+    fn match_include(text: &str) -> bool {
+        matches!(text, "ir" | "iw" | "ict" | "io" | "ich" | "ip" | "ig")
+    }
+
+    #[inline]
+    fn match_exclude(text: &str) -> bool {
+        matches!(text, "er" | "ew" | "ect" | "eo" | "ech" | "ep" | "eg")
+    }
+
+    fn filter<'s>(self, stories: &mut Vec<(&'s String, &'s Story)>, include: bool) {
+        let lists = vec![
+            self.origins.map(|list| (EntityKind::Origin, list)),
+            self.characters.map(|list| (EntityKind::Character, list)),
+            self.pairings.map(|list| (EntityKind::Pairing, list)),
+            self.generals.map(|list| (EntityKind::General, list)),
+        ];
+
+        for entry in lists {
+            if let Some((kind, list)) = entry {
+                Self::filter_retain(stories, kind, include, list);
+            }
+        }
+    }
+
+    fn filter_retain<'s>(
+        stories: &mut Vec<(&'s String, &'s Story)>,
+        kind: EntityKind,
+        include: bool,
+        entities: Vec<Cow<'i, str>>,
+    ) {
+        match kind {
+            EntityKind::Origin => {
+                for entity in entities {
+                    stories.retain(|(_id, story)| {
+                        include ^ story.meta().origins.iter().any(|id| id == &entity)
+                    });
+                }
+            }
+            EntityKind::Pairing => {
+                for entity in entities {
+                    stories.retain(|(_id, story)| {
+                        include ^ story.meta().pairings.iter().any(|id| id == &entity)
+                    });
+                }
+            }
+            EntityKind::Character => {
+                for entity in entities {
+                    stories.retain(|(_id, story)| {
+                        include ^ story.meta().characters.iter().any(|id| id == &entity)
+                    });
+                }
+            }
+            EntityKind::General => {
+                for entity in entities {
+                    stories.retain(|(_id, story)| {
+                        include ^ story.meta().generals.iter().any(|id| id == &entity)
+                    });
+                }
+            }
+        }
+    }
+}
+
+impl<'i> From<Vec<&(Cow<'i, str>, Cow<'i, str>)>> for Group<'i> {
+    fn from(list: Vec<&(Cow<'i, str>, Cow<'i, str>)>) -> Self {
+        let mut group: Group = Group::default();
+
+        for (key, value) in list {
+            let list = match key.borrow() {
+                "ir" | "er" => Some(&mut group.rating),
+                "iw" | "ew" => Some(&mut group.warnings),
+                "ict" | "ect" => Some(&mut group.categories),
+                "io" | "eo" => Some(&mut group.origins),
+                "ich" | "ech" => Some(&mut group.characters),
+                "ip" | "ep" => Some(&mut group.pairings),
+                "ig" | "eg" => Some(&mut group.generals),
+                _ => None,
+            };
+
+            if let Some(list) = list {
+                list.get_or_insert_with(Vec::new).push(value.clone());
+            }
+        }
+
+        group
+    }
+}
 
 macro_rules! help {
     (bound; $db:ident, $iter:ident, $text:ident, $var:ident, $mem:ident) => {{

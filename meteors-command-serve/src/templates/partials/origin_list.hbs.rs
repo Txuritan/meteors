@@ -1,5 +1,5 @@
 impl ::opal::Template for OriginList {
-#[allow(dead_code, clippy::if_same_then_else)]
+#[allow(dead_code, unused_variables, clippy::if_same_then_else)]
     fn size_hint(&self) -> usize {
         let mut hint = 0;hint += 45;
 for (i, origin) in self.origins.iter().enumerate() {
