@@ -42,7 +42,10 @@ pub fn compile(bounds: Option<(&str, &str)>, typ: &str, text: &str) -> Result<St
         writeln!(&mut buf, "impl ::opal::Template for {} {{", typ,)?;
     }
 
-    writeln!(&mut buf, "#[allow(dead_code, clippy::if_same_then_else)]")?;
+    writeln!(
+        &mut buf,
+        "#[allow(dead_code, unused_variables, clippy::if_same_then_else)]"
+    )?;
     writeln!(&mut buf, "    fn size_hint(&self) -> usize {{")?;
     write!(&mut buf, "        let mut hint = 0;")?;
     write_size_hint(&mut buf, &tokens)?;
@@ -107,10 +110,14 @@ where
     for token in tokens {
         match token {
             Stage4::Expr(expr) => {
+                if expr.trim() == "count" {
+                    continue;
+                }
+
                 if !(expr.contains('+') || expr.contains('-') || expr.contains("len")) {
                     writeln!(writer, "hint += {}.len();", expr)?;
                 }
-            },
+            }
             Stage4::ExprAssign(expr) => writeln!(writer, "{}", expr)?,
             Stage4::ExprRender(expr) => writeln!(
                 writer,
