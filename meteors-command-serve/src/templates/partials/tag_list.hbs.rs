@@ -27,7 +27,7 @@ for (i, (kind, tag)) in self.tags.iter().enumerate() {
 write!(writer, "<wbr /><a class=\"tag ")?;
 write!(writer, "{}",  kind.class() )?;
 write!(writer, "\" href=\"/search?search=")?;
- crate::filters::percent_encode(&tag.text).render(writer) ?;
+crate::filters::percent_encode(&tag.text).render(writer)?;
 write!(writer, "\">")?;
 write!(writer, "{}",  &tag.text )?;
 write!(writer, "</a><wbr />")?;

@@ -28,7 +28,7 @@ write!(writer, "{}",  self.title )?;
 write!(writer, " | local archive</title>\r\n    <link rel=\"stylesheet\" href=\"/style.css\">\r\n</head>\r\n\r\n<body>\r\n    <header>\r\n        <nav>\r\n            <a href=\"/")?;
 write!(writer, "{}",  self.query )?;
 write!(writer, "\" class=\"brand\">local archive</a>\r\n            <div class=\"spacer\"></div>\r\n            <form method=\"get\" action=\"/search\">\r\n                <input id=\"search\" name=\"search\" type=\"text\" placeholder=\"search\" value=\"\" aria-label=\"Search\" />\r\n            </form>\r\n        </nav>\r\n    </header>\r\n    <hr />\r\n    <section>\r\n        ")?;
- self.body.render(writer) ?;
+self.body.render(writer)?;
 write!(writer, "\r\n    </section>\r\n</body>\r\n\r\n</html>\r\n")?;
         Ok(())
     }

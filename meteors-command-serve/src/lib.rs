@@ -7,7 +7,7 @@ mod search;
 mod utils;
 
 use {
-    crate::router::{get, Router},
+    crate::router::{get, post, Router},
     common::{database::Database, prelude::*, Action},
     std::{
         net::{Ipv4Addr, SocketAddr},
@@ -73,6 +73,8 @@ impl Action for Command {
         let router = Arc::new(
             Router::new(database.clone())
                 .on("/", get(handlers::index))
+                .on("/download", get(handlers::download_get))
+                .on("/download", post(handlers::download_post))
                 .on("/story/:id/:chapter", get(handlers::story))
                 .on("/search", get(handlers::search))
                 .on("/search2", get(handlers::search_v2))

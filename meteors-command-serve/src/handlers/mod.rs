@@ -1,3 +1,4 @@
+mod download;
 mod index;
 mod search;
 mod story;
@@ -5,6 +6,7 @@ mod story;
 pub use {
     crate::{
         handlers::{
+            download::{download_get, download_post},
             index::index,
             search::{search, search_v2},
             story::story,
@@ -15,22 +17,7 @@ pub use {
     std::io::Cursor,
 };
 
-#[macro_export]
-macro_rules! res {
-    (200; $body:expr) => {
-        $crate::router::Response::from_string(::opal::Template::render_into_string($body)?)
-            .with_header(
-                ::tiny_http::Header::from_bytes(
-                    &b"Content-Type"[..],
-                    &b"text/html; charset=utf-8"[..],
-                )
-                .unwrap(),
-            )
-            .with_status_code(200)
-    };
-}
-
-pub fn style(ctx: &Context<'_, Database>) -> Result<Response> {
+pub fn style(ctx: Context<'_, Database>) -> Result<Response> {
     static CSS: &str = include_str!("../../assets/style.css");
     // RELEASE: change anytime theres a release and the style gets updated
     static CSS_TAG: &str = "f621e1d55cbee8397c906c7d72d0fb9a4520a06be6218abeccff1ffcf75f00b3";
@@ -50,7 +37,7 @@ pub fn style(ctx: &Context<'_, Database>) -> Result<Response> {
 
     let target_header = HeaderField::from_bytes(&b"If-None-Match"[..])?;
     let header = ctx
-        .headers
+        .headers()
         .iter()
         .find(|header| header.field == target_header);
 

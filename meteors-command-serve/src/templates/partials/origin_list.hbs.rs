@@ -23,7 +23,7 @@ use {::opal::Template as _, std::io::Write as _};
 write!(writer, "<div class=\"origins\">\r\n    <span role=\"list\">")?;
 for (i, origin) in self.origins.iter().enumerate() {
 write!(writer, "<wbr /><a  href=\"/search?search=")?;
- crate::filters::percent_encode(&origin.text).render(writer) ?;
+crate::filters::percent_encode(&origin.text).render(writer)?;
 write!(writer, "\">")?;
 write!(writer, "{}",  &origin.text )?;
 write!(writer, "</a><wbr />")?;

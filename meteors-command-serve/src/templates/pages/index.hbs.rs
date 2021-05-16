@@ -6,7 +6,7 @@ if self.stories.is_empty() {
 hint += 6;
 } else {
 hint += 10;
- let len = self.stories.len() -1; 
+let len = self.stories.len() -1;
 hint += 10;
 for (i, story) in self.stories.iter().enumerate() {
 hint += 14;
@@ -32,11 +32,11 @@ if self.stories.is_empty() {
 write!(writer, "\r\n    ")?;
 } else {
 write!(writer, "\r\n        ")?;
- let len = self.stories.len() -1; 
+let len = self.stories.len() -1;
 write!(writer, "\r\n        ")?;
 for (i, story) in self.stories.iter().enumerate() {
 write!(writer, "\r\n            ")?;
- story.render(writer) ?;
+story.render(writer)?;
 write!(writer, "\r\n            ")?;
 if i != len {
 write!(writer, "\r\n                <hr />\r\n            ")?;

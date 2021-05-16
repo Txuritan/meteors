@@ -61,7 +61,7 @@ write!(writer, "{}",  self.info.title )?;
 write!(writer, "</a> by\r\n            ")?;
 for (i, author) in self.authors.iter().enumerate() {
 write!(writer, "\r\n                <a href=\"/search?search=")?;
- crate::filters::percent_encode(&author.text).render(writer) ?;
+crate::filters::percent_encode(&author.text).render(writer)?;
 write!(writer, "\">")?;
 write!(writer, "{}",  author.text )?;
 write!(writer, "</a>")?;
@@ -81,9 +81,9 @@ write!(writer, ",")?;
 write!(writer, "\r\n            ")?;
 }
 write!(writer, "\r\n        </p>\r\n    </header>\r\n    ")?;
- self.origins.render(writer) ?;
+self.origins.render(writer)?;
 write!(writer, "\r\n    ")?;
- self.tags.render(writer) ?;
+self.tags.render(writer)?;
 write!(writer, "\r\n    <div class=\"summary\">")?;
 write!(writer, "{}",  self.info.summary )?;
 write!(writer, "</div>\r\n    <p class=\"meta\"><span class=\"info\">chapters</span>: <span class=\"count\">")?;

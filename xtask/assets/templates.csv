@@ -1,5 +1,6 @@
 meteors-command-serve;B: Template;B;Layout;layout.hbs
 meteors-command-serve;'s;'s;Chapter;pages/chapter.hbs
+meteors-command-serve;;;Download;pages/download.hbs
 meteors-command-serve;'s;'s;Index;pages/index.hbs
 meteors-command-serve;'s;'s;Search;pages/search.hbs
 meteors-command-serve;;;OriginList;partials/origin-list.hbs

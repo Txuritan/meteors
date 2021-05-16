@@ -7,6 +7,42 @@ use common::{
     prelude::*,
 };
 
+pub mod http {
+    use {common::prelude::*, curl::easy::Easy, std::cell::RefCell};
+
+    thread_local! {
+        // cURL says to not use the same handle on multiple threads
+        static HANDLE: RefCell<Easy> = RefCell::new(Easy::new());
+    }
+
+    pub fn get(url: &str) -> Result<Vec<u8>> {
+        let mut buf = Vec::new();
+
+        HANDLE.try_with(|handle| -> Result<()> {
+            let mut handle = handle.borrow_mut();
+
+            handle.fail_on_error(true)?;
+            handle.follow_location(true)?;
+            handle.useragent("meteors/1.0 (txuritan@github.com)")?;
+            handle.url(url)?;
+
+            let mut transfer = handle.transfer();
+
+            transfer.write_function(|data| {
+                buf.extend_from_slice(data);
+
+                Ok(data.len())
+            })?;
+
+            transfer.perform()?;
+
+            Ok(())
+        })??;
+
+        Ok(buf)
+    }
+}
+
 #[allow(clippy::ptr_arg)]
 pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, Story)> {
     enum Kind {

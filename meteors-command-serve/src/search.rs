@@ -70,15 +70,19 @@ pub struct Stats<'m> {
     warnings: Vec<(&'m String, usize)>,
     categories: Vec<(&'m String, usize)>,
     origins: Vec<(&'m String, usize)>,
+    pairings: Vec<(&'m String, usize)>,
     characters: Vec<(&'m String, usize)>,
     generals: Vec<(&'m String, usize)>,
 }
+
+pub struct StatKind {}
 
 pub struct FilledStats<'m> {
     pub ratings: Vec<(Rating, usize)>,
     pub warnings: Vec<(&'m Entity, usize)>,
     pub categories: Vec<(&'m Entity, usize)>,
     pub origins: Vec<(&'m Entity, usize)>,
+    pub pairings: Vec<(&'m Entity, usize)>,
     pub characters: Vec<(&'m Entity, usize)>,
     pub generals: Vec<(&'m Entity, usize)>,
 }
@@ -90,6 +94,7 @@ impl<'m> Stats<'m> {
         let mut warnings = HashMap::<&String, usize>::new();
         let mut categories = HashMap::<&String, usize>::new();
         let mut origins = HashMap::<&String, usize>::new();
+        let mut pairings = HashMap::<&String, usize>::new();
         let mut characters = HashMap::<&String, usize>::new();
         let mut generals = HashMap::<&String, usize>::new();
 
@@ -111,6 +116,7 @@ impl<'m> Stats<'m> {
                 (&mut warnings, &meta.warnings),
                 (&mut categories, &meta.categories),
                 (&mut origins, &meta.origins),
+                (&mut pairings, &meta.pairings),
                 (&mut characters, &meta.characters),
                 (&mut generals, &meta.generals),
             ];
@@ -140,6 +146,7 @@ impl<'m> Stats<'m> {
             warnings: to_top_list(warnings),
             categories: to_top_list(categories),
             origins: to_top_list(origins),
+            pairings: to_top_list(pairings),
             characters: to_top_list(characters),
             generals: to_top_list(generals),
         }
@@ -160,6 +167,7 @@ impl<'m> Stats<'m> {
             warnings: fill(self.warnings, &index.warnings)?,
             categories: fill(self.categories, &index.categories)?,
             origins: fill(self.origins, &index.origins)?,
+            pairings: fill(self.pairings, &index.pairings)?,
             characters: fill(self.characters, &index.characters)?,
             generals: fill(self.generals, &index.generals)?,
         })

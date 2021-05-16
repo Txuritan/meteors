@@ -8,9 +8,9 @@ use {
     common::{database::Database, prelude::*},
 };
 
-pub fn search(ctx: &Context<'_, Database>) -> Result<Response> {
+pub fn search(ctx: Context<'_, Database>) -> Result<Response> {
     let db = ctx
-        .state
+        .database
         .read()
         .map_err(|err| anyhow!("Unable to get read lock on the database: {:?}", err))?;
 
@@ -43,9 +43,9 @@ pub fn search(ctx: &Context<'_, Database>) -> Result<Response> {
     Ok(crate::res!(200; body))
 }
 
-pub fn search_v2(ctx: &Context<'_, Database>) -> Result<Response> {
+pub fn search_v2(ctx: Context<'_, Database>) -> Result<Response> {
     let db = ctx
-        .state
+        .database
         .read()
         .map_err(|err| anyhow!("Unable to get read lock on the database: {:?}", err))?;
 

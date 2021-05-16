@@ -74,8 +74,8 @@ where
     for token in tokens {
         match token {
             Stage4::Expr(expr) => writeln!(writer, "write!(writer, \"{{}}\", {})?;", expr)?,
-            Stage4::ExprAssign(expr) => writeln!(writer, "{}", expr)?,
-            Stage4::ExprRender(expr) => writeln!(writer, "{}?;", expr)?,
+            Stage4::ExprAssign(expr) => writeln!(writer, "{}", expr.trim())?,
+            Stage4::ExprRender(expr) => writeln!(writer, "{}?;", expr.trim())?,
             Stage4::If(cond, if_tokens, else_tokens) => {
                 writeln!(writer, "{} {{", cond)?;
 
@@ -118,7 +118,7 @@ where
                     writeln!(writer, "hint += {}.len();", expr)?;
                 }
             }
-            Stage4::ExprAssign(expr) => writeln!(writer, "{}", expr)?,
+            Stage4::ExprAssign(expr) => writeln!(writer, "{}", expr.trim())?,
             Stage4::ExprRender(expr) => writeln!(
                 writer,
                 "hint += &{}.size_hint();",

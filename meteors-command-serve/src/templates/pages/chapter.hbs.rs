@@ -2,9 +2,9 @@ impl<'s> ::opal::Template for Chapter<'s> {
 #[allow(dead_code, unused_variables, clippy::if_same_then_else)]
     fn size_hint(&self) -> usize {
         let mut hint = 0;hint += 12;
- let len = self.card.len; 
+let len = self.card.len;
 hint += 6;
- let id = self.card.id; 
+let id = self.card.id;
 hint += 6;
 hint += &self.card.size_hint();
 hint += 18;
@@ -58,11 +58,11 @@ hint += 9;
         {
 use {::opal::Template as _, std::io::Write as _};
 write!(writer, "<main>\r\n    ")?;
- let len = self.card.len; 
+let len = self.card.len;
 write!(writer, "\r\n    ")?;
- let id = self.card.id; 
+let id = self.card.id;
 write!(writer, "\r\n    ")?;
- self.card.render(writer) ?;
+self.card.render(writer)?;
 write!(writer, "\r\n    <hr />\r\n    ")?;
 write!(writer, "{}",  self.chapter )?;
 write!(writer, "\r\n    <hr />\r\n    ")?;

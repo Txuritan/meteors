@@ -6,7 +6,7 @@ use {
     std::{
         borrow::Cow,
         collections::BTreeMap,
-        io::Cursor,
+        io::{Cursor, Read},
         sync::{Arc, RwLock},
         time::Instant,
     },
@@ -17,18 +17,38 @@ pub use tiny_http::{Header, HeaderField, Request, StatusCode};
 pub static PAGE_404: &str = r#"<!DOCTYPE html><html><head><title>404 | local archive</title><style>*{transition:all .6s}html{height:100%}body{font-family:sans-serif;color:#888;margin:0}#main{display:table;width:100%;height:100vh;text-align:center}.fof{display:table-cell;vertical-align:middle}.fof h1{font-size:50px;display:inline-block;padding-right:12px;animation:type .5s alternate infinite}@keyframes type{from{box-shadow:inset -3px 0 0 #888}to{box-shadow:inset -3px 0 0 transparent}}</style></head><body><div id="main"><div class="fof"><h1>Error 404</h1></div></div></body></html>"#;
 pub static PAGE_503: &str = r#"<!DOCTYPE html><html><head><title>503 | local archive</title><style>*{transition:all .6s}html{height:100%}body{font-family:sans-serif;color:#888;margin:0}#main{display:table;width:100%;height:100vh;text-align:center}.fof{display:table-cell;vertical-align:middle}.fof h1{font-size:50px;display:inline-block;padding-right:12px;animation:type .5s alternate infinite}@keyframes type{from{box-shadow:inset -3px 0 0 #888}to{box-shadow:inset -3px 0 0 transparent}}</style></head><body><div id="main"><div class="fof"><h1>Error 503</h1></div></div></body></html>"#;
 
+#[macro_export]
 macro_rules! res {
-    (404) => {
-        Response::from_string(PAGE_404)
+    (200; $body:expr) => {
+        $crate::router::Response::from_string(::opal::Template::render_into_string($body)?)
             .with_header(
-                Header::from_bytes(&b"Content-Type"[..], &b"text/html; charset=utf-8"[..]).unwrap(),
+                $crate::router::Header::from_bytes(
+                    &b"Content-Type"[..],
+                    &b"text/html; charset=utf-8"[..],
+                )
+                .unwrap(),
+            )
+            .with_status_code(200)
+    };
+    (404) => {
+        $crate::router::Response::from_string($crate::router::PAGE_404)
+            .with_header(
+                $crate::router::Header::from_bytes(
+                    &b"Content-Type"[..],
+                    &b"text/html; charset=utf-8"[..],
+                )
+                .unwrap(),
             )
             .with_status_code(404)
     };
     (503) => {
-        Response::from_string(PAGE_503)
+        $crate::router::Response::from_string($crate::router::PAGE_503)
             .with_header(
-                Header::from_bytes(&b"Content-Type"[..], &b"text/html; charset=utf-8"[..]).unwrap(),
+                $crate::router::Header::from_bytes(
+                    &b"Content-Type"[..],
+                    &b"text/html; charset=utf-8"[..],
+                )
+                .unwrap(),
             )
             .with_status_code(503)
     };
@@ -40,8 +60,9 @@ pub struct Context<'s, S> {
     params: Vec<(&'s str, &'s str)>,
     raw_query: &'s str,
 
-    pub state: Arc<RwLock<S>>,
-    pub headers: &'s [Header],
+    request: &'s mut Request,
+
+    pub database: Arc<RwLock<S>>,
     pub query: Vec<(Cow<'s, str>, Cow<'s, str>)>,
 }
 
@@ -59,6 +80,18 @@ impl<'s, S> Context<'s, S> {
             .map(|(_, value)| value.clone())
     }
 
+    pub fn headers(&self) -> &[Header] {
+        &self.request.headers()
+    }
+
+    pub fn as_reader(&mut self) -> &mut dyn Read {
+        self.request.as_reader()
+    }
+
+    pub fn length(&self) -> usize {
+        self.request.body_length().unwrap_or(0)
+    }
+
     pub fn rebuild_query(&self) -> Cow<'static, str> {
         if self.raw_query.is_empty() {
             Cow::from(String::new())
@@ -73,7 +106,7 @@ impl<'s, S> Context<'s, S> {
 }
 
 pub trait Route<'r, S>: 'static {
-    fn call(&'r self, ctx: &'r Context<'r, S>) -> Result<Response>;
+    fn call(&'r self, ctx: Context<'r, S>) -> Result<Response>;
 }
 
 pub struct Boxed<S>(Box<dyn (for<'r> Route<'r, S>) + Send + Sync>);
@@ -81,9 +114,9 @@ pub struct Boxed<S>(Box<dyn (for<'r> Route<'r, S>) + Send + Sync>);
 impl<'r, S, T> Route<'r, S> for T
 where
     S: 'r,
-    T: 'static + Fn(&'r Context<'r, S>) -> Result<Response>,
+    T: 'static + Fn(Context<'r, S>) -> Result<Response>,
 {
-    fn call(&'r self, ctx: &'r Context<'r, S>) -> Result<Response> {
+    fn call(&'r self, ctx: Context<'r, S>) -> Result<Response> {
         (self)(ctx)
     }
 }
@@ -92,7 +125,7 @@ impl<'r, S> Route<'r, S> for Boxed<S>
 where
     S: 'static,
 {
-    fn call(&'r self, ctx: &'r Context<'r, S>) -> Result<Response> {
+    fn call(&'r self, ctx: Context<'r, S>) -> Result<Response> {
         self.0.call(ctx)
     }
 }
@@ -112,7 +145,6 @@ where
     }
 }
 
-#[allow(dead_code)]
 pub fn post<R, S>(route: R) -> Handler<S>
 where
     R: (for<'r> Route<'r, S>) + Send + Sync,
@@ -147,13 +179,13 @@ impl<S> Router<S> {
         self
     }
 
-    pub fn handle(&self, request: Request) -> Result<()>
+    pub fn handle(&self, mut request: Request) -> Result<()>
     where
         S: 'static,
     {
         let earlier = Instant::now();
 
-        let url = request.url();
+        let url = request.url().to_string();
         let (url, raw_query) = url.split_at(url.find('?').unwrap_or_else(|| url.len()));
         let query = form_urlencoded::parse(raw_query.trim_start_matches('?').as_bytes())
             .collect::<Vec<_>>();
@@ -170,16 +202,16 @@ impl<S> Router<S> {
             url.bright_purple(),
         );
 
-        let state = Arc::clone(&self.state);
+        let database = Arc::clone(&self.state);
 
         let response = self
             .tree
             .get(&method)
             .and_then(|tree| tree.find(url))
             .map_or(Ok(res!(404)), |(payload, params)| {
-                payload.call(&Context {
-                    headers: request.headers(),
-                    state,
+                payload.call(Context {
+                    request: &mut request,
+                    database,
                     query,
                     params,
                     raw_query,

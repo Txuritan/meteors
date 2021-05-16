@@ -135,7 +135,8 @@ html.dark {
 textarea,
 input[type="number"],
 input[type="password"],
-input[type="text"]  {
+input[type="text"],
+input[type="url"]  {
     border-width: 0rem;
     font-family: Consolas, Menlo, Monaco, monospace, serif;
     @include font-size(1rem);
@@ -156,7 +157,8 @@ html.light {
     textarea,
     input[type="number"],
     input[type="password"],
-    input[type="text"]  {
+    input[type="text"],
+    input[type="url"]  {
         border-bottom: 0.0625rem solid $black;
         color: $black;
         &:disabled {
@@ -172,7 +174,8 @@ html.dark {
     textarea,
     input[type="number"],
     input[type="password"],
-    input[type="text"]  {
+    input[type="text"],
+    input[type="url"]  {
         background-color: $black;
         border-bottom: 0.0625rem solid $silver;
         color: $silver;
@@ -314,24 +317,38 @@ html.dark {
 }
 
 form#filter {
+    @include padding-left(0.5rem);
+    @include padding-right(0.5rem);
+
     button {
         @include font-size(1rem);
+        width: 100%;
         &:hover {
             border-color: $blue;
         }
     }
+
+    input[type="checkbox"] {
+        vertical-align:middle;
+    }
+
     fieldset {
         border: 1px solid black;
         @include margin-bottom(0.5rem);
         @include margin-top(0.5rem);
+        margin-left: 0;
+        margin-right: 0;
     }
+
     details {
         margin: 3px 0;
+
         summary {
             border-bottom: 1px solid black;
             margin: 3px 0;
             padding: 3px 0;
         }
+
         span {
             display: block;
         }
