@@ -49,7 +49,12 @@ pub fn download_post(mut ctx: Context<'_, Database>) -> Result<Response> {
                 .position(|window| window == needle)
         }
 
-        let bytes = utils::http::get(&url)?;
+        let db = ctx
+            .database
+            .read()
+            .map_err(|err| anyhow!("Unable to get read lock on the database: {:?}", err))?;
+
+        let bytes = utils::http::get(&db.temp_path, &url)?;
 
         static TARGET_START: &[u8; 7] = b"<title>";
         static TARGET_END: &[u8; 8] = b"</title>";
@@ -65,11 +70,6 @@ pub fn download_post(mut ctx: Context<'_, Database>) -> Result<Response> {
             .ok_or_else(|| anyhow!("Unable to find title separator"))?;
 
         let title = &whole_title[0..first_dash];
-
-        let db = ctx
-            .database
-            .read()
-            .map_err(|err| anyhow!("Unable to get read lock on the database: {:?}", err))?;
 
         let save_path = db
             .data_path

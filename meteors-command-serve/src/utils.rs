@@ -8,38 +8,59 @@ use common::{
 };
 
 pub mod http {
-    use {common::prelude::*, curl::easy::Easy, std::cell::RefCell};
+    use {
+        common::prelude::*,
+        std::{fs, path::Path, process::Command},
+    };
 
-    thread_local! {
-        // cURL says to not use the same handle on multiple threads
-        static HANDLE: RefCell<Easy> = RefCell::new(Easy::new());
-    }
+    pub fn get<P>(temp_path: P, url: &str) -> Result<Vec<u8>>
+    where
+        P: AsRef<Path>,
+    {
+        let url = url.replace(
+            &['\\', '/', ':', ';', '<', '>', '"', '|', '?', '*', '[', ']'][..],
+            "-",
+        );
 
-    pub fn get(url: &str) -> Result<Vec<u8>> {
-        let mut buf = Vec::new();
+        let temp_path = temp_path.as_ref();
 
-        HANDLE.try_with(|handle| -> Result<()> {
-            let mut handle = handle.borrow_mut();
+        fs::create_dir_all(&temp_path)?;
 
-            handle.fail_on_error(true)?;
-            handle.follow_location(true)?;
-            handle.useragent("meteors/1.0 (txuritan@github.com)")?;
-            handle.url(url)?;
+        let temp_file_path = temp_path.join(&url);
 
-            let mut transfer = handle.transfer();
+        let shell = if cfg!(target_os = "windows") {
+            "cmd"
+        } else {
+            "sh"
+        };
 
-            transfer.write_function(|data| {
-                buf.extend_from_slice(data);
+        let output = Command::new(shell)
+            .args(&["/C", "curl"])
+            .arg("-L")
+            .arg("-o")
+            .arg(&temp_file_path)
+            .arg(&url)
+            .output()?;
 
-                Ok(data.len())
-            })?;
+        if !output.status.success() {
+            let mut err = anyhow!("curl return with error code {:?}", output.status);
 
-            transfer.perform()?;
+            if let Ok(text) = String::from_utf8(output.stdout) {
+                err = err.context(format!("with stdout: {}", text));
+            }
 
-            Ok(())
-        })??;
+            if let Ok(text) = String::from_utf8(output.stderr) {
+                err = err.context(format!("with stderr: {}", text));
+            }
 
-        Ok(buf)
+            return Err(err);
+        }
+
+        let bytes = fs::read(&temp_file_path)?;
+
+        fs::remove_file(&temp_file_path)?;
+
+        Ok(bytes)
     }
 }
 

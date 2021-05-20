@@ -26,6 +26,7 @@ pub struct Database {
 
     pub data_path: PathBuf,
     pub index_path: PathBuf,
+    pub temp_path: PathBuf,
 
     lock_maps: BTreeMap<String, MappedFile>,
 }
@@ -36,6 +37,7 @@ impl Database {
 
         let data_path = cur.join("data");
         let index_path = cur.join("meteors.pb.gz");
+        let temp_path = cur.join("temp");
 
         let database = if index_path.exists() {
             debug!("{} found existing", "+".bright_black());
@@ -53,6 +55,7 @@ impl Database {
 
                 data_path,
                 index_path,
+                temp_path,
 
                 lock_maps: BTreeMap::new(),
             }
@@ -80,6 +83,7 @@ impl Database {
 
                 data_path,
                 index_path,
+                temp_path,
 
                 lock_maps: BTreeMap::new(),
             }
