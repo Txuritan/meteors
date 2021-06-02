@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "aloene",
-    "aloene/derive",
+    "aloene/macros",
     "html-parser",
     "meteors",
     "meteors-command-config",
@@ -11,7 +11,7 @@ members = [
     "meteors-format-ao3",
     "opal",
     "query",
-    "query-macros",
+    "query/macros",
     "xtask",
 ]
 

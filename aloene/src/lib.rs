@@ -14,7 +14,7 @@ pub mod io;
 mod impl_element;
 mod impl_value;
 
-pub use aloene_derive::Aloene;
+pub use aloene_macros::Aloene;
 
 pub trait Aloene: Sized {
     fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self>;

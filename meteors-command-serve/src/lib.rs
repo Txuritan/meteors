@@ -78,7 +78,8 @@ impl Action for Command {
                 .on("/story/:id/:chapter", get(handlers::story))
                 .on("/search", get(handlers::search))
                 .on("/search2", get(handlers::search_v2))
-                .on("/style.css", get(handlers::style)),
+                .on("/style.css", get(handlers::style))
+                .on("/favicon.ico", get(handlers::favicon)),
         );
 
         let server =

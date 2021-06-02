@@ -20,6 +20,3 @@ log = { version = "0.4", features = [ "std" ] }
 memmap2 = "0.2"
 owo-colors = "2.0"
 rand = "0.8"
-
-[build-dependencies]
-prost-build = "0.7"

@@ -7,4 +7,4 @@ edition = "2018"
 workspace = ".."
 
 [dependencies]
-aloene-derive = { path = "./derive" }
+aloene-macros = { path = "./macros" }

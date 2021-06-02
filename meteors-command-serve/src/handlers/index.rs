@@ -37,3 +37,13 @@ pub fn index(ctx: Context<'_, Database>) -> Result<Response> {
 
     Ok(crate::res!(200; body))
 }
+
+pub fn favicon(_ctx: Context<'_, Database>) -> Result<Response> {
+    Ok(crate::router::Response::from_data(Vec::from(
+        &include_bytes!("../../../assets/noel.ico")[..],
+    ))
+    .with_header(
+        crate::router::Header::from_bytes(&b"Content-Type"[..], &b"image/x-icon"[..]).unwrap(),
+    )
+    .with_status_code(200))
+}

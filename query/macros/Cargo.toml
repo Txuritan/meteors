@@ -6,7 +6,7 @@ edition = "2018"
 
 license = "MIT"
 
-workspace = ".."
+workspace = "../.."
 
 [lib]
 proc-macro = true

@@ -11,4 +11,4 @@ workspace = ".."
 [dependencies]
 anyhow = "1.0"
 html_parser = { path = "../html-parser" }
-query-macros = { path = "../query-macros" }
+query-macros = { path = "./macros" }

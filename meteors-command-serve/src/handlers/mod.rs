@@ -7,7 +7,7 @@ pub use {
     crate::{
         handlers::{
             download::{download_get, download_post},
-            index::index,
+            index::{favicon, index},
             search::{search, search_v2},
             story::story,
         },
