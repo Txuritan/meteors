@@ -9,15 +9,16 @@ license = "MIT"
 workspace = ".."
 
 [dependencies]
+aloene = { path = "../aloene" }
+
 anyhow = "1.0"
-chrono = { version = "0.4", default-features = false }
+chrono = { version = "0.4", default-features = false, features = [ "clock" ] }
 either = "1.6"
 flate2 = "1.0"
 fs2 = "0.4"
 log = { version = "0.4", features = [ "std" ] }
 memmap2 = "0.2"
 owo-colors = "2.0"
-prost = "0.7"
 rand = "0.8"
 
 [build-dependencies]

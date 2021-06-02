@@ -1,5 +1,7 @@
 [workspace]
 members = [
+    "aloene",
+    "aloene/derive",
     "html-parser",
     "meteors",
     "meteors-command-config",

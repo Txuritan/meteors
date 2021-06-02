@@ -12,3 +12,5 @@ workspace = ".."
 common = { path = "../meteors-common", package = "meteors-common" }
 
 query = { path = "../query" }
+
+flate2 = "1.0"

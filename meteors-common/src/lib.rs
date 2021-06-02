@@ -14,8 +14,6 @@ pub mod prelude {
     };
 }
 
-pub use prost::Message;
-
 pub fn action<T>(name: &'static str, ctx: &T, run: fn(&T) -> anyhow::Result<()>) {
     use owo_colors::OwoColorize as _;
 

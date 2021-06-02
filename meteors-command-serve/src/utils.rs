@@ -1,8 +1,7 @@
 use common::{
     database::Database,
     models::{
-        proto::{self, Entity, Index},
-        story, Story,
+        resolved, {Entity, Index, StoryInfo, StoryMeta},
     },
     prelude::*,
 };
@@ -65,7 +64,7 @@ pub mod http {
 }
 
 #[allow(clippy::ptr_arg)]
-pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, Story)> {
+pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, resolved::Story)> {
     enum Kind {
         Categories,
         Authors,
@@ -76,7 +75,7 @@ pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, 
         Generals,
     }
 
-    fn values(index: &Index, meta: &proto::story::Meta, kind: &Kind) -> Result<Vec<Entity>> {
+    fn values(index: &Index, meta: &StoryMeta, kind: &Kind) -> Result<Vec<Entity>> {
         let (map, keys) = match kind {
             Kind::Categories => (&index.categories, &meta.categories),
             Kind::Authors => (&index.authors, &meta.authors),
@@ -103,21 +102,21 @@ pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, 
         .get(id)
         .ok_or_else(|| anyhow!("story with id `{}` does not exist", id))?;
 
-    let info = &story_ref.info();
-    let meta = &story_ref.meta();
+    let info = &story_ref.info;
+    let meta = &story_ref.meta;
 
     Ok((
         id,
-        Story {
+        resolved::Story {
             file_name: story_ref.file_name.clone(),
             file_hash: story_ref.file_hash,
             chapters: story_ref.chapters.clone(),
-            info: story::Info {
+            info: StoryInfo {
                 title: info.title.clone(),
                 summary: info.summary.clone(),
             },
-            meta: story::Meta {
-                rating: meta.rating(),
+            meta: resolved::StoryMeta {
+                rating: meta.rating,
                 categories: values(&index, meta, &Kind::Categories).context("categories")?,
                 authors: values(&index, meta, &Kind::Authors).context("authors")?,
                 origins: values(&index, meta, &Kind::Origins).context("origins")?,

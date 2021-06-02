@@ -34,7 +34,7 @@ pub fn search(ctx: Context<'_, Database>) -> Result<Response> {
 
     let body = Layout::new(
         Width::Slim,
-        db.settings().theme(),
+        db.settings().theme,
         "search",
         query,
         pages::Index::new(stories),
@@ -69,7 +69,7 @@ pub fn search_v2(ctx: Context<'_, Database>) -> Result<Response> {
 
     let body = Layout::new(
         Width::Wide,
-        db.settings().theme(),
+        db.settings().theme,
         "search",
         query,
         pages::Search::new(stories, stats),

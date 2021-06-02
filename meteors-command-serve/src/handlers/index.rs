@@ -29,7 +29,7 @@ pub fn index(ctx: Context<'_, Database>) -> Result<Response> {
 
     let body = Layout::new(
         Width::Slim,
-        db.settings().theme(),
+        db.settings().theme,
         "home",
         query,
         pages::Index::new(stories),

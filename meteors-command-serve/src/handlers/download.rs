@@ -18,7 +18,7 @@ pub fn download_get(ctx: Context<'_, Database>) -> Result<Response> {
 
     let body = Layout::new(
         Width::Slim,
-        db.settings().theme(),
+        db.settings().theme,
         "downloads",
         query.clone(),
         pages::Download::new(),
@@ -81,7 +81,7 @@ pub fn download_post(mut ctx: Context<'_, Database>) -> Result<Response> {
 
         let body = Layout::new(
             Width::Slim,
-            db.settings().theme(),
+            db.settings().theme,
             "downloads",
             query.clone(),
             pages::Download::new(),

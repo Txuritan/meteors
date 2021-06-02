@@ -1,7 +1,7 @@
 use {
     common::{
         database::Database,
-        models::proto::{story, Entity, Story},
+        models::{Chapter, Entity, Story, StoryInfo, StoryMeta},
         prelude::*,
         utils::{self, FileIter},
         Action,
@@ -188,20 +188,20 @@ fn add_to_index(
         chapters: chapters
             .chapters
             .into_iter()
-            .map(|chapter| story::Chapter {
+            .map(|chapter| Chapter {
                 title: chapter.title.to_string(),
-                content: Some(chapter.content),
+                content: chapter.content,
                 summary: chapter.summary,
                 start_notes: chapter.start_notes,
                 end_notes: chapter.end_notes,
             })
             .collect(),
-        info: Some(story::Info {
+        info: StoryInfo {
             title: info.title.to_string(),
             summary: info.summary.to_string(),
-        }),
-        meta: Some(story::Meta {
-            rating: story::meta::Rating::to(meta.rating),
+        },
+        meta: StoryMeta {
+            rating: meta.rating,
             authors: values_to_keys(info.authors, &mut index.authors),
             categories: values_to_keys(meta.categories, &mut index.categories),
             origins: values_to_keys(meta.origins, &mut index.origins),
@@ -209,7 +209,7 @@ fn add_to_index(
             pairings: values_to_keys(meta.pairings, &mut index.pairings),
             characters: values_to_keys(meta.characters, &mut index.characters),
             generals: values_to_keys(meta.generals, &mut index.generals),
-        }),
+        },
     };
 
     index.stories.insert(id, story);

@@ -1,10 +1,8 @@
 use {
     crate::{ParsedChapter, ParsedChapters, ParsedInfo, ParsedMeta},
-    common::{
-        models::proto::{story::meta::Rating, Range},
-        prelude::*,
-    },
+    common::{models::Rating, prelude::*},
     query::{Document, Node, Span},
+    std::ops::Range,
 };
 
 pub fn parse_info(doc: &Document<'_>) -> ParsedInfo {
@@ -206,9 +204,9 @@ fn parse_chapter_single<'input>(
 struct MultiState {
     title: Option<String>,
     summary: Option<String>,
-    start_notes: Option<Range>,
-    content: Option<Range>,
-    end_notes: Option<Range>,
+    start_notes: Option<Range<usize>>,
+    content: Option<Range<usize>>,
+    end_notes: Option<Range<usize>>,
 }
 
 impl MultiState {
@@ -312,12 +310,9 @@ fn parse_chapters_multi<'input>(
 }
 
 #[inline]
-fn span_as_range(span: Span<'_>) -> Range {
+fn span_as_range(span: Span<'_>) -> Range<usize> {
     let start = span.start();
     let end = span.end();
 
-    Range {
-        start: start as u64,
-        end: end as u64,
-    }
+    Range { start, end }
 }

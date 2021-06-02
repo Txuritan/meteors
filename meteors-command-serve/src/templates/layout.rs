@@ -1,7 +1,4 @@
-use {
-    crate::templates::Width, common::models::proto::settings::Theme, opal::Template,
-    std::borrow::Cow,
-};
+use {crate::templates::Width, common::models::Theme, opal::Template, std::borrow::Cow};
 
 pub struct Layout<B>
 where

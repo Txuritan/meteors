@@ -1,6 +1,6 @@
 use common::{
     database::Database,
-    models::proto::settings::{Node, Theme},
+    models::{Node, Theme},
     prelude::*,
     Action,
 };
@@ -64,7 +64,7 @@ impl Action for GetCommand {
 
         match self.key.as_str() {
             key @ "theme" => {
-                info!(target: "config", "{} Value of {}: {}", "+".bright_black(), key.bright_blue(), settings.theme().as_class().bright_yellow());
+                info!(target: "config", "{} Value of {}: {}", "+".bright_black(), key.bright_blue(), settings.theme.as_class().bright_yellow());
             }
             key @ "sync-key" | key @ "sync_key" => {
                 info!(target: "config", "{} Value of {}: {}", "+".bright_black(), key.bright_blue(), settings.sync_key.bright_yellow());
@@ -117,9 +117,9 @@ impl Action for SetCommand {
                 };
 
                 if let Some(theme) = theme {
-                    settings.set_theme(theme);
+                    settings.theme = theme;
 
-                    info!(target: "config", "{} {} set to {}", "+".bright_black(), key.bright_blue(), settings.theme().as_class().bright_yellow());
+                    info!(target: "config", "{} {} set to {}", "+".bright_black(), key.bright_blue(), settings.theme.as_class().bright_yellow());
                 }
             }
             key @ "sync-key" | key @ "sync_key" => {
@@ -179,7 +179,7 @@ impl Action for PushCommand {
                         name: name.to_string(),
                         key: key.to_string(),
                         host: host.to_string(),
-                        port: port.parse::<u32>()?,
+                        port: port.parse::<u16>()?,
                     });
                 } else {
                     error!(target: "config", "{} Invalid sync node information", "+".bright_black());

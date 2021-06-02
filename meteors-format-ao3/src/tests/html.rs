@@ -3,7 +3,7 @@ use {
         html::{parse_chapters, parse_info, parse_meta},
         ParsedChapter, ParsedChapters, ParsedInfo, ParsedMeta,
     },
-    common::models::proto::{story::meta::Rating, Range},
+    common::models::Rating,
     query::Document,
     std::convert::TryFrom as _,
 };
@@ -50,16 +50,16 @@ fn test_parse_chapters_multiple() {
         ParsedChapter {
             title: "Small Batch Hashtag".to_string(),
             summary: Some("<p>Trust fund hot chicken elit blog, williamsburg semiotics asymmetrical franzen church-key portland. Meh keytar iceland semiotics, portland asymmetrical cray godard venmo forage qui consectetur cillum adipisicing</p>".to_string()),
-            start_notes: Some(Range::new(3112, 3349)),
-            content: Range::new(3541, 19287),
-            end_notes: Some(Range::new(19419, 19430)),
+            start_notes: Some(3112..3349),
+            content: 3541..19287,
+            end_notes: Some(19419..19430),
         },
         ParsedChapter {
             title: "Try-hard Brunch".to_string(),
             summary: Some("<p>Helvetica bread everyday.</p>".to_string()),
             start_notes: None,
-            content: Range::new(19837, 41637),
-            end_notes: Some(Range::new(41769, 41905)),
+            content: 19837..41637,
+            end_notes: Some(41769..41905),
         },
     ] };
     let right = parse_chapters(&doc).unwrap();
@@ -110,7 +110,7 @@ fn test_parse_chapters_single() {
             title: "A Work To Test Downloads Again".to_string(),
             summary: None,
             start_notes: None,
-            content: Range::new(2265, 18822),
+            content: 2265..18822,
             end_notes: None,
         }],
     };

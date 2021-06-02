@@ -4,7 +4,7 @@ use {
         TagKind,
     },
     common::{
-        models::{proto::Entity, story, Story},
+        models::{resolved, Entity, Rating, StoryInfo},
         prelude::*,
     },
     std::borrow::Cow,
@@ -14,9 +14,9 @@ pub struct StoryCard<'s> {
     pub id: &'s str,
 
     pub len: usize,
-    pub info: story::Info,
+    pub info: StoryInfo,
 
-    pub rating: story::meta::Rating,
+    pub rating: Rating,
     pub categories: Vec<Entity>,
     pub authors: Vec<Entity>,
 
@@ -27,8 +27,8 @@ pub struct StoryCard<'s> {
 }
 
 impl<'s> StoryCard<'s> {
-    pub fn new(id: &'s str, story: Story, query: Cow<'static, str>) -> Result<Self> {
-        let story::Meta {
+    pub fn new(id: &'s str, story: resolved::Story, query: Cow<'static, str>) -> Result<Self> {
+        let resolved::StoryMeta {
             rating,
             authors,
             categories,

@@ -1,16 +1,15 @@
 use {
     crate::{
-        models::proto::{settings, Entity, Index, Meteors, Settings},
+        models::{Entity, Index, Meteors, Settings, Theme},
         prelude::*,
         utils::FileIter,
     },
+    aloene::Aloene as _,
     flate2::{read::GzDecoder, write::GzEncoder, Compression},
     fs2::FileExt as _,
     memmap2::Mmap,
-    prost::Message,
     std::{
         collections::BTreeMap,
-        convert::TryInto as _,
         env,
         ffi::OsStr,
         fs::{self, File},
@@ -36,7 +35,7 @@ impl Database {
         let cur = env::current_dir()?.canonicalize()?;
 
         let data_path = cur.join("data");
-        let index_path = cur.join("meteors.pb.gz");
+        let index_path = cur.join("meteors.aloe.gz");
         let temp_path = cur.join("temp");
 
         let database = if index_path.exists() {
@@ -48,7 +47,7 @@ impl Database {
 
             decoder.read_to_end(&mut bytes)?;
 
-            let inner = <Meteors as Message>::decode(&bytes[..])?;
+            let inner = Meteors::deserialize(&mut std::io::Cursor::new(bytes))?;
 
             Self {
                 inner,
@@ -64,7 +63,7 @@ impl Database {
 
             Self {
                 inner: Meteors {
-                    index: Some(Index {
+                    index: Index {
                         stories: BTreeMap::new(),
                         categories: BTreeMap::new(),
                         authors: BTreeMap::new(),
@@ -73,12 +72,12 @@ impl Database {
                         pairings: BTreeMap::new(),
                         characters: BTreeMap::new(),
                         generals: BTreeMap::new(),
-                    }),
-                    settings: Some(Settings {
-                        theme: settings::Theme::Light as i32,
+                    },
+                    settings: Settings {
+                        theme: Theme::Light,
                         sync_key: String::new(),
                         nodes: vec![],
-                    }),
+                    },
                 },
 
                 data_path,
@@ -93,25 +92,19 @@ impl Database {
     }
 
     pub fn index(&self) -> &Index {
-        self.inner.index.as_ref().unwrap_or_else(|| unreachable!())
+        &self.inner.index
     }
 
     pub fn index_mut(&mut self) -> &mut Index {
-        self.inner.index.as_mut().unwrap_or_else(|| unreachable!())
+        &mut self.inner.index
     }
 
     pub fn settings(&self) -> &Settings {
-        self.inner
-            .settings
-            .as_ref()
-            .unwrap_or_else(|| unreachable!())
+        &self.inner.settings
     }
 
     pub fn settings_mut(&mut self) -> &mut Settings {
-        self.inner
-            .settings
-            .as_mut()
-            .unwrap_or_else(|| unreachable!())
+        &mut self.inner.settings
     }
 
     pub fn lock_data(&mut self) -> Result<()> {
@@ -211,10 +204,7 @@ impl Database {
                 )
             })?;
 
-            let content = &chapter.content();
-            let range = (content.start.try_into()?)..(content.end.try_into()?);
-
-            let sliced = contents.get(range).ok_or_else(|| {
+            let sliced = contents.get(chapter.content.clone()).ok_or_else(|| {
                 anyhow!(
                     "chapter `{}` not found in chapter index for `{}`",
                     number,
@@ -233,7 +223,7 @@ impl Database {
 
         let mut buf = Vec::new();
 
-        <Meteors as Message>::encode(&self.inner, &mut buf)?;
+        Meteors::serialize(&self.inner, &mut buf)?;
 
         let mut encoder = GzEncoder::new(File::create(&self.index_path)?, Compression::best());
 

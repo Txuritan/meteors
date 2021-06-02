@@ -1,7 +1,7 @@
 use {
     common::{
         database::Database,
-        models::proto::{story::meta::Rating, Entity, Index, Story},
+        models::{Entity, Index, Rating, Story},
     },
     std::{
         borrow::{Borrow as _, Cow},
@@ -108,9 +108,9 @@ impl<'m> Stats<'m> {
         }
 
         for (_, story) in stories {
-            let meta = story.meta();
+            let meta = &story.meta;
 
-            inc(&mut ratings, meta.rating());
+            inc(&mut ratings, meta.rating);
 
             let lists = vec![
                 (&mut warnings, &meta.warnings),
@@ -228,28 +228,28 @@ impl<'i> Group<'i> {
             EntityKind::Origin => {
                 for entity in entities {
                     stories.retain(|(_id, story)| {
-                        include ^ story.meta().origins.iter().any(|id| id == &entity)
+                        include ^ story.meta.origins.iter().any(|id| id == &entity)
                     });
                 }
             }
             EntityKind::Pairing => {
                 for entity in entities {
                     stories.retain(|(_id, story)| {
-                        include ^ story.meta().pairings.iter().any(|id| id == &entity)
+                        include ^ story.meta.pairings.iter().any(|id| id == &entity)
                     });
                 }
             }
             EntityKind::Character => {
                 for entity in entities {
                     stories.retain(|(_id, story)| {
-                        include ^ story.meta().characters.iter().any(|id| id == &entity)
+                        include ^ story.meta.characters.iter().any(|id| id == &entity)
                     });
                 }
             }
             EntityKind::General => {
                 for entity in entities {
                     stories.retain(|(_id, story)| {
-                        include ^ story.meta().generals.iter().any(|id| id == &entity)
+                        include ^ story.meta.generals.iter().any(|id| id == &entity)
                     });
                 }
             }
@@ -285,14 +285,14 @@ impl<'i> From<Vec<&(Cow<'i, str>, Cow<'i, str>)>> for Group<'i> {
 macro_rules! help {
     (bound; $db:ident, $iter:ident, $text:ident, $var:ident, $mem:ident) => {{
         BoundIter::$var(
-            $iter.filter(move |(_, s)| any_by_text(&$db.index().$mem, &s.meta().$mem, &$text)),
+            $iter.filter(move |(_, s)| any_by_text(&$db.index().$mem, &s.meta.$mem, &$text)),
         )
     }};
     (retain; $db:ident, $stories:ident, $include:ident, $text:ident, $mem:ident) => {{
         $stories.retain(|id| {
             let story = $db.index().stories.get(id).unwrap();
 
-            !(&$include ^ any_by_text(&$db.index().$mem, &story.meta().$mem, &$text))
+            !(&$include ^ any_by_text(&$db.index().$mem, &story.meta.$mem, &$text))
         });
     }};
 }

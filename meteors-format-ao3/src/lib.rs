@@ -6,12 +6,10 @@ pub mod gztar;
 pub mod html;
 
 use {
-    common::{
-        models::proto::{story::meta::Rating, Range},
-        prelude::*,
-    },
+    common::{models::Rating, prelude::*},
+    flate2::read::DeflateDecoder,
     query::Document,
-    std::convert::TryFrom,
+    std::{convert::TryFrom, ops::Range},
 };
 
 #[derive(Debug, PartialEq)]
@@ -41,21 +39,24 @@ pub struct ParsedChapters {
 pub struct ParsedChapter {
     pub title: String,
     pub summary: Option<String>,
-    pub start_notes: Option<Range>,
-    pub content: Range,
-    pub end_notes: Option<Range>,
+    pub start_notes: Option<Range<usize>>,
+    pub content: Range<usize>,
+    pub end_notes: Option<Range<usize>>,
 }
 
 #[derive(Debug, Clone, Copy)]
 pub enum FileKind {
     Epub,
     Html,
-    Gztar,
 }
 
 pub fn parse(kind: FileKind, bytes: Vec<u8>) -> Result<(ParsedInfo, ParsedMeta, ParsedChapters)> {
     match kind {
-        FileKind::Epub => todo!(),
+        FileKind::Epub => {
+            let mut decoder = DeflateDecoder::new(&bytes[..]);
+
+            todo!()
+        }
         FileKind::Html => {
             let text = String::from_utf8(bytes)?;
 
@@ -67,6 +68,5 @@ pub fn parse(kind: FileKind, bytes: Vec<u8>) -> Result<(ParsedInfo, ParsedMeta, 
 
             Ok((info, meta, chapters))
         }
-        FileKind::Gztar => todo!(),
     }
 }
