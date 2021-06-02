@@ -1,6 +1,14 @@
 version: '3'
 
 tasks:
+  build-android:
+    env:
+      CARGO_NET_GIT_FETCH_WITH_CLI: true
+    cmds:
+      - cross +nightly build -Z build-std=panic_abort,std --release --target aarch64-linux-android
+
   build-windows:
+    env:
+      CARGO_NET_GIT_FETCH_WITH_CLI: false
     cmds:
       - cargo +nightly build -Z build-std=panic_abort,std --release --target x86_64-pc-windows-msvc
