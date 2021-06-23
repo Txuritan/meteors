@@ -18,4 +18,4 @@ command-serve = { path = "../meteors-command-serve", package = "meteors-command-
 argh = "0.1"
 
 [build-dependencies]
-embed-resource = "1.3"
+embed-resource = "1.6"
