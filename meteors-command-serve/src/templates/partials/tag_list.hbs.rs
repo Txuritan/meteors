@@ -1,14 +1,14 @@
 impl ::opal::Template for TagList {
-#[allow(dead_code, unused_variables, clippy::if_same_then_else)]
+#[allow(dead_code, unused_variables, clippy::if_same_then_else, clippy::branches_sharing_code)]
     fn size_hint(&self) -> usize {
         let mut hint = 0;hint += 42;
 for (i, (kind, tag)) in self.tags.iter().enumerate() {
 hint += 21;
-hint +=  kind.class() .len();
+hint += kind.class().len();
 hint += 23;
 hint += &crate::filters::percent_encode(&tag.text).size_hint();
 hint += 2;
-hint +=  &tag.text .len();
+hint += &tag.text.len();
 hint += 11;
 if i != (&self.tags.len() - 1) {
 hint += 2;
@@ -16,7 +16,7 @@ hint += 2;
 }
 hint += 15;
         hint    }
-#[allow(unused_imports)]
+#[allow(unused_imports, clippy::branches_sharing_code)]
     fn render<W>(&self, writer: &mut W) -> ::std::io::Result<()>
         where
             W: ::std::io::Write,

@@ -13,7 +13,7 @@ pub fn download_get(db: Data<Database>) -> Result<HttpResponse> {
         Width::Slim,
         db.settings().theme,
         "downloads",
-        "".into(),
+        None,
         pages::Download::new(),
     );
 
@@ -57,7 +57,7 @@ pub fn download_post(db: Data<Database>, body: Body) -> Result<HttpResponse> {
             Width::Slim,
             db.settings().theme,
             "downloads",
-            "".into(),
+            None,
             pages::Download::new(),
         );
 

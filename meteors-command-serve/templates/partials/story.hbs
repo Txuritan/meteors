@@ -1,7 +1,7 @@
 <article class="story">
     <header>
         <div class="left">
-            <span class="rating {{ self.rating.class() }}">{{ self.rating.symbol() }}</span> <a href="/story/{{ self.id }}/1{{ self.query }}" class="title">{{ self.info.title }}</a> by
+            <span class="rating {{ self.rating.class() }}">{{ self.rating.symbol() }}</span> <a href="/story/{{ self.id }}/1{{ #if let Some(query) = self.query.as_ref() }}{{ query }}{{ /if }}" class="title">{{ self.info.title }}</a> by
             {{ #for (i, author) in self.authors.iter().enumerate() }}
                 <a href="/search?search={{ crate::filters::percent_encode(&author.text).render(writer) }}">{{ author.text }}</a>{{ #if i != (self.authors.len() - 1) }},{{ /if }}
             {{ /for }}

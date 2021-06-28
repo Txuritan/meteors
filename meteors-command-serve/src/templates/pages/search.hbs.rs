@@ -1,5 +1,5 @@
 impl<'s> ::opal::Template for Search<'s> {
-#[allow(dead_code, unused_variables, clippy::if_same_then_else)]
+#[allow(dead_code, unused_variables, clippy::if_same_then_else, clippy::branches_sharing_code)]
     fn size_hint(&self) -> usize {
         let mut hint = 0;hint += 12;
 if self.stories.is_empty() {
@@ -28,7 +28,7 @@ hint += &encoded.size_hint();
 hint += 40;
 hint += &encoded.size_hint();
 hint += 2;
-hint +=  rating.name() .len();
+hint += rating.name().len();
 hint += 2;
 hint += 56;
 }
@@ -43,7 +43,7 @@ let lists = vec![
 hint += 14;
 for (name, list) in lists {
 hint += 70;
-hint +=  name .len();
+hint += name.len();
 hint += 32;
 for (entry, count) in list.iter() {
 hint += 26;
@@ -53,7 +53,7 @@ hint += &encoded.size_hint();
 hint += 44;
 hint += &encoded.size_hint();
 hint += 2;
-hint +=  entry.text .len();
+hint += entry.text.len();
 hint += 2;
 hint += 64;
 }
@@ -61,7 +61,7 @@ hint += 42;
 }
 hint += 101;
         hint    }
-#[allow(unused_imports)]
+#[allow(unused_imports, clippy::branches_sharing_code)]
     fn render<W>(&self, writer: &mut W) -> ::std::io::Result<()>
         where
             W: ::std::io::Write,

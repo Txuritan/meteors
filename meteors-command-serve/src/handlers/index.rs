@@ -14,7 +14,7 @@ pub fn index(db: Data<Database>) -> Result<HttpResponse> {
         .keys()
         .map(|id| {
             utils::get_story_full(&*db, id)
-                .and_then(|(id, story)| partials::StoryCard::new(id, story, "".into()))
+                .and_then(|(id, story)| partials::StoryCard::new(id, story, None))
         })
         .collect::<Result<Vec<partials::StoryCard<'_>>>>()?;
 
@@ -24,7 +24,7 @@ pub fn index(db: Data<Database>) -> Result<HttpResponse> {
         Width::Slim,
         db.settings().theme,
         "home",
-        "".into(),
+        None,
         pages::Index::new(stories),
     );
 

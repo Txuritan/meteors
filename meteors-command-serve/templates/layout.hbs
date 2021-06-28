@@ -11,7 +11,7 @@
 <body>
     <header>
         <nav>
-            <a href="/{{ self.query }}" class="brand">local archive</a>
+            <a href="/{{ #if let Some(query) = self.query.as_ref() }}{{ query }}{{ /if }}" class="brand">local archive</a>
             <div class="spacer"></div>
             <form method="get" action="/search">
                 <input id="search" name="search" type="text" placeholder="search" value="" aria-label="Search" />

@@ -16,8 +16,6 @@ command-index = { path = "../meteors-command-index", package = "meteors-command-
 command-serve = { path = "../meteors-command-serve", package = "meteors-command-serve" }
 
 argh = "0.1"
-tracing-flame = "0.1"
-tracing-subscriber = { version = "0.2", default-features = false, features = [ "fmt", "ansi" ] }
 
 [build-dependencies]
 embed-resource = "1.6"

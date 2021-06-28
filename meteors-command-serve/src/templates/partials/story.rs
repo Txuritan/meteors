@@ -23,11 +23,11 @@ pub struct StoryCard<'s> {
     pub origins: OriginList,
     pub tags: TagList,
 
-    pub query: Cow<'static, str>,
+    pub query: Option<Cow<'static, str>>,
 }
 
 impl<'s> StoryCard<'s> {
-    pub fn new(id: &'s str, story: resolved::Story, query: Cow<'static, str>) -> Result<Self> {
+    pub fn new(id: &'s str, story: resolved::Story, query: Option<Cow<'static, str>>) -> Result<Self> {
         let resolved::StoryMeta {
             rating,
             authors,

@@ -17,12 +17,11 @@ pub fn story(db: Data<Database>, id: Param<"id">, index: Param<"chapter">) -> Re
         Width::Slim,
         db.settings().theme,
         story.info.title.clone(),
-        "".into(),
+        None,
         pages::Chapter::new(
-            partials::StoryCard::new(&id, story, "".into())?,
+            partials::StoryCard::new(&id, story, None)?,
             &chapter,
             index,
-            "".into(),
         ),
     );
 

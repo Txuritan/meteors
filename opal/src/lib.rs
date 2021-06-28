@@ -44,7 +44,7 @@ pub fn compile(bounds: Option<(&str, &str)>, typ: &str, text: &str) -> Result<St
 
     writeln!(
         &mut buf,
-        "#[allow(dead_code, unused_variables, clippy::if_same_then_else)]"
+        "#[allow(dead_code, unused_variables, clippy::if_same_then_else, clippy::branches_sharing_code)]"
     )?;
     writeln!(&mut buf, "    fn size_hint(&self) -> usize {{")?;
     write!(&mut buf, "        let mut hint = 0;")?;
@@ -52,7 +52,7 @@ pub fn compile(bounds: Option<(&str, &str)>, typ: &str, text: &str) -> Result<St
     write!(&mut buf, "        hint")?;
     writeln!(&mut buf, "    }}")?;
 
-    writeln!(&mut buf, "#[allow(unused_imports)]")?;
+    writeln!(&mut buf, "#[allow(unused_imports, clippy::branches_sharing_code)]")?;
     writeln!(&mut buf, "    fn render<W>(&self, writer: &mut W) -> ::std::io::Result<()>\n        where\n            W: ::std::io::Write,\n        {{")?;
     writeln!(
         &mut buf,
@@ -115,7 +115,7 @@ where
                 }
 
                 if !(expr.contains('+') || expr.contains('-') || expr.contains("len")) {
-                    writeln!(writer, "hint += {}.len();", expr)?;
+                    writeln!(writer, "hint += {}.len();", expr.trim())?;
                 }
             }
             Stage4::ExprAssign(expr) => writeln!(writer, "{}", expr.trim())?,

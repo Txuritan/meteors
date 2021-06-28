@@ -35,7 +35,7 @@ pub fn search(
         .iter()
         .map(|id| {
             utils::get_story_full(&*db, id)
-                .and_then(|(id, story)| partials::StoryCard::new(id, story, query.clone()))
+                .and_then(|(id, story)| partials::StoryCard::new(id, story, Some(query.clone())))
         })
         .collect::<Result<Vec<_>>>()?;
 
@@ -45,7 +45,7 @@ pub fn search(
         Width::Slim,
         db.settings().theme,
         "search",
-        query,
+        Some(query),
         pages::Index::new(stories),
     );
 
@@ -68,7 +68,7 @@ pub fn search_v2(db: Data<Database>, query: RawQuery) -> Result<HttpResponse> {
         .into_iter()
         .map(|(id, _)| {
             utils::get_story_full(&*db, id)
-                .and_then(|(id, story)| partials::StoryCard::new(id, story, query.clone()))
+                .and_then(|(id, story)| partials::StoryCard::new(id, story, Some(query.clone())))
         })
         .collect::<Result<Vec<_>>>()?;
 
@@ -78,7 +78,7 @@ pub fn search_v2(db: Data<Database>, query: RawQuery) -> Result<HttpResponse> {
         Width::Wide,
         db.settings().theme,
         "search",
-        query,
+        Some(query),
         pages::Search::new(stories, stats),
     );
 

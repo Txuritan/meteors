@@ -1,12 +1,12 @@
 impl ::opal::Template for OriginList {
-#[allow(dead_code, unused_variables, clippy::if_same_then_else)]
+#[allow(dead_code, unused_variables, clippy::if_same_then_else, clippy::branches_sharing_code)]
     fn size_hint(&self) -> usize {
         let mut hint = 0;hint += 45;
 for (i, origin) in self.origins.iter().enumerate() {
 hint += 32;
 hint += &crate::filters::percent_encode(&origin.text).size_hint();
 hint += 2;
-hint +=  &origin.text .len();
+hint += &origin.text.len();
 hint += 11;
 if i != (self.origins.len() - 1) {
 hint += 2;
@@ -14,7 +14,7 @@ hint += 2;
 }
 hint += 15;
         hint    }
-#[allow(unused_imports)]
+#[allow(unused_imports, clippy::branches_sharing_code)]
     fn render<W>(&self, writer: &mut W) -> ::std::io::Result<()>
         where
             W: ::std::io::Write,

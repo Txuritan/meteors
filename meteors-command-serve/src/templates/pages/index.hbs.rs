@@ -1,5 +1,5 @@
 impl<'s> ::opal::Template for Index<'s> {
-#[allow(dead_code, unused_variables, clippy::if_same_then_else)]
+#[allow(dead_code, unused_variables, clippy::if_same_then_else, clippy::branches_sharing_code)]
     fn size_hint(&self) -> usize {
         let mut hint = 0;hint += 12;
 if self.stories.is_empty() {
@@ -21,7 +21,7 @@ hint += 6;
 }
 hint += 9;
         hint    }
-#[allow(unused_imports)]
+#[allow(unused_imports, clippy::branches_sharing_code)]
     fn render<W>(&self, writer: &mut W) -> ::std::io::Result<()>
         where
             W: ::std::io::Write,

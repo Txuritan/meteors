@@ -1,11 +1,9 @@
-use {crate::templates::partials::StoryCard, std::borrow::Cow};
+use {crate::templates::partials::StoryCard};
 
 pub struct Chapter<'s> {
     pub card: StoryCard<'s>,
     pub chapter: &'s str,
     pub index: usize,
-
-    pub query: Cow<'static, str>,
 }
 
 impl<'s> Chapter<'s> {
@@ -13,13 +11,11 @@ impl<'s> Chapter<'s> {
         card: StoryCard<'s>,
         chapter: &'s str,
         index: usize,
-        query: Cow<'static, str>,
     ) -> Self {
         Self {
             card,
             chapter,
             index,
-            query,
         }
     }
 }
