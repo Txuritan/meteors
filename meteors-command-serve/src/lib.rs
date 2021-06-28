@@ -1,3 +1,6 @@
+#![allow(incomplete_features)]
+#![feature(const_generics)]
+
 mod handlers;
 mod templates;
 
@@ -7,18 +10,19 @@ mod search;
 mod utils;
 
 use {
-    crate::router::{get, post, Router},
     common::{database::Database, prelude::*, Action},
+    std::time::Instant,
     std::{
         net::{Ipv4Addr, SocketAddr},
         sync::{
             atomic::{AtomicBool, Ordering},
-            Arc, RwLock,
+            Arc,
         },
         thread,
         time::Duration,
     },
     tiny_http::Server,
+    tiny_http_router::{get, post, Middleware, Router},
 };
 
 #[derive(argh::FromArgs)]
@@ -56,7 +60,7 @@ impl Action for Command {
 
         let addr: SocketAddr = (self.host.parse::<Ipv4Addr>()?, self.port).into();
 
-        let database = Arc::new(RwLock::new({
+        let database = Arc::new({
             let mut db = Database::open()?;
 
             trace!(
@@ -68,19 +72,20 @@ impl Action for Command {
             db.lock_data()?;
 
             db
-        }));
+        });
 
-        let router = Arc::new(
-            Router::new(database.clone())
-                .on("/", get(handlers::index))
-                .on("/download", get(handlers::download_get))
-                .on("/download", post(handlers::download_post))
-                .on("/story/:id/:chapter", get(handlers::story))
-                .on("/search", get(handlers::search))
-                .on("/search2", get(handlers::search_v2))
-                .on("/style.css", get(handlers::style))
-                .on("/favicon.ico", get(handlers::favicon)),
-        );
+        let router = Router::new()
+            .data(database.clone())
+            .service(get("/").to(handlers::index))
+            .service(get("/download").to(handlers::download_get))
+            .service(post("/download").to(handlers::download_post))
+            .service(get("/story/:id/:chapter").to(handlers::story))
+            .service(get("/search").to(handlers::search))
+            .service(get("/search2").to(handlers::search_v2))
+            .service(get("/style.css").to(handlers::style))
+            .service(get("/favicon.ico").to(handlers::favicon))
+            .wrap(LoggerMiddleware)
+            .build();
 
         let server =
             Arc::new(Server::http(addr).map_err(|err| anyhow!("unable to start server: {}", err))?);
@@ -96,7 +101,7 @@ impl Action for Command {
         for id in 0..4 {
             guards.push(thread::spawn({
                 let stop = Arc::clone(&stop);
-                let router = Arc::clone(&router);
+                let router = router.clone();
                 let server = Arc::clone(&server);
 
                 move || loop {
@@ -131,12 +136,78 @@ impl Action for Command {
             }
         }
 
-        let mut db = database
-            .write()
-            .map_err(|err| anyhow!("Unable to get write lock on database: {:?}", err))?;
-
-        db.unlock_data()?;
+        if let Ok(mut database) = Arc::try_unwrap(database) {
+            database.unlock_data()?;
+        } else {
+            error!("unable to unwrap database, not unlocking data");
+        }
 
         Ok(())
+    }
+}
+
+struct LoggerMiddleware;
+
+impl Middleware for LoggerMiddleware {
+    fn before(&self, req: &mut tiny_http_router::HttpRequest) {
+        use tiny_http_router::Method;
+
+        let earlier = Instant::now();
+
+        req.ext_mut().insert(earlier);
+
+        fn to_colored_string(method: &Method) -> String {
+            match method {
+                Method::Get => format!("{}", "GET".green()),
+                Method::Post => format!("{}", "POST".bright_blue()),
+                Method::Put => format!("{}", "PUT".bright_purple()),
+                Method::Patch => format!("{}", "PATCH".bright_yellow()),
+                Method::Delete => format!("{}", "DELETE".bright_red()),
+                Method::Head => "HEAD".to_owned(),
+                Method::Connect => "CONNECT".to_owned(),
+                Method::Options => "OPTION".to_owned(),
+                Method::Trace => "TRACE".to_owned(),
+            }
+        }
+
+        let url = req.url().to_string();
+
+        let (url, _) = url.split_at(url.find('?').unwrap_or_else(|| url.len()));
+
+        info!(
+            target: "command_serve::router",
+            "{} {} {}/{} {} {}",
+            "+".bright_black(),
+            "+".bright_black(),
+            "HTTP".bright_yellow(),
+            req.http_version(),
+            to_colored_string(&req.method()),
+            url.bright_purple(),
+        );
+    }
+
+    fn after(&self, req: &tiny_http_router::HttpRequest, res: &tiny_http_router::HttpResponse) {
+        let dur = req
+            .ext()
+            .get::<Instant>()
+            .and_then(|earlier| {
+                chrono::Duration::from_std(Instant::now().duration_since(*earlier)).ok()
+            })
+            .map(|dur| format!("{}", dur.num_milliseconds().bright_purple()))
+            .unwrap_or_else(|| format!("{}", "??".bright_red()));
+
+        info!(
+            target: "command_serve::router",
+            "{} {} {} {}ms",
+            "+".bright_black(),
+            "+".bright_black(),
+            match res.status_code().0 {
+                200 => format!("{}", "200".green()),
+                404 => format!("{}", "404".bright_yellow()),
+                503 => format!("{}", "503".bright_red()),
+                code => format!("{}", code.to_string().bright_blue()),
+            },
+            dur,
+        );
     }
 }

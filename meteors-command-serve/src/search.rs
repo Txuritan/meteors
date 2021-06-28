@@ -211,10 +211,8 @@ impl<'i> Group<'i> {
             self.generals.map(|list| (EntityKind::General, list)),
         ];
 
-        for entry in lists {
-            if let Some((kind, list)) = entry {
-                Self::filter_retain(stories, kind, include, list);
-            }
+        for (kind, list) in lists.into_iter().flatten() {
+            Self::filter_retain(stories, kind, include, list);
         }
     }
 
@@ -361,7 +359,7 @@ pub fn search(database: &Database, text: &str) -> Vec<String> {
             ),
         };
 
-        first_push(include, &database, &mut stories, iter);
+        first_push(include, database, &mut stories, iter);
     }
 
     for bound in bounds_iter {

@@ -1,42 +1,28 @@
 use {
     crate::{
-        router::{Context, Response},
         templates::{pages, partials, Layout, Width},
         utils,
     },
     common::{database::Database, prelude::*},
+    tiny_http_router::{Data, HttpResponse, Param},
 };
 
-pub fn story(ctx: Context<'_, Database>) -> Result<Response> {
-    let db = ctx
-        .database
-        .read()
-        .map_err(|err| anyhow!("Unable to get read lock on the database: {:?}", err))?;
-
-    let id = ctx
-        .param("id")
-        .map(String::from)
-        .ok_or_else(|| anyhow!("no story id was found is the request uri"))?;
-    let index: usize = ctx
-        .param("chapter")
-        .ok_or_else(|| anyhow!("no story id was found is the request uri"))
-        .and_then(|s| s.parse().map_err(anyhow::Error::from))?;
+pub fn story(db: Data<Database>, id: Param<"id">, index: Param<"chapter">) -> Result<HttpResponse> {
+    let index: usize = index.parse().map_err(anyhow::Error::from)?;
 
     let (_, story) = utils::get_story_full(&*db, &id)?;
     let chapter = db.get_chapter_body(&id, index)?;
-
-    let query = ctx.rebuild_query();
 
     let body = Layout::new(
         Width::Slim,
         db.settings().theme,
         story.info.title.clone(),
-        query.clone(),
+        "".into(),
         pages::Chapter::new(
-            partials::StoryCard::new(&id, story, query.clone())?,
+            partials::StoryCard::new(&id, story, "".into())?,
             &chapter,
             index,
-            query,
+            "".into(),
         ),
     );
 

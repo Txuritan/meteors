@@ -87,7 +87,7 @@ pub mod runtime {
 
                 match el.data {
                     NodeData::Element(Element {
-                        ref name,
+                        name,
                         ref attributes,
                         ..
                     }) if matcher.matches(name, attributes) => {
@@ -412,7 +412,7 @@ pub mod compile_time {
 
             match node.data {
                 NodeData::Element(Element {
-                    ref name,
+                    name,
                     ref attributes,
                     ..
                 }) if matcher.matches(name, attributes) => {

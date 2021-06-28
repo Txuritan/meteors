@@ -57,7 +57,7 @@ impl Action for Command {
 
         for id in index_keys
             .into_iter()
-            .filter(|key| !known_ids.contains(&key))
+            .filter(|key| !known_ids.contains(key))
         {
             match index.stories.remove(&id) {
                 Some(story) => {

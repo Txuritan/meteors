@@ -1,0 +1,15 @@
+[package]
+name = "tiny_http-router"
+version = "0.1.0"
+authors = ["Txuritan <txuritan@protonmail.com>"]
+edition = "2018"
+
+workspace = ".."
+
+[dependencies]
+anyhow = "1.0"
+form_urlencoded = "1.0"
+path-tree = "0.1"
+percent-encoding = "2.1"
+qstring = "0.7"
+tiny_http = "0.8"

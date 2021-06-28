@@ -1,45 +1,26 @@
 use {
     crate::{
-        router::{Context, Response},
         templates::{pages, Layout, Width},
         utils,
     },
     common::{database::Database, prelude::*},
     std::fs,
+    tiny_http_router::{Body, Data, HttpResponse},
 };
 
-pub fn download_get(ctx: Context<'_, Database>) -> Result<Response> {
-    let db = ctx
-        .database
-        .read()
-        .map_err(|err| anyhow!("Unable to get read lock on the database: {:?}", err))?;
-
-    let query = ctx.rebuild_query();
-
+pub fn download_get(db: Data<Database>) -> Result<HttpResponse> {
     let body = Layout::new(
         Width::Slim,
         db.settings().theme,
         "downloads",
-        query.clone(),
+        "".into(),
         pages::Download::new(),
     );
 
     Ok(crate::res!(200; body))
 }
 
-pub fn download_post(mut ctx: Context<'_, Database>) -> Result<Response> {
-    let body = {
-        let len = ctx.length();
-
-        let reader = ctx.as_reader();
-
-        let mut buf = String::with_capacity(len);
-
-        reader.read_to_string(&mut buf)?;
-
-        buf
-    };
-
+pub fn download_post(db: Data<Database>, body: Body) -> Result<HttpResponse> {
     let mut parse = form_urlencoded::parse(body.as_bytes());
 
     if let Some((_, url)) = parse.find(|(key, _)| key == "download") {
@@ -48,11 +29,6 @@ pub fn download_post(mut ctx: Context<'_, Database>) -> Result<Response> {
                 .windows(needle.len())
                 .position(|window| window == needle)
         }
-
-        let db = ctx
-            .database
-            .read()
-            .map_err(|err| anyhow!("Unable to get read lock on the database: {:?}", err))?;
 
         let bytes = utils::http::get(&db.temp_path, &url)?;
 
@@ -77,13 +53,11 @@ pub fn download_post(mut ctx: Context<'_, Database>) -> Result<Response> {
 
         fs::write(save_path, bytes)?;
 
-        let query = ctx.rebuild_query();
-
         let body = Layout::new(
             Width::Slim,
             db.settings().theme,
             "downloads",
-            query.clone(),
+            "".into(),
             pages::Download::new(),
         );
 

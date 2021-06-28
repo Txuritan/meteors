@@ -1,27 +1,20 @@
 use {
     crate::{
-        router::{Context, Response},
         templates::{pages, partials, Layout, Width},
         utils,
     },
     common::{database::Database, prelude::*},
+    tiny_http_router::{Data, Header, HttpResponse},
 };
 
-pub fn index(ctx: Context<'_, Database>) -> Result<Response> {
-    let db = ctx
-        .database
-        .read()
-        .map_err(|err| anyhow!("Unable to get read lock on the database: {:?}", err))?;
-
-    let query = ctx.rebuild_query();
-
+pub fn index(db: Data<Database>) -> Result<HttpResponse> {
     let mut stories = db
         .index()
         .stories
         .keys()
         .map(|id| {
             utils::get_story_full(&*db, id)
-                .and_then(|(id, story)| partials::StoryCard::new(&id, story, query.clone()))
+                .and_then(|(id, story)| partials::StoryCard::new(id, story, "".into()))
         })
         .collect::<Result<Vec<partials::StoryCard<'_>>>>()?;
 
@@ -31,19 +24,17 @@ pub fn index(ctx: Context<'_, Database>) -> Result<Response> {
         Width::Slim,
         db.settings().theme,
         "home",
-        query,
+        "".into(),
         pages::Index::new(stories),
     );
 
     Ok(crate::res!(200; body))
 }
 
-pub fn favicon(_ctx: Context<'_, Database>) -> Result<Response> {
-    Ok(crate::router::Response::from_data(Vec::from(
-        &include_bytes!("../../../assets/noel.ico")[..],
-    ))
-    .with_header(
-        crate::router::Header::from_bytes(&b"Content-Type"[..], &b"image/x-icon"[..]).unwrap(),
+pub fn favicon() -> Result<HttpResponse> {
+    Ok(
+        HttpResponse::from_data(Vec::from(&include_bytes!("../../../assets/noel.ico")[..]))
+            .with_header(Header::from_bytes(&b"Content-Type"[..], &b"image/x-icon"[..]).unwrap())
+            .with_status_code(200),
     )
-    .with_status_code(200))
 }

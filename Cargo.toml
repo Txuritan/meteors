@@ -12,6 +12,7 @@ members = [
     "opal",
     "query",
     "query/macros",
+    "tiny_http-router",
     "xtask",
 ]
 
