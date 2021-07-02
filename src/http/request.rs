@@ -23,6 +23,8 @@ pub struct HttpRequest {
     pub(crate) params: BTreeMap<String, String>,
 
     pub(crate) data: Arc<Extensions>,
+
+    pub(crate) extensions: Extensions,
 }
 
 impl HttpRequest {
@@ -37,6 +39,7 @@ impl HttpRequest {
             body,
             params,
             data,
+            extensions: Extensions::new(),
         }
     }
 
@@ -108,5 +111,13 @@ impl HttpRequest {
             version,
             headers,
         })
+    }
+
+    pub fn ext(&self) -> &Extensions {
+        &self.extensions
+    }
+
+    pub fn ext_mut(&mut self) -> &mut Extensions {
+        &mut self.extensions
     }
 }
