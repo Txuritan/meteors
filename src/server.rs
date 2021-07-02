@@ -7,39 +7,28 @@ use {
         collections::BTreeMap,
         io::{self, Read as _},
         net::{SocketAddr, TcpListener, TcpStream},
-        sync::{atomic::AtomicBool, Arc},
+        sync::{
+            atomic::{AtomicBool, Ordering},
+            Arc,
+        },
         thread::{self, JoinHandle},
     },
 };
 
-enum ServerError {
-    Handler(HandlerError),
-    Http(HttpError),
-    Io(io::Error),
-    Utf8(std::string::FromUtf8Error),
+pub enum RunError {
+    Io(std::io::Error),
+    Signal(ctrlc::Error),
 }
 
-impl From<HandlerError> for ServerError {
-    fn from(err: HandlerError) -> Self {
-        ServerError::Handler(err)
+impl From<std::io::Error> for RunError {
+    fn from(err: std::io::Error) -> Self {
+        Self::Io(err)
     }
 }
 
-impl From<HttpError> for ServerError {
-    fn from(err: HttpError) -> Self {
-        ServerError::Http(err)
-    }
-}
-
-impl From<io::Error> for ServerError {
-    fn from(err: io::Error) -> Self {
-        ServerError::Io(err)
-    }
-}
-
-impl From<std::string::FromUtf8Error> for ServerError {
-    fn from(err: std::string::FromUtf8Error) -> Self {
-        ServerError::Utf8(err)
+impl From<ctrlc::Error> for RunError {
+    fn from(err: ctrlc::Error) -> Self {
+        Self::Signal(err)
     }
 }
 
@@ -79,7 +68,15 @@ impl HttpServer<Unbound> {
 }
 
 impl HttpServer<SocketAddr> {
-    pub fn run(self) -> Result<(), io::Error> {
+    pub fn run(self) -> Result<(), RunError> {
+        ctrlc::set_handler({
+            let close = Arc::clone(&self.close);
+
+            move || {
+                close.store(true, Ordering::Relaxed);
+            }
+        })?;
+
         let listener = TcpListener::bind(self.addr)?;
 
         let (pool, sender) = ThreadPool::new(4, |data| {
@@ -87,30 +84,71 @@ impl HttpServer<SocketAddr> {
                 log::error!("unable to handle thread");
 
                 match err {
-                    ServerError::Handler(err) => log::error!("route handler error: {:?}", err),
-                    ServerError::Http(err) => log::error!("invalid http: {:?}", err),
-                    ServerError::Io(err) => log::error!("{}", err),
-                    ServerError::Utf8(err) => log::error!("{}", err),
+                    ThreadError::Handler(err) => log::error!("route handler error: {:?}", err),
+                    ThreadError::Http(err) => log::error!("invalid http: {:?}", err),
+                    ThreadError::Io(err) => log::error!("{}", err),
+                    ThreadError::Utf8(err) => log::error!("{}", err),
                 }
             }
         });
 
-        thread::spawn(move || {
-            while let Ok((stream, addr)) = listener.accept() {
-                if sender.send((Arc::clone(&self.app), stream, addr)).is_err() {
-                    break;
+        thread::spawn({
+            let app = Arc::clone(&self.app);
+
+            move || {
+                while let Ok((stream, addr)) = listener.accept() {
+                    if sender.send((Arc::clone(&app), stream, addr)).is_err() {
+                        break;
+                    }
                 }
             }
         });
+
+        while !self.close.load(Ordering::Acquire) {
+            std::hint::spin_loop();
+        }
 
         pool.join();
 
         Ok(())
     }
+}
 
+enum ThreadError {
+    Handler(HandlerError),
+    Http(HttpError),
+    Io(io::Error),
+    Utf8(std::string::FromUtf8Error),
+}
+
+impl From<HandlerError> for ThreadError {
+    fn from(err: HandlerError) -> Self {
+        ThreadError::Handler(err)
+    }
+}
+
+impl From<HttpError> for ThreadError {
+    fn from(err: HttpError) -> Self {
+        ThreadError::Http(err)
+    }
+}
+
+impl From<io::Error> for ThreadError {
+    fn from(err: io::Error) -> Self {
+        ThreadError::Io(err)
+    }
+}
+
+impl From<std::string::FromUtf8Error> for ThreadError {
+    fn from(err: std::string::FromUtf8Error) -> Self {
+        ThreadError::Utf8(err)
+    }
+}
+
+impl HttpServer<SocketAddr> {
     fn thread_handle(
         (app, mut stream, _addr): (Arc<BuiltApp>, TcpStream, SocketAddr),
-    ) -> Result<(), ServerError> {
+    ) -> Result<(), ThreadError> {
         let bytes = Self::read_stream(&mut stream)?;
 
         let (header, body) = if let Some(i) = bytes
