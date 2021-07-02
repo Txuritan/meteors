@@ -14,6 +14,7 @@ pub use self::{
 
 use crate::HttpRequest;
 
+#[derive(Debug)]
 pub enum ExtractorError {
     Missing,
 }

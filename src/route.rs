@@ -1,9 +1,8 @@
 use crate::{
     extractor::{Extractor, ExtractorError},
-    handler::{Handler, HandlerService, HandlerError},
+    handler::{Handler, HandlerError, HandlerService},
     service::BoxedService,
-    HttpRequest, HttpResponse, Method,
-    Responder,
+    HttpRequest, HttpResponse, Method, Responder,
 };
 
 pub fn get(path: &str) -> Route {

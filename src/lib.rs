@@ -20,7 +20,7 @@ pub use crate::{
     extractor::{Body, Data, OptionalHeader, OptionalQuery, Param, Query, RawQuery},
     http::{HttpRequest, HttpResponse, Method, StatusCode},
     middleware::Middleware,
+    responder::Responder,
     route::{get, post},
     server::HttpServer,
-    responder::Responder,
 };

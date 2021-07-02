@@ -10,6 +10,8 @@ pub use self::{
     version::Version,
 };
 
+#[derive(Debug)]
+#[allow(clippy::enum_variant_names)] // for the `Parse` prefix, in case i need to add more variants
 pub enum HttpError {
     ParseMissingMeta,
     ParseMetaMissingMethod,

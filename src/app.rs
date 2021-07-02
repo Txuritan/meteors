@@ -1,7 +1,7 @@
 use {
     crate::{
-        extensions::Extensions, route::Route, service::BoxedService, Data, HttpRequest,
-        HttpResponse, Method, Middleware, handler::HandlerError,
+        extensions::Extensions, handler::HandlerError, route::Route, service::BoxedService, Data,
+        HttpRequest, HttpResponse, Method, Middleware,
     },
     path_tree::PathTree,
     std::{collections::BTreeMap, sync::Arc},

@@ -1,11 +1,11 @@
-use crate::service::Service;
-
 use {
-    self::pool::ThreadPool,
-    crate::{app::BuiltApp, http::HttpError, App, HttpRequest, handler::HandlerError},
+    crate::{
+        app::BuiltApp, handler::HandlerError, http::HttpError, server::pool::ThreadPool,
+        service::Service, App, HttpRequest,
+    },
     std::{
         collections::BTreeMap,
-        io::{self, Read as _, Write as _},
+        io::{self, Read as _},
         net::{SocketAddr, TcpListener, TcpStream},
         sync::{atomic::AtomicBool, Arc},
         thread::{self, JoinHandle},
@@ -83,8 +83,15 @@ impl HttpServer<SocketAddr> {
         let listener = TcpListener::bind(self.addr)?;
 
         let (pool, sender) = ThreadPool::new(4, |data| {
-            if let Err(_) = Self::thread_handle(data) {
-                // TODO: log the error here
+            if let Err(err) = Self::thread_handle(data) {
+                log::error!("unable to handle thread");
+
+                match err {
+                    ServerError::Handler(err) => log::error!("route handler error: {:?}", err),
+                    ServerError::Http(err) => log::error!("invalid http: {:?}", err),
+                    ServerError::Io(err) => log::error!("{}", err),
+                    ServerError::Utf8(err) => log::error!("{}", err),
+                }
             }
         });
 
@@ -102,7 +109,7 @@ impl HttpServer<SocketAddr> {
     }
 
     fn thread_handle(
-        (app, mut stream, addr): (Arc<BuiltApp>, TcpStream, SocketAddr),
+        (app, mut stream, _addr): (Arc<BuiltApp>, TcpStream, SocketAddr),
     ) -> Result<(), ServerError> {
         let bytes = Self::read_stream(&mut stream)?;
 
@@ -149,7 +156,7 @@ impl HttpServer<SocketAddr> {
             middleware.after(&request, &response);
         }
 
-        stream.write_all(&response.into_bytes())?;
+        response.into_stream(&mut stream)?;
 
         Ok(())
     }
@@ -290,7 +297,11 @@ mod pool {
                 };
 
                 match received {
-                    Ok(data) => handle(data),
+                    Ok(data) => {
+                        log::trace!("worker {} received a request", id);
+
+                        handle(data)
+                    }
                     Err(RecvTimeoutError::Disconnected) => break,
                     Err(RecvTimeoutError::Timeout) => {
                         if close.load(Ordering::Relaxed) {
@@ -302,7 +313,9 @@ mod pool {
         }
 
         fn join(self) {
-            self.thread.join().unwrap()
+            self.thread.join().unwrap();
+
+            log::trace!("shutdown worker {}", self.id);
         }
     }
 }

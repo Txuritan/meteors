@@ -1,6 +1,8 @@
 use {
-    super::{Extractor, ExtractorError},
-    crate::HttpRequest,
+    crate::{
+        extractor::{Extractor, ExtractorError},
+        HttpRequest,
+    },
     std::{ops::Deref, sync::Arc},
 };
 

@@ -1,4 +1,4 @@
-use {super::HttpError, std::str::FromStr};
+use {crate::http::HttpError, std::str::FromStr};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Method {

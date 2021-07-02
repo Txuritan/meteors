@@ -1,6 +1,8 @@
 use {
-    super::{HttpError, Method, Version},
-    crate::extensions::Extensions,
+    crate::{
+        extensions::Extensions,
+        http::{HttpError, Method, Version},
+    },
     std::{collections::BTreeMap, str::FromStr as _, sync::Arc},
 };
 
@@ -9,6 +11,7 @@ pub(crate) struct HeaderData {
     pub(crate) url: String,
     pub(crate) query: String,
     pub(crate) query_params: BTreeMap<String, String>,
+    #[allow(dead_code)] // just store it as we needed to parse it anyway
     pub(crate) version: Version,
     pub(crate) headers: BTreeMap<String, String>,
 }

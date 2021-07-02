@@ -1,7 +1,13 @@
 use {
-    super::{Body, Version},
-    crate::StatusCode,
-    std::collections::BTreeMap,
+    crate::{
+        http::{Body, Version},
+        StatusCode,
+    },
+    std::{
+        collections::BTreeMap,
+        io::{self, Write as _},
+        net::TcpStream,
+    },
 };
 
 pub struct HttpResponse {
@@ -61,7 +67,32 @@ impl HttpResponse {
         self
     }
 
-    pub(crate) fn into_bytes(self) -> Vec<u8> {
-        vec![]
+    pub(crate) fn into_stream(self, stream: &mut TcpStream) -> io::Result<()> {
+        write!(
+            stream,
+            "{} {} {}\r\n",
+            self.version,
+            self.status.0,
+            self.status.phrase()
+        )?;
+
+        for (key, value) in self.headers {
+            write!(stream, "{}: {}\r\n", key, value)?;
+        }
+
+        match self.body {
+            Body::None | Body::Empty => {
+                write!(stream, "Content-Length: 0\r\n")?;
+            }
+            Body::Bytes(bytes) => {
+                write!(stream, "Content-Length: {}\r\n", bytes.len())?;
+
+                write!(stream, "\r\n")?;
+
+                stream.write_all(&bytes)?
+            }
+        }
+
+        Ok(())
     }
 }

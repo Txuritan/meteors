@@ -2,7 +2,6 @@ pub enum Body {
     None,
     Empty,
     Bytes(Vec<u8>),
-    Message(BoxedMessageBody),
 }
 
 impl From<&'static str> for Body {
@@ -27,10 +26,4 @@ impl From<Vec<u8>> for Body {
     fn from(s: Vec<u8>) -> Self {
         Self::Bytes(s)
     }
-}
-
-pub trait MessageBody {}
-
-pub struct BoxedMessageBody {
-    inner: Box<dyn MessageBody + Send + Sync + 'static>,
 }

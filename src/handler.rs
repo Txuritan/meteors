@@ -1,13 +1,13 @@
 use {
     crate::{
         extractor::{Extractor, ExtractorError},
-        HttpRequest, HttpResponse,
         service::Service,
-        Responder
+        HttpRequest, HttpResponse, Responder,
     },
     std::marker::PhantomData,
 };
 
+#[derive(Debug)]
 pub enum HandlerError {
     Extractor(ExtractorError),
 }
