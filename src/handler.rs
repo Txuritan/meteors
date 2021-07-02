@@ -1,33 +1,46 @@
 use {
     crate::{
         extractor::{Extractor, ExtractorError},
-        http::{HttpRequest, HttpResponse},
+        HttpRequest, HttpResponse,
         service::Service,
-        Error,
+        Responder
     },
     std::marker::PhantomData,
 };
 
-pub trait Handler<T>
-where
-    T: Extractor,
-{
-    fn call(&self, param: T) -> Result<HttpResponse, Error>;
+pub enum HandlerError {
+    Extractor(ExtractorError),
 }
 
-pub struct HandlerService<F, T>
+impl From<ExtractorError> for HandlerError {
+    fn from(err: ExtractorError) -> Self {
+        HandlerError::Extractor(err)
+    }
+}
+
+pub trait Handler<T, R>
 where
-    F: Handler<T>,
     T: Extractor,
+    R: Responder,
+{
+    fn call(&self, param: T) -> R;
+}
+
+pub struct HandlerService<F, T, R>
+where
+    F: Handler<T, R>,
+    T: Extractor,
+    R: Responder,
 {
     inner: F,
-    _phantom: PhantomData<T>,
+    _phantom: PhantomData<(T, R)>,
 }
 
-impl<F, T> HandlerService<F, T>
+impl<F, T, R> HandlerService<F, T, R>
 where
-    F: Handler<T>,
+    F: Handler<T, R>,
     T: Extractor,
+    R: Responder,
 {
     pub(crate) fn new(fun: F) -> Self {
         Self {
@@ -37,41 +50,46 @@ where
     }
 }
 
-impl<F, T> Service<HttpRequest> for HandlerService<F, T>
+impl<F, T, R> Service<HttpRequest> for HandlerService<F, T, R>
 where
-    F: Handler<T>,
+    F: Handler<T, R>,
     T: Extractor<Error = ExtractorError>,
+    R: Responder,
 {
     type Response = HttpResponse;
 
-    type Error = Error;
+    type Error = HandlerError;
 
     fn call(&self, req: &mut HttpRequest) -> Result<Self::Response, Self::Error> {
         let param = T::extract(req)?;
 
-        self.inner.call(param)
+        let res = self.inner.call(param);
+
+        Ok(res.respond_to(&*req))
     }
 }
 
-impl<FUN> Handler<()> for FUN
+impl<FUN, R> Handler<(), R> for FUN
 where
-    FUN: Fn() -> Result<HttpResponse, Error>,
+    FUN: Fn() -> R,
+    R: Responder,
 {
     #[allow(non_snake_case)]
-    fn call(&self, _param: ()) -> Result<HttpResponse, Error> {
+    fn call(&self, _param: ()) -> R {
         (self)()
     }
 }
 
 macro_rules! tuple (
     { $($param:ident)* } => {
-        impl<FUN, $($param,)*> Handler<($($param,)*)> for FUN
+        impl<FUN, $($param,)* R> Handler<($($param,)*), R> for FUN
         where
-            FUN: Fn($($param),*) -> Result<HttpResponse, Error>,
+            FUN: Fn($($param),*) -> R,
             $($param: Extractor<Error = ExtractorError>,)*
+            R: Responder,
         {
             #[allow(non_snake_case)]
-            fn call(&self, ($($param,)*): ($($param,)*)) -> Result<HttpResponse, Error> {
+            fn call(&self, ($($param,)*): ($($param,)*)) -> R {
                 (self)($($param,)*)
             }
         }

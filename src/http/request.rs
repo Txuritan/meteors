@@ -4,7 +4,7 @@ use {
     std::{collections::BTreeMap, str::FromStr as _, sync::Arc},
 };
 
-struct HeaderData {
+pub(crate) struct HeaderData {
     pub(crate) method: Method,
     pub(crate) url: String,
     pub(crate) query: String,

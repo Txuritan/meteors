@@ -1,9 +1,9 @@
 use crate::{
     extractor::{Extractor, ExtractorError},
-    handler::Handler,
-    handler::HandlerService,
+    handler::{Handler, HandlerService, HandlerError},
     service::BoxedService,
-    Error, HttpRequest, HttpResponse, Method,
+    HttpRequest, HttpResponse, Method,
+    Responder,
 };
 
 pub fn get(path: &str) -> Route {
@@ -17,7 +17,7 @@ pub fn post(path: &str) -> Route {
 pub struct Route<'s> {
     pub(crate) method: Method,
     pub(crate) path: &'s str,
-    pub(crate) service: BoxedService<HttpRequest, HttpResponse, Error>,
+    pub(crate) service: BoxedService<HttpRequest, HttpResponse, HandlerError>,
 }
 
 impl<'s> Route<'s> {
@@ -30,14 +30,15 @@ impl<'s> Route<'s> {
         }
     }
 
-    pub(crate) fn not_found() -> Result<HttpResponse, Error> {
-        todo!()
+    pub(crate) fn not_found() -> HttpResponse {
+        HttpResponse::not_found()
     }
 
-    pub fn to<F, T>(mut self, handler: F) -> Self
+    pub fn to<F, T, R>(mut self, handler: F) -> Self
     where
-        F: Handler<T> + Send + Sync + 'static,
+        F: Handler<T, R> + Send + Sync + 'static,
         T: Extractor<Error = ExtractorError> + Send + Sync + 'static,
+        R: Responder + Send + Sync + 'static,
     {
         self.service = BoxedService::new(HandlerService::new(handler));
 

@@ -1,17 +1,13 @@
 use {
     crate::{
-        extensions::Extensions, route::Route, service::BoxedService, Data, Error, HttpRequest,
-        HttpResponse, Method, Middleware,
+        extensions::Extensions, route::Route, service::BoxedService, Data, HttpRequest,
+        HttpResponse, Method, Middleware, handler::HandlerError,
     },
     path_tree::PathTree,
     std::{collections::BTreeMap, sync::Arc},
 };
 
-type InnerRoute = BoxedService<HttpRequest, HttpResponse, Error>;
-
-pub(crate) fn not_found() -> Result<HttpResponse, Error> {
-    todo!()
-}
+type InnerRoute = BoxedService<HttpRequest, HttpResponse, HandlerError>;
 
 #[derive(Clone)]
 pub struct BuiltApp {

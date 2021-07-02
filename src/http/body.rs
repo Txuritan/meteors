@@ -32,5 +32,5 @@ impl From<Vec<u8>> for Body {
 pub trait MessageBody {}
 
 pub struct BoxedMessageBody {
-    inner: Box<dyn MessageBody>,
+    inner: Box<dyn MessageBody + Send + Sync + 'static>,
 }

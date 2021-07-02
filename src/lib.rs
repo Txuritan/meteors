@@ -22,4 +22,5 @@ pub use crate::{
     middleware::Middleware,
     route::{get, post},
     server::HttpServer,
+    responder::Responder,
 };

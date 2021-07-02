@@ -2,20 +2,27 @@ use crate::service::Service;
 
 use {
     self::pool::ThreadPool,
-    crate::{app::BuiltApp, http::HttpError, App, HttpRequest, HttpResponse},
+    crate::{app::BuiltApp, http::HttpError, App, HttpRequest, handler::HandlerError},
     std::{
         collections::BTreeMap,
         io::{self, Read as _, Write as _},
-        net::{Shutdown, SocketAddr, TcpListener, TcpStream},
+        net::{SocketAddr, TcpListener, TcpStream},
         sync::{atomic::AtomicBool, Arc},
         thread::{self, JoinHandle},
     },
 };
 
 enum ServerError {
+    Handler(HandlerError),
     Http(HttpError),
     Io(io::Error),
     Utf8(std::string::FromUtf8Error),
+}
+
+impl From<HandlerError> for ServerError {
+    fn from(err: HandlerError) -> Self {
+        ServerError::Handler(err)
+    }
 }
 
 impl From<HttpError> for ServerError {
@@ -77,10 +84,7 @@ impl HttpServer<SocketAddr> {
 
         let (pool, sender) = ThreadPool::new(4, |data| {
             if let Err(_) = Self::thread_handle(data) {
-                if let Err(err) = data.1.write_all(&HttpResponse::bad_request().into_bytes()) {
-                    // TODO: log the error here
-                    data.1.shutdown(Shutdown::Both);
-                }
+                // TODO: log the error here
             }
         });
 

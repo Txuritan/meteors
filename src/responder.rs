@@ -4,11 +4,8 @@ pub trait Responder {
     fn respond_to(self, req: &HttpRequest) -> HttpResponse;
 }
 
-impl<T, E> Responder for Result<T, E>
-where
-    T: Responder,
-{
-    fn respond_to(self, req: &HttpRequest) -> HttpResponse {
-        todo!()
+impl Responder for HttpResponse {
+    fn respond_to(self, _req: &HttpRequest) -> HttpResponse {
+        self
     }
 }
