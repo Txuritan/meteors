@@ -6,6 +6,7 @@ use {
     },
 };
 
+#[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Version {
     Http09,
     Http10,

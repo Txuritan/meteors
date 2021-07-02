@@ -120,4 +120,16 @@ impl HttpRequest {
     pub fn ext_mut(&mut self) -> &mut Extensions {
         &mut self.extensions
     }
+
+    pub fn url(&self) -> &str {
+        &self.header_data.url
+    }
+
+    pub fn version(&self) -> Version {
+        self.header_data.version
+    }
+
+    pub fn method(&self) -> Method {
+        self.header_data.method
+    }
 }
