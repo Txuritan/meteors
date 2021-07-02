@@ -1,7 +1,10 @@
 use {
     crate::{
-        extensions::Extensions, handler::HandlerError, route::Route, service::BoxedService, Data,
-        HttpRequest, HttpResponse, Method, Middleware,
+        extensions::Extensions,
+        handler::{HandlerError, HandlerService},
+        route::{self, Route},
+        service::BoxedService,
+        Data, HttpRequest, HttpResponse, Method, Middleware,
     },
     path_tree::PathTree,
     std::{collections::BTreeMap, sync::Arc},
@@ -25,6 +28,10 @@ pub struct App {
 }
 
 impl App {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     pub fn data<T>(mut self, data: Arc<T>) -> Self
     where
         T: Send + Sync + 'static,
@@ -57,6 +64,17 @@ impl App {
             data: Arc::new(self.data),
             middleware: Arc::new(self.middleware),
             not_found: self.not_found,
+        }
+    }
+}
+
+impl Default for App {
+    fn default() -> Self {
+        Self {
+            tree: BTreeMap::new(),
+            data: Extensions::new(),
+            middleware: Vec::new(),
+            not_found: Arc::new(BoxedService::new(HandlerService::new(route::not_found))),
         }
     }
 }

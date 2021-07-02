@@ -13,6 +13,10 @@ pub fn post(path: &str) -> Route {
     Route::new(Method::Post, path)
 }
 
+pub(crate) fn not_found() -> HttpResponse {
+    HttpResponse::not_found()
+}
+
 pub struct Route<'s> {
     pub(crate) method: Method,
     pub(crate) path: &'s str,
@@ -25,12 +29,8 @@ impl<'s> Route<'s> {
         Self {
             method,
             path,
-            service: BoxedService::new(HandlerService::new(Self::not_found)),
+            service: BoxedService::new(HandlerService::new(not_found)),
         }
-    }
-
-    pub(crate) fn not_found() -> HttpResponse {
-        HttpResponse::not_found()
     }
 
     pub fn to<F, T, R>(mut self, handler: F) -> Self
