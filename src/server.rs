@@ -11,10 +11,12 @@ use {
             atomic::{AtomicBool, Ordering},
             Arc,
         },
+        fmt,
         thread::{self, JoinHandle},
     },
 };
 
+#[derive(Debug)]
 pub enum RunError {
     Io(std::io::Error),
     Signal(ctrlc::Error),
@@ -29,6 +31,24 @@ impl From<std::io::Error> for RunError {
 impl From<ctrlc::Error> for RunError {
     fn from(err: ctrlc::Error) -> Self {
         Self::Signal(err)
+    }
+}
+
+impl fmt::Display for RunError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RunError::Io(err) => err.fmt(f),
+            RunError::Signal(err) => err.fmt(f),
+        }
+    }
+}
+
+impl std::error::Error for RunError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            RunError::Io(err) => Some(err),
+            RunError::Signal(err) => Some(err),
+        }
     }
 }
 
