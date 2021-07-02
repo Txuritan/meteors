@@ -18,53 +18,40 @@ pub struct HttpResponse {
 }
 
 impl HttpResponse {
-    pub fn new(status: StatusCode) -> Self {
-        Self {
-            version: Version::Http10,
-            status,
-            headers: BTreeMap::new(),
-            body: Body::Empty,
+    #[allow(clippy::new_ret_no_self)]
+    pub fn new(status: StatusCode) -> HttpResponseBuilder {
+        HttpResponseBuilder {
+            inner: Self {
+                version: Version::Http10,
+                status,
+                headers: BTreeMap::new(),
+                body: Body::Empty,
+            },
         }
     }
 
-    pub fn ok() -> Self {
+    pub fn ok() -> HttpResponseBuilder {
         Self::new(StatusCode::OK)
     }
 
-    pub fn not_found() -> Self {
+    pub fn not_found() -> HttpResponseBuilder {
         Self::new(StatusCode::NOT_FOUND)
     }
 
-    pub fn internal_server_error() -> Self {
+    pub fn internal_server_error() -> HttpResponseBuilder {
         Self::new(StatusCode::INTERNAL_SERVER_ERROR)
     }
 
-    pub fn bad_request() -> Self {
+    pub fn bad_request() -> HttpResponseBuilder {
         Self::new(StatusCode::BAD_REQUEST)
     }
 
-    pub fn status(mut self, status: StatusCode) -> Self {
-        self.status = status;
-
-        self
+    pub fn version(&self) -> Version {
+        self.version
     }
 
-    pub fn header<V>(mut self, key: &'static str, value: V) -> Self
-    where
-        V: ToString,
-    {
-        self.headers.insert(key, value.to_string());
-
-        self
-    }
-
-    pub fn body<B>(mut self, body: B) -> Self
-    where
-        B: Into<Body>,
-    {
-        self.body = body.into();
-
-        self
+    pub fn status(&self) -> StatusCode {
+        self.status
     }
 
     pub(crate) fn into_stream(self, stream: &mut TcpStream) -> io::Result<()> {
@@ -94,5 +81,39 @@ impl HttpResponse {
         }
 
         Ok(())
+    }
+}
+
+pub struct HttpResponseBuilder {
+    inner: HttpResponse,
+}
+
+impl HttpResponseBuilder {
+    pub fn status(mut self, status: StatusCode) -> Self {
+        self.inner.status = status;
+
+        self
+    }
+
+    pub fn header<V>(mut self, key: &'static str, value: V) -> Self
+    where
+        V: ToString,
+    {
+        self.inner.headers.insert(key, value.to_string());
+
+        self
+    }
+
+    pub fn body<B>(mut self, body: B) -> HttpResponse
+    where
+        B: Into<Body>,
+    {
+        self.inner.body = body.into();
+
+        self.inner
+    }
+
+    pub fn finish(self) -> HttpResponse {
+        self.inner
     }
 }

@@ -14,7 +14,7 @@ pub fn post(path: &str) -> Route {
 }
 
 pub(crate) fn not_found() -> HttpResponse {
-    HttpResponse::not_found()
+    HttpResponse::not_found().finish()
 }
 
 pub struct Route<'s> {
