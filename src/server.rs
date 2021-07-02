@@ -43,7 +43,7 @@ impl From<std::string::FromUtf8Error> for ServerError {
     }
 }
 
-struct Unbound;
+pub struct Unbound;
 
 pub struct HttpServer<Addr> {
     close: Arc<AtomicBool>,
