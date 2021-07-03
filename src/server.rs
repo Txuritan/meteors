@@ -165,6 +165,8 @@ impl HttpServer<SocketAddr> {
     fn thread_handle(
         (app, mut stream, _addr): (Arc<BuiltApp>, TcpStream, SocketAddr),
     ) -> Result<(), ThreadError> {
+        log::trace!("thread_handle");
+
         let bytes = Self::read_stream(&mut stream)?;
 
         log::trace!("read_stream");
