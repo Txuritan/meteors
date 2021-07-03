@@ -124,10 +124,6 @@ impl HttpServer<SocketAddr> {
             }
         });
 
-        while !self.close.load(Ordering::Acquire) {
-            std::hint::spin_loop();
-        }
-
         pool.join();
 
         Ok(())
@@ -171,6 +167,8 @@ impl HttpServer<SocketAddr> {
     ) -> Result<(), ThreadError> {
         let bytes = Self::read_stream(&mut stream)?;
 
+        log::trace!("read_stream");
+
         let (header, body) = if let Some(i) = bytes
             .windows(4)
             .position(|window| window == &b"\r\n\r\n"[..])
@@ -182,9 +180,15 @@ impl HttpServer<SocketAddr> {
             (bytes, vec![])
         };
 
+        log::trace!("header, body");
+
         let header = String::from_utf8(header)?;
 
+        log::trace!("header");
+
         let header_data = HttpRequest::parse_header(&header)?;
+
+        log::trace!("header_data");
 
         let (service, parameters) = app
             .tree
@@ -201,20 +205,32 @@ impl HttpServer<SocketAddr> {
             })
             .unwrap_or_else(|| (app.not_found.clone(), BTreeMap::new()));
 
+        log::trace!("service, parameters");
+
         let mut request =
             HttpRequest::from_parts(header_data, body, parameters, Arc::clone(&app.data));
+
+        log::trace!("request");
 
         for middleware in &*app.middleware {
             middleware.before(&mut request);
         }
 
+        log::trace!("middleware::before");
+
         let response = service.call(&mut request)?;
+
+        log::trace!("response");
 
         for middleware in &*app.middleware {
             middleware.after(&request, &response);
         }
 
+        log::trace!("middleware::after");
+
         response.into_stream(&mut stream)?;
+
+        log::trace!("into_stream");
 
         Ok(())
     }
@@ -266,7 +282,6 @@ mod pool {
     where
         Data: Send + Sync + 'static,
     {
-        close: Arc<AtomicBool>,
         workers: Vec<Worker<Data>>,
     }
 
@@ -296,12 +311,10 @@ mod pool {
                 })
                 .collect();
 
-            (Self { close, workers }, sender)
+            (Self { workers }, sender)
         }
 
         pub fn join(self) {
-            self.close.store(true, Ordering::Relaxed);
-
             for worker in self.workers {
                 worker.join()
             }
