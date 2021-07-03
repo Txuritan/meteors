@@ -12,6 +12,7 @@ use {
             Arc,
         },
         fmt,
+        time::Duration,
         thread::{self, JoinHandle},
     },
 };
@@ -240,6 +241,8 @@ impl HttpServer<SocketAddr> {
     fn read_stream(stream: &mut TcpStream) -> io::Result<Vec<u8>> {
         const BUFFER_SIZE: usize = 512;
         const MAX_BYTES: usize = 1028 * 8;
+
+        stream.set_read_timeout(Some(Duration::from_millis(100)))?;
 
         let mut data = Vec::with_capacity(512);
 
