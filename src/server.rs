@@ -251,7 +251,7 @@ impl HttpServer<SocketAddr> {
 
             let read = stream.read(&mut read_buf)?;
 
-            if read == 0 {
+            if dbg!(read == 0) {
                 break;
             }
 
@@ -261,7 +261,7 @@ impl HttpServer<SocketAddr> {
 
             read_buf = [0; BUFFER_SIZE];
 
-            if amount_read >= MAX_BYTES {
+            if dbg!(amount_read >= MAX_BYTES) {
                 break;
             }
         }
