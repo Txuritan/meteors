@@ -247,6 +247,8 @@ impl HttpServer<SocketAddr> {
         let mut read_buf = [0; BUFFER_SIZE];
 
         loop {
+            log::trace!("read loop");
+
             let read = stream.read(&mut read_buf)?;
 
             if read == 0 {
