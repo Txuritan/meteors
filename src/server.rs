@@ -249,13 +249,11 @@ impl HttpServer<SocketAddr> {
         let mut read = BUFFER_SIZE;
 
         loop {
-            log::trace!("read loop");
-
             if dbg!(read == 0) {
                 break;
             }
 
-            read = stream.read(&mut read_buf)?;
+            read = dbg!(stream.read(&mut read_buf)?);
 
             if dbg!(read == 0) {
                 break;
