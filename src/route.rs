@@ -5,13 +5,27 @@ use crate::{
     HttpRequest, HttpResponse, Method, Responder,
 };
 
-pub fn get(path: &str) -> Route {
-    Route::new(Method::Get, path)
+macro_rules! route {
+    ($($fn:ident[$method:expr],)*) => {
+        $(
+            pub fn $fn(path: &str) -> Route {
+                Route::new($method, path)
+            }
+        )*
+    };
 }
 
-pub fn post(path: &str) -> Route {
-    Route::new(Method::Post, path)
-}
+route![
+    get[Method::Get],
+    head[Method::Head],
+    post[Method::Post],
+    put[Method::Put],
+    delete[Method::Delete],
+    connect[Method::Connect],
+    options[Method::Options],
+    trace[Method::Trace],
+    patch[Method::Patch],
+];
 
 pub(crate) fn not_found() -> HttpResponse {
     HttpResponse::not_found().finish()

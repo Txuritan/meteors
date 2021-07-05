@@ -29,6 +29,6 @@ pub mod web {
             Body, Data, Header, OptionalHeader, OptionalParam, OptionalQuery, Param, Query,
             RawQuery,
         },
-        route::{get, post},
+        route::{connect, delete, get, head, options, patch, post, put, trace},
     };
 }
