@@ -8,7 +8,7 @@ pub use self::{
     body::Body,
     data::Data,
     header::{Header, OptionalHeader},
-    param::{Param, OptionalParam},
+    param::{OptionalParam, Param},
     query::{OptionalQuery, Query, RawQuery},
 };
 

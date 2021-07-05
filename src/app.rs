@@ -4,7 +4,7 @@ use {
         handler::{HandlerError, HandlerService},
         route::{self, Route},
         service::BoxedService,
-        Data, HttpRequest, HttpResponse, Method, Middleware,
+        web, HttpRequest, HttpResponse, Method, Middleware,
     },
     path_tree::PathTree,
     std::{collections::BTreeMap, sync::Arc},
@@ -36,7 +36,7 @@ impl App {
     where
         T: Send + Sync + 'static,
     {
-        self.data.insert(Data { data });
+        self.data.insert(web::Data { data });
 
         self
     }

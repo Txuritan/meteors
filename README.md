@@ -7,21 +7,21 @@ A (nightly) insecure lightweight synchronous Actix-like HTTP server.
 ## Example
 
 ```rust
-use enrgy::{get, App, HttpServer, Param, Responder};
+use enrgy::{web, App, HttpServer, Responder};
 
 fn index() -> impl Responder {
     "Hello World!"
 }
 
-fn greet(name: Param<"name">) -> impl Responder {
+fn greet(name: web::Param<"name">) -> impl Responder {
     format!("Hello {}!", &name)
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     HttpServer::new(
         App::new()
-            .service(get("/").to(index))
-            .service(get("/:name").to(greet))
+            .service(web::get("/").to(index))
+            .service(web::get("/:name").to(greet))
     )
     .bind(("127.0.0.1", 8080))
     .run()?;

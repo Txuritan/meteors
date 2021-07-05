@@ -17,10 +17,18 @@ mod service;
 pub use crate::{
     app::App,
     error::Error,
-    extractor::{Body, Data, OptionalHeader, OptionalQuery, Param, Query, RawQuery},
     http::{HttpRequest, HttpResponse, Method, StatusCode},
     middleware::Middleware,
     responder::Responder,
-    route::{get, post},
     server::HttpServer,
 };
+
+pub mod web {
+    pub use crate::{
+        extractor::{
+            Body, Data, Header, OptionalHeader, OptionalParam, OptionalQuery, Param, Query,
+            RawQuery,
+        },
+        route::{get, post},
+    };
+}
