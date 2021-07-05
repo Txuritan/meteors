@@ -1,8 +1,8 @@
 # enrgy
 
-An (nightly) insecure lightweight synchronous Actix-like HTTP server.
+A (nightly) insecure lightweight synchronous Actix-like HTTP server.
 
-*WARNING*: Do not allow access to this server from the open internet, it little to no security measures.
+*WARNING*: Do not allow access to this server from the open internet, it has little to no security measures.
 
 ## Example
 
