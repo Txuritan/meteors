@@ -93,13 +93,13 @@ impl HttpServer<SocketAddr> {
             let close = Arc::clone(&self.close);
 
             move || {
-                close.store(true, Ordering::Relaxed);
+                close.store(true, Ordering::SeqCst);
             }
         })?;
 
         let listener = TcpListener::bind(self.addr)?;
 
-        let (pool, sender) = ThreadPool::new(4, |data| {
+        let (pool, sender) = ThreadPool::new(4, Arc::clone(&self.close), |data| {
             if let Err(err) = Self::thread_handle(data) {
                 log::error!("unable to handle thread");
 
@@ -299,12 +299,10 @@ mod pool {
     where
         Data: Send + Sync + 'static,
     {
-        pub fn new<F>(size: usize, handler: F) -> (Self, Sender<Data>)
+        pub fn new<F>(size: usize, close: Arc<AtomicBool>, handler: F) -> (Self, Sender<Data>)
         where
             F: Fn(Data) + Clone + Send + Sync + 'static,
         {
-            let close = Arc::new(AtomicBool::new(false));
-
             let (sender, receiver) = mpsc::channel();
 
             let receiver = Arc::new(Mutex::new(receiver));
@@ -385,7 +383,7 @@ mod pool {
                     }
                     Err(RecvTimeoutError::Disconnected) => break,
                     Err(RecvTimeoutError::Timeout) => {
-                        if close.load(Ordering::Relaxed) {
+                        if close.load(Ordering::SeqCst) {
                             break;
                         }
                     }
