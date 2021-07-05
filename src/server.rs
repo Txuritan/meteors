@@ -195,13 +195,13 @@ impl HttpServer<SocketAddr> {
         };
 
         loop {
-            if dbg!(state.amount_read == 0) {
+            if state.amount_read == 0 {
                 break;
             }
 
-            state.amount_read = dbg!(stream.read(&mut state.read_buffer)?);
+            state.amount_read = stream.read(&mut state.read_buffer)?;
 
-            if dbg!(state.amount_read == 0) {
+            if state.amount_read == 0 {
                 break;
             }
 
@@ -221,7 +221,7 @@ impl HttpServer<SocketAddr> {
                 break;
             }
 
-            if dbg!(state.total_read >= MAX_BYTES) {
+            if state.total_read >= MAX_BYTES {
                 break;
             }
         }
