@@ -3,7 +3,7 @@ use {
         extractor::{Extractor, ExtractorError},
         HttpRequest,
     },
-    std::ops::Deref,
+    std::ops::{Deref, DerefMut},
 };
 
 pub struct Param<const KEY: &'static str> {
@@ -15,6 +15,12 @@ impl<const KEY: &'static str> Deref for Param<KEY> {
 
     fn deref(&self) -> &Self::Target {
         &self.value
+    }
+}
+
+impl<const KEY: &'static str> DerefMut for Param<KEY> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
     }
 }
 
@@ -39,6 +45,12 @@ impl<const KEY: &'static str> Deref for OptionalParam<KEY> {
 
     fn deref(&self) -> &Self::Target {
         &self.value
+    }
+}
+
+impl<const KEY: &'static str> DerefMut for OptionalParam<KEY> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
     }
 }
 

@@ -3,7 +3,7 @@ use {
         extractor::{Extractor, ExtractorError},
         HttpRequest,
     },
-    std::ops::Deref,
+    std::ops::{Deref, DerefMut},
 };
 
 pub struct Query<const KEY: &'static str> {
@@ -15,6 +15,12 @@ impl<const KEY: &'static str> Deref for Query<KEY> {
 
     fn deref(&self) -> &Self::Target {
         &self.value
+    }
+}
+
+impl<const KEY: &'static str> DerefMut for Query<KEY> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
     }
 }
 
@@ -42,6 +48,12 @@ impl<const KEY: &'static str> Deref for OptionalQuery<KEY> {
     }
 }
 
+impl<const KEY: &'static str> DerefMut for OptionalQuery<KEY> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
+    }
+}
+
 impl<const KEY: &'static str> Extractor for OptionalQuery<KEY> {
     type Error = ExtractorError;
 
@@ -61,6 +73,12 @@ impl Deref for RawQuery {
 
     fn deref(&self) -> &Self::Target {
         &self.value
+    }
+}
+
+impl DerefMut for RawQuery {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
     }
 }
 

@@ -3,7 +3,7 @@ use {
         extractor::{Extractor, ExtractorError},
         HttpRequest,
     },
-    std::ops::Deref,
+    std::ops::{Deref, DerefMut},
 };
 
 pub struct Body {
@@ -15,6 +15,12 @@ impl Deref for Body {
 
     fn deref(&self) -> &Self::Target {
         &self.value
+    }
+}
+
+impl DerefMut for Body {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
     }
 }
 

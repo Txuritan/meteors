@@ -3,7 +3,7 @@ use {
         extractor::{Extractor, ExtractorError},
         HttpRequest,
     },
-    std::ops::Deref,
+    std::ops::{Deref, DerefMut},
 };
 
 pub struct Header<const KEY: &'static str> {
@@ -15,6 +15,12 @@ impl<const KEY: &'static str> Deref for Header<KEY> {
 
     fn deref(&self) -> &Self::Target {
         &self.value
+    }
+}
+
+impl<const KEY: &'static str> DerefMut for Header<KEY> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
     }
 }
 
@@ -45,6 +51,12 @@ impl<const KEY: &'static str> Deref for OptionalHeader<KEY> {
 
     fn deref(&self) -> &Self::Target {
         &self.value
+    }
+}
+
+impl<const KEY: &'static str> DerefMut for OptionalHeader<KEY> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
     }
 }
 
