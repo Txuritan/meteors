@@ -221,6 +221,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "enrgy"
+version = "0.1.0"
+source = "git+https://github.com/Txuritan/enrgy.git#ad4f3182d0be35acc2e2dc30fe87770d82b7c8c9"
+dependencies = [
+ "ctrlc",
+ "form_urlencoded",
+ "log",
+ "path-tree",
+ "percent-encoding",
+ "qstring",
+]
+
+[[package]]
 name = "fake-simd"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -388,6 +401,7 @@ dependencies = [
  "meteors-common",
  "meteors-format-ao3",
  "xxhash-rust",
+ "zip",
 ]
 
 [[package]]
@@ -396,16 +410,13 @@ version = "0.1.0"
 dependencies = [
  "argh",
  "chrono",
- "ctrlc",
+ "enrgy",
  "form_urlencoded",
  "meteors-common",
  "once_cell",
  "opal",
- "path-tree",
  "percent-encoding",
  "qstring",
- "tiny_http",
- "tiny_http-router",
 ]
 
 [[package]]
@@ -431,6 +442,7 @@ dependencies = [
  "flate2",
  "meteors-common",
  "query",
+ "zip",
 ]
 
 [[package]]
@@ -698,6 +710,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "thiserror"
+version = "1.0.26"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93119e4feac1cbe6c798c34d3a53ea0026b0b1de6a120deef895137c0529bfe2"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "1.0.26"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "060d69a0afe7796bf42e9e2ff91f5ee691fb15c53d38b4b62a9a53eb23164745"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "time"
 version = "0.1.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -779,9 +811,9 @@ dependencies = [
 
 [[package]]
 name = "unicode-segmentation"
-version = "1.7.1"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb0d2e7be6ae3a5fa87eed5fb451aff96f2573d2694942e40543ae0bbe19c796"
+checksum = "8895849a949e7845e06bd6dc1aa51731a103c42707010a5b591c0038fb73385b"
 
 [[package]]
 name = "unicode-xid"
@@ -872,3 +904,15 @@ name = "xxhash-rust"
 version = "0.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e575e15bedf6e57b5c2d763ffc6c3c760143466cbd09d762d539680ab5992ded"
+
+[[package]]
+name = "zip"
+version = "0.5.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "93ab48844d61251bb3835145c521d88aa4031d7139e8485990f60ca911fa0815"
+dependencies = [
+ "byteorder",
+ "crc32fast",
+ "flate2",
+ "thiserror",
+]

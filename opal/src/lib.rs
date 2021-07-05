@@ -52,7 +52,10 @@ pub fn compile(bounds: Option<(&str, &str)>, typ: &str, text: &str) -> Result<St
     write!(&mut buf, "        hint")?;
     writeln!(&mut buf, "    }}")?;
 
-    writeln!(&mut buf, "#[allow(unused_imports, clippy::branches_sharing_code)]")?;
+    writeln!(
+        &mut buf,
+        "#[allow(unused_imports, clippy::branches_sharing_code)]"
+    )?;
     writeln!(&mut buf, "    fn render<W>(&self, writer: &mut W) -> ::std::io::Result<()>\n        where\n            W: ::std::io::Write,\n        {{")?;
     writeln!(
         &mut buf,

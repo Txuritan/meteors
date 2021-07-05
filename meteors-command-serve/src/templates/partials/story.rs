@@ -27,7 +27,11 @@ pub struct StoryCard<'s> {
 }
 
 impl<'s> StoryCard<'s> {
-    pub fn new(id: &'s str, story: resolved::Story, query: Option<Cow<'static, str>>) -> Result<Self> {
+    pub fn new(
+        id: &'s str,
+        story: resolved::Story,
+        query: Option<Cow<'static, str>>,
+    ) -> Result<Self> {
         let resolved::StoryMeta {
             rating,
             authors,

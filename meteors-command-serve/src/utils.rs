@@ -6,9 +6,24 @@ use {
         },
         prelude::*,
     },
+    enrgy::HttpResponse,
     once_cell::sync::Lazy,
     std::{collections::BTreeMap, sync::RwLock},
 };
+
+pub fn wrap<F>(fun: F) -> HttpResponse
+where
+    F: FnOnce() -> Result<HttpResponse>,
+{
+    match fun() {
+        Ok(res) => res,
+        Err(err) => {
+            error!("handler error: {}", err);
+
+            HttpResponse::internal_server_error().finish()
+        }
+    }
+}
 
 pub mod http {
     use {

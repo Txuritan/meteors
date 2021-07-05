@@ -4,36 +4,18 @@ pub static PAGE_503: &str = r#"<!DOCTYPE html><html><head><title>503 | local arc
 #[macro_export]
 macro_rules! res {
     (200; $body:expr) => {
-        ::tiny_http_router::HttpResponse::from_string(::opal::Template::render_into_string($body)?)
-            .with_header(
-                ::tiny_http_router::Header::from_bytes(
-                    &b"Content-Type"[..],
-                    &b"text/html; charset=utf-8"[..],
-                )
-                .unwrap(),
-            )
-            .with_status_code(200)
+        ::enrgy::HttpResponse::ok()
+            .header("Content-Type", "text/html; charset=utf-8")
+            .body(::opal::Template::render_into_string($body)?)
     };
     (404) => {
-        ::tiny_http_router::HttpResponse::from_string($crate::router::PAGE_404)
-            .with_header(
-                ::tiny_http_router::Header::from_bytes(
-                    &b"Content-Type"[..],
-                    &b"text/html; charset=utf-8"[..],
-                )
-                .unwrap(),
-            )
-            .with_status_code(404)
+        ::enrgy::HttpResponse::not_found()
+            .header("Content-Type", "text/html; charset=utf-8")
+            .body($crate::router::PAGE_404)
     };
     (503) => {
-        ::tiny_http_router::HttpResponse::from_string($crate::router::PAGE_503)
-            .with_header(
-                ::tiny_http_router::Header::from_bytes(
-                    &b"Content-Type"[..],
-                    &b"text/html; charset=utf-8"[..],
-                )
-                .unwrap(),
-            )
-            .with_status_code(503)
+        ::enrgy::HttpResponse::internal_server_error()
+            .header("Content-Type", "text/html; charset=utf-8")
+            .body($crate::router::PAGE_503)
     };
 }

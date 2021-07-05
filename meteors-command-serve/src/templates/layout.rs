@@ -16,7 +16,13 @@ where
     B: Template,
 {
     #[allow(clippy::needless_pass_by_value)]
-    pub fn new<S>(width: Width, theme: Theme, title: S, query: Option<Cow<'static, str>>, body: B) -> Self
+    pub fn new<S>(
+        width: Width,
+        theme: Theme,
+        title: S,
+        query: Option<Cow<'static, str>>,
+        body: B,
+    ) -> Self
     where
         S: ToString,
     {

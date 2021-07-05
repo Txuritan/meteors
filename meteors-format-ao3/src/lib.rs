@@ -2,14 +2,16 @@
 mod tests;
 
 pub mod epub;
-pub mod gztar;
 pub mod html;
 
 use {
-    common::{models::Rating, prelude::*},
-    flate2::read::DeflateDecoder,
+    common::{
+        models::{FileKind, Rating},
+        prelude::*,
+    },
     query::Document,
-    std::{convert::TryFrom, ops::Range},
+    std::{convert::TryFrom, io::Cursor, ops::Range},
+    zip::ZipArchive,
 };
 
 #[derive(Debug, PartialEq)]
@@ -44,29 +46,18 @@ pub struct ParsedChapter {
     pub end_notes: Option<Range<usize>>,
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum FileKind {
-    Epub,
-    Html,
+pub fn parse_epub(
+    mut archive: ZipArchive<Cursor<Vec<u8>>>,
+) -> Result<(ParsedInfo, ParsedMeta, ParsedChapters)> {
+    todo!()
 }
 
-pub fn parse(kind: FileKind, bytes: Vec<u8>) -> Result<(ParsedInfo, ParsedMeta, ParsedChapters)> {
-    match kind {
-        FileKind::Epub => {
-            let mut decoder = DeflateDecoder::new(&bytes[..]);
+pub fn parse_html(text: &str) -> Result<(ParsedInfo, ParsedMeta, ParsedChapters)> {
+    let doc = Document::try_from(text)?;
 
-            todo!()
-        }
-        FileKind::Html => {
-            let text = String::from_utf8(bytes)?;
+    let info = html::parse_info(&doc);
+    let meta = html::parse_meta(&doc);
+    let chapters = html::parse_chapters(&doc)?;
 
-            let doc = Document::try_from(text.as_str())?;
-
-            let info = html::parse_info(&doc);
-            let meta = html::parse_meta(&doc);
-            let chapters = html::parse_chapters(&doc)?;
-
-            Ok((info, meta, chapters))
-        }
-    }
+    Ok((info, meta, chapters))
 }

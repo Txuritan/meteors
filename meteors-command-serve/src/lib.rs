@@ -11,6 +11,7 @@ mod utils;
 
 use {
     common::{database::Database, prelude::*, Action},
+    enrgy::{get, post, App, HttpServer, Middleware},
     std::time::Instant,
     std::{
         net::{Ipv4Addr, SocketAddr},
@@ -21,8 +22,6 @@ use {
         thread,
         time::Duration,
     },
-    tiny_http::Server,
-    tiny_http_router::{get, post, Middleware, Router},
 };
 
 #[derive(argh::FromArgs)]
@@ -48,15 +47,15 @@ pub struct Command {
 
 impl Action for Command {
     fn run(&self) -> Result<()> {
-        let stop = Arc::new(AtomicBool::new(false));
+        // let stop = Arc::new(AtomicBool::new(false));
 
-        ctrlc::set_handler({
-            let stop = Arc::clone(&stop);
+        // ctrlc::set_handler({
+        //     let stop = Arc::clone(&stop);
 
-            move || {
-                stop.store(true, Ordering::SeqCst);
-            }
-        })?;
+        //     move || {
+        //         stop.store(true, Ordering::SeqCst);
+        //     }
+        // })?;
 
         let addr: SocketAddr = (self.host.parse::<Ipv4Addr>()?, self.port).into();
 
@@ -74,21 +73,20 @@ impl Action for Command {
             db
         });
 
-        let router = Router::new()
-            .data(database.clone())
-            .service(get("/").to(handlers::index))
-            .service(get("/download").to(handlers::download_get))
-            .service(post("/download").to(handlers::download_post))
-            .service(get("/story/:id/:chapter").to(handlers::story))
-            .service(get("/search").to(handlers::search))
-            .service(get("/search2").to(handlers::search_v2))
-            .service(get("/style.css").to(handlers::style))
-            .service(get("/favicon.ico").to(handlers::favicon))
-            .wrap(LoggerMiddleware)
-            .build();
-
-        let server =
-            Arc::new(Server::http(addr).map_err(|err| anyhow!("unable to start server: {}", err))?);
+        let server = HttpServer::new(
+            App::new()
+                .data(database.clone())
+                .service(get("/").to(handlers::index))
+                .service(get("/download").to(handlers::download_get))
+                .service(post("/download").to(handlers::download_post))
+                .service(get("/story/:id/:chapter").to(handlers::story))
+                .service(get("/search").to(handlers::search))
+                .service(get("/search2").to(handlers::search_v2))
+                .service(get("/style.css").to(handlers::style))
+                .service(get("/favicon.ico").to(handlers::favicon))
+                .wrap(LoggerMiddleware),
+        )
+        .bind(addr);
 
         info!(
             "{} sever listening on: {}",
@@ -96,45 +94,7 @@ impl Action for Command {
             addr.bright_purple()
         );
 
-        let mut guards = Vec::with_capacity(4);
-
-        for id in 0..4 {
-            guards.push(thread::spawn({
-                let stop = Arc::clone(&stop);
-                let router = router.clone();
-                let server = Arc::clone(&server);
-
-                move || loop {
-                    match server.recv_timeout(Duration::from_millis(100)) {
-                        Ok(Some(req)) => {
-                            if let Err(err) = router.handle(req) {
-                                error!("{} unable to handle request {:?}", "+".bright_black(), err);
-                            }
-                        }
-                        Ok(None) => {
-                            if stop.load(Ordering::SeqCst) {
-                                info!(
-                                    "{} shutting down server thread {}",
-                                    "+".bright_black(),
-                                    id.bright_purple()
-                                );
-
-                                break;
-                            }
-                        }
-                        Err(err) => {
-                            error!("{} {:?}", "+".bright_black(), err);
-                        }
-                    }
-                }
-            }));
-        }
-
-        for guard in guards {
-            if guard.join().is_err() {
-                error!("{} unable to join server thread", "+".bright_black());
-            }
-        }
+        server.run()?;
 
         if let Ok(mut database) = Arc::try_unwrap(database) {
             database.unlock_data()?;
@@ -149,8 +109,8 @@ impl Action for Command {
 struct LoggerMiddleware;
 
 impl Middleware for LoggerMiddleware {
-    fn before(&self, req: &mut tiny_http_router::HttpRequest) {
-        use tiny_http_router::Method;
+    fn before(&self, req: &mut enrgy::HttpRequest) {
+        use enrgy::Method;
 
         let earlier = Instant::now();
 
@@ -180,13 +140,13 @@ impl Middleware for LoggerMiddleware {
             "+".bright_black(),
             "+".bright_black(),
             "HTTP".bright_yellow(),
-            req.http_version(),
+            req.version(),
             to_colored_string(&req.method()),
             url.bright_purple(),
         );
     }
 
-    fn after(&self, req: &tiny_http_router::HttpRequest, res: &tiny_http_router::HttpResponse) {
+    fn after(&self, req: &enrgy::HttpRequest, res: &enrgy::HttpResponse) {
         let dur = req
             .ext()
             .get::<Instant>()
@@ -201,7 +161,7 @@ impl Middleware for LoggerMiddleware {
             "{} {} {} {}ms",
             "+".bright_black(),
             "+".bright_black(),
-            match res.status_code().0 {
+            match res.status().0 {
                 200 => format!("{}", "200".green()),
                 404 => format!("{}", "404".bright_yellow()),
                 503 => format!("{}", "503".bright_red()),

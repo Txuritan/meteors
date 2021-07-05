@@ -3,6 +3,18 @@ use {
     std::{collections::BTreeMap, ops::Range},
 };
 
+#[derive(Debug, Clone, Copy, PartialEq, Aloene)]
+pub enum Site {
+    ArchiveOfOurOwn,
+    Unknown,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum FileKind {
+    Epub,
+    Html,
+}
+
 #[derive(Debug, Clone, PartialEq, Aloene)]
 pub struct Entity {
     pub text: String,
@@ -70,6 +82,7 @@ pub struct Story {
     pub file_hash: u64,
     pub info: StoryInfo,
     pub meta: StoryMeta,
+    // pub site: Site,
     pub chapters: Vec<Chapter>,
 }
 

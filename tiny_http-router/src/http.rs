@@ -1,5 +1,5 @@
 use {
-    crate::{router::Extensions, Header, StatusCode, Method},
+    crate::{router::Extensions, Header, Method, StatusCode},
     std::{
         collections::BTreeMap,
         io::Cursor,
@@ -27,7 +27,7 @@ impl HttpRequest {
     }
 
     pub fn http_version(&self) -> &HTTPVersion {
-       self.inner.http_version()
+        self.inner.http_version()
     }
 
     pub fn method(&self) -> Method {
