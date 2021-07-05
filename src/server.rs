@@ -217,10 +217,6 @@ impl HttpServer<SocketAddr> {
                 break;
             }
 
-            if state.data.windows(4).any(double_newline) {
-                break;
-            }
-
             if state.total_read >= MAX_BYTES {
                 break;
             }
