@@ -6,6 +6,36 @@ use {
     std::ops::Deref,
 };
 
+pub struct Header<const KEY: &'static str> {
+    value: String,
+}
+
+impl<const KEY: &'static str> Deref for Header<KEY> {
+    type Target = String;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl<const KEY: &'static str> Extractor for Header<KEY> {
+    type Error = ExtractorError;
+
+    fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
+        if let Some(value) = req
+            .header_data
+            .headers
+            .iter()
+            .find(|(key, _)| key.eq_ignore_ascii_case(KEY))
+            .map(|(_, value)| value.to_string())
+        {
+            Ok(Self { value })
+        } else {
+            Err(ExtractorError::Missing)
+        }
+    }
+}
+
 pub struct OptionalHeader<const KEY: &'static str> {
     value: Option<String>,
 }

@@ -7,8 +7,8 @@ pub mod query;
 pub use self::{
     body::Body,
     data::Data,
-    header::OptionalHeader,
-    param::Param,
+    header::{Header, OptionalHeader},
+    param::{Param, OptionalParam},
     query::{OptionalQuery, Query, RawQuery},
 };
 

@@ -29,3 +29,25 @@ impl<const KEY: &'static str> Extractor for Param<KEY> {
         }
     }
 }
+
+pub struct OptionalParam<const KEY: &'static str> {
+    value: Option<String>,
+}
+
+impl<const KEY: &'static str> Deref for OptionalParam<KEY> {
+    type Target = Option<String>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl<const KEY: &'static str> Extractor for OptionalParam<KEY> {
+    type Error = ExtractorError;
+
+    fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
+        Ok(Self {
+            value: req.params.get(KEY).cloned(),
+        })
+    }
+}
