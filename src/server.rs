@@ -5,13 +5,13 @@ use {
     },
     std::{
         collections::BTreeMap,
+        fmt,
         io::{self, Read as _},
         net::{SocketAddr, TcpListener, TcpStream},
         sync::{
             atomic::{AtomicBool, Ordering},
             Arc,
         },
-        fmt,
         thread::{self, JoinHandle},
     },
 };
@@ -165,21 +165,59 @@ impl HttpServer<SocketAddr> {
     fn thread_handle(
         (app, mut stream, _addr): (Arc<BuiltApp>, TcpStream, SocketAddr),
     ) -> Result<(), ThreadError> {
+        fn double_newline(bytes: &[u8]) -> bool {
+            bytes == &b"\r\n\r\n"[..]
+        }
+
+        const BUFFER_SIZE: usize = 512;
+        const MAX_BYTES: usize = 1028 * 8;
+
         log::trace!("thread_handle");
 
-        let bytes = Self::read_stream(&mut stream)?;
+        let mut data = Vec::with_capacity(512);
+
+        let mut amount_read = 0;
+        let mut read_buf = [0; BUFFER_SIZE];
+
+        let mut read = BUFFER_SIZE;
+
+        loop {
+            if dbg!(read == 0) {
+                break;
+            }
+
+            read = dbg!(stream.read(&mut read_buf)?);
+
+            if dbg!(read == 0) {
+                break;
+            }
+
+            amount_read += read;
+
+            data.extend_from_slice(&read_buf[..read]);
+
+            read_buf = [0; BUFFER_SIZE];
+
+            if data.windows(4).any(double_newline) {
+                break;
+            }
+
+            if dbg!(amount_read >= MAX_BYTES) {
+                break;
+            }
+        }
 
         log::trace!("read_stream");
 
-        let (header, body) = if let Some(i) = bytes
+        let (header, body) = if let Some(i) = data
             .windows(4)
-            .position(|window| window == &b"\r\n\r\n"[..])
+            .position(double_newline)
         {
-            let (header, body) = bytes.split_at(i + 2);
+            let (header, body) = data.split_at(i + 2);
 
             (Vec::from(header), Vec::from(&body[2..]))
         } else {
-            (bytes, vec![])
+            (data, vec![])
         };
 
         log::trace!("header, body");
@@ -235,42 +273,6 @@ impl HttpServer<SocketAddr> {
         log::trace!("into_stream");
 
         Ok(())
-    }
-
-    fn read_stream(stream: &mut TcpStream) -> io::Result<Vec<u8>> {
-        const BUFFER_SIZE: usize = 512;
-        // const MAX_BYTES: usize = 1028 * 8;
-
-        let mut data = Vec::with_capacity(512);
-
-        // let mut amount_read = 0;
-        let mut read_buf = [0; BUFFER_SIZE];
-
-        let mut read = BUFFER_SIZE;
-
-        loop {
-            if dbg!(read == 0) {
-                break;
-            }
-
-            read = dbg!(stream.read(&mut read_buf)?);
-
-            if dbg!(read == 0) {
-                break;
-            }
-
-            // amount_read += read;
-
-            data.extend_from_slice(&read_buf[..read]);
-
-            read_buf = [0; BUFFER_SIZE];
-
-            // if dbg!(amount_read >= MAX_BYTES) {
-            //     break;
-            // }
-        }
-
-        Ok(data)
     }
 }
 
