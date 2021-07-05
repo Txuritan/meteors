@@ -222,62 +222,62 @@ impl HttpServer<SocketAddr> {
             }
         }
 
-        if let Some(i) = state.data.windows(4).position(double_newline) {
-            let header_bytes = &state.data[..(i + 2)];
-            let header_str = String::from_utf8_lossy(header_bytes);
-
-            let header_data = HttpRequest::parse_header(header_str.as_ref())?;
-
-            let (header_data, body) =
-                if let Some(header) = header_data.headers.get("Content-Length") {
-                    let amount_of_bytes = header.trim().parse::<u64>()?;
-
-                    let mut body = Vec::with_capacity(amount_of_bytes as usize);
-
-                    stream
-                        .by_ref()
-                        .take(amount_of_bytes)
-                        .read_to_end(&mut body)?;
-
-                    (header_data, Vec::from(&body[..]))
-                } else {
-                    (header_data, vec![])
-                };
-
-            let (service, parameters) = app
-                .tree
-                .get(&header_data.method)
-                .and_then(|tree| tree.find(&header_data.url))
-                .map(|(service, parameters)| {
-                    (
-                        Arc::clone(service),
-                        parameters
-                            .into_iter()
-                            .map(|(key, value)| (key.to_string(), value.to_string()))
-                            .collect::<BTreeMap<_, _>>(),
-                    )
-                })
-                .unwrap_or_else(|| (app.not_found.clone(), BTreeMap::new()));
-
-            let mut request =
-                HttpRequest::from_parts(header_data, body, parameters, Arc::clone(&app.data));
-
-            for middleware in &*app.middleware {
-                middleware.before(&mut request);
-            }
-
-            let response = service.call(&mut request)?;
-
-            for middleware in &*app.middleware {
-                middleware.after(&request, &response);
-            }
-
-            response.into_stream(&mut stream)?;
-
-            Ok(())
+        let header_bytes = if let Some(i) = state.data.windows(4).position(double_newline) {
+            &state.data[..(i + 2)]
         } else {
-            Err(HttpError::InvalidRequest.into())
+            &state.data[..]
+        };
+
+        let header_str = String::from_utf8_lossy(header_bytes);
+
+        let header_data = HttpRequest::parse_header(header_str.as_ref())?;
+
+        let (header_data, body) = if let Some(header) = header_data.headers.get("Content-Length") {
+            let amount_of_bytes = header.trim().parse::<u64>()?;
+
+            let mut body = Vec::with_capacity(amount_of_bytes as usize);
+
+            stream
+                .by_ref()
+                .take(amount_of_bytes)
+                .read_to_end(&mut body)?;
+
+            (header_data, Vec::from(&body[..]))
+        } else {
+            (header_data, vec![])
+        };
+
+        let (service, parameters) = app
+            .tree
+            .get(&header_data.method)
+            .and_then(|tree| tree.find(&header_data.url))
+            .map(|(service, parameters)| {
+                (
+                    Arc::clone(service),
+                    parameters
+                        .into_iter()
+                        .map(|(key, value)| (key.to_string(), value.to_string()))
+                        .collect::<BTreeMap<_, _>>(),
+                )
+            })
+            .unwrap_or_else(|| (app.not_found.clone(), BTreeMap::new()));
+
+        let mut request =
+            HttpRequest::from_parts(header_data, body, parameters, Arc::clone(&app.data));
+
+        for middleware in &*app.middleware {
+            middleware.before(&mut request);
         }
+
+        let response = service.call(&mut request)?;
+
+        for middleware in &*app.middleware {
+            middleware.after(&request, &response);
+        }
+
+        response.into_stream(&mut stream)?;
+
+        Ok(())
     }
 }
 

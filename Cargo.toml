@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Txuritan <txuritan@protonmail.com>"]
 edition = "2018"
 
-description = "An insecure lightweight synchronous Actix-like HTTP server"
+description = "An (nightly) insecure lightweight synchronous Actix-like HTTP server"
 repository = "https://github.com/Txuritan/enrgy"
 
 license = "MIT"
