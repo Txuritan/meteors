@@ -1,4 +1,4 @@
-use {crate::http::HttpError, std::str::FromStr};
+use {crate::http::Error, std::str::FromStr};
 
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Method {
@@ -14,7 +14,7 @@ pub enum Method {
 }
 
 impl FromStr for Method {
-    type Err = HttpError;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
@@ -27,7 +27,7 @@ impl FromStr for Method {
             "OPTIONS" => Ok(Method::Options),
             "TRACE" => Ok(Method::Trace),
             "PATCH" => Ok(Method::Patch),
-            _ => Err(HttpError::ParseUnknownMethod),
+            _ => Err(Error::ParseUnknownMethod),
         }
     }
 }

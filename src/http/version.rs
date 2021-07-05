@@ -1,5 +1,5 @@
 use {
-    crate::http::HttpError,
+    crate::http::Error,
     std::{
         fmt::{self, Display, Formatter},
         str::FromStr,
@@ -24,14 +24,14 @@ impl Display for Version {
 }
 
 impl FromStr for Version {
-    type Err = HttpError;
+    type Err = Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "HTTP/0.9" => Ok(Self::Http09),
             "HTTP/1.0" => Ok(Self::Http10),
             "HTTP/1.1" => Ok(Self::Http11),
-            _ => Err(HttpError::ParseUnknownVersion),
+            _ => Err(Error::ParseUnknownVersion),
         }
     }
 }

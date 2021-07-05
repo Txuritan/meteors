@@ -1,8 +1,5 @@
 use {
-    crate::{
-        http::{Body, Version},
-        StatusCode,
-    },
+    crate::http::{Body, StatusCode, Version},
     std::{
         collections::BTreeMap,
         io::{self, Write as _},

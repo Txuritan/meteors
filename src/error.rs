@@ -1,8 +1,8 @@
-use crate::{extractor::ExtractorError, http::HttpError};
+use crate::{extractor::ExtractorError, http};
 
 pub enum Error {
     Extractor(ExtractorError),
-    Http(HttpError),
+    Http(http::Error),
 }
 
 impl From<ExtractorError> for Error {
@@ -11,8 +11,8 @@ impl From<ExtractorError> for Error {
     }
 }
 
-impl From<HttpError> for Error {
-    fn from(err: HttpError) -> Self {
+impl From<http::Error> for Error {
+    fn from(err: http::Error) -> Self {
         Error::Http(err)
     }
 }

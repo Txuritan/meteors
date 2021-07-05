@@ -1,6 +1,6 @@
 use {
     crate::{
-        app::BuiltApp, handler::HandlerError, http::HttpError, server::pool::ThreadPool,
+        app::BuiltApp, handler::HandlerError, http::Error, server::pool::ThreadPool,
         service::Service, App, HttpRequest,
     },
     std::{
@@ -133,7 +133,7 @@ impl HttpServer<SocketAddr> {
 
 enum ThreadError {
     Handler(HandlerError),
-    Http(HttpError),
+    Http(Error),
     Io(io::Error),
     ParseInt(std::num::ParseIntError),
     Utf8(std::string::FromUtf8Error),
@@ -145,8 +145,8 @@ impl From<HandlerError> for ThreadError {
     }
 }
 
-impl From<HttpError> for ThreadError {
-    fn from(err: HttpError) -> Self {
+impl From<Error> for ThreadError {
+    fn from(err: Error) -> Self {
         ThreadError::Http(err)
     }
 }

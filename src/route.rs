@@ -1,8 +1,9 @@
 use crate::{
     extractor::{Extractor, ExtractorError},
     handler::{Handler, HandlerError, HandlerService},
+    http::Method,
     service::BoxedService,
-    HttpRequest, HttpResponse, Method, Responder,
+    HttpRequest, HttpResponse, Responder,
 };
 
 macro_rules! route {

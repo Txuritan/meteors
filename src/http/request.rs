@@ -1,7 +1,7 @@
 use {
     crate::{
         extensions::Extensions,
-        http::{HttpError, Method, Version},
+        http::{self, Method, Version},
     },
     std::{collections::BTreeMap, str::FromStr as _, sync::Arc},
 };
@@ -43,10 +43,10 @@ impl HttpRequest {
         }
     }
 
-    pub(crate) fn parse_header(headers: &str) -> Result<HeaderData, HttpError> {
+    pub(crate) fn parse_header(headers: &str) -> Result<HeaderData, http::Error> {
         let mut lines = headers.lines();
 
-        let meta = lines.next().ok_or(HttpError::ParseMissingMeta)?;
+        let meta = lines.next().ok_or(http::Error::ParseMissingMeta)?;
 
         let (method, url, query, query_params, version) = {
             let mut meta_parts = meta.split(' ').filter(|part| !part.is_empty());
@@ -54,13 +54,13 @@ impl HttpRequest {
             let method = Method::from_str(
                 meta_parts
                     .next()
-                    .ok_or(HttpError::ParseMetaMissingMethod)?
+                    .ok_or(http::Error::ParseMetaMissingMethod)?
                     .trim(),
             )?;
 
             let url = meta_parts
                 .next()
-                .ok_or(HttpError::ParseMetaMissingUrl)?
+                .ok_or(http::Error::ParseMetaMissingUrl)?
                 .trim();
 
             let (url, query) = url.split_at(url.find('?').unwrap_or_else(|| url.len()));
@@ -72,7 +72,7 @@ impl HttpRequest {
             let version = Version::from_str(
                 meta_parts
                     .next()
-                    .ok_or(HttpError::ParseMetaMissingVersion)?
+                    .ok_or(http::Error::ParseMetaMissingVersion)?
                     .trim(),
             )?;
 

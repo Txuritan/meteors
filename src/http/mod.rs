@@ -1,17 +1,16 @@
-pub mod body;
-pub mod method;
-pub mod request;
-pub mod response;
-pub mod status;
-pub mod version;
+mod body;
+mod method;
+pub(crate) mod request;
+pub(crate) mod response;
+mod status;
+mod version;
 
-pub use self::{
-    body::Body, method::Method, request::HttpRequest, response::HttpResponse, status::StatusCode,
-    version::Version,
-};
+pub(crate) use self::body::Body;
+
+pub use self::{method::Method, status::StatusCode, version::Version};
 
 #[derive(Debug)]
-pub enum HttpError {
+pub enum Error {
     InvalidRequest,
 
     ParseMissingMeta,

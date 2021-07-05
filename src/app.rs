@@ -2,9 +2,11 @@ use {
     crate::{
         extensions::Extensions,
         handler::{HandlerError, HandlerService},
+        http::Method,
+        middleware::Middleware,
         route::{self, Route},
         service::BoxedService,
-        web, HttpRequest, HttpResponse, Method, Middleware,
+        web, HttpRequest, HttpResponse,
     },
     path_tree::PathTree,
     std::{collections::BTreeMap, sync::Arc},
