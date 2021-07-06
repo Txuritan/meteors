@@ -207,9 +207,9 @@ dependencies = [
 
 [[package]]
 name = "enrgy"
-version = "0.2.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a37931a49dea8d5238e5b691ea7a98b6f4bff5ab3c2b6448c50380d6e72c56bd"
+checksum = "01031155f28ad0ab514f0ffa34340e6224525bfc04bb2fcbc52a17fa0326fb92"
 dependencies = [
  "ctrlc",
  "form_urlencoded",

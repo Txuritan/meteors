@@ -75,6 +75,7 @@ pub fn run(command: Command) -> Result<()> {
             .service(web::get("/search2").to(handlers::search_v2))
             .service(web::get("/style.css").to(handlers::style))
             .service(web::get("/favicon.ico").to(handlers::favicon))
+            .default_service(web::to(|| -> enrgy::HttpResponse { res!(404) }))
             .wrap(LoggerMiddleware),
     )
     .bind(addr);
