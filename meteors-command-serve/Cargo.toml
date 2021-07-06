@@ -13,7 +13,7 @@ common = { path = "../meteors-common", package = "meteors-common" }
 opal = { path = "../opal" }
 
 argh = "0.1"
-chrono = "0.4"
+chrono = { version = "0.4", default-features = false, features = [ "std" ] }
 enrgy = "0.2"
 form_urlencoded = "1.0"
 once_cell = "1.8"
