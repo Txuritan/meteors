@@ -1,7 +1,6 @@
 use {
     crate::prelude::*,
     flate2::{read::GzDecoder, write::GzEncoder},
-    rand::{rngs::StdRng, Rng as _, SeedableRng as _},
     std::{
         fs::{self, DirEntry},
         io::{Read, Write},
@@ -105,10 +104,20 @@ pub fn new_id() -> String {
     let mut id = String::new();
 
     loop {
-        let mut rng = StdRng::from_entropy();
+        fastrand::seed({
+            let mut buf = [0; std::mem::size_of::<u64>()];
+
+            let _ = getrandom::getrandom(&mut buf);
+
+            u64::from_le_bytes(buf)
+
+        });
+
         let mut bytes = [0_u8; STEP];
 
-        rng.fill(&mut bytes[..]);
+        for elt in &mut bytes[..] {
+            *elt = fastrand::u8(0..=(std::u8::MAX));
+        }
 
         for &byte in &bytes {
             let byte = byte as usize & MASK;
