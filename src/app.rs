@@ -1,18 +1,18 @@
 use {
     crate::{
         extensions::Extensions,
-        handler::{HandlerError, HandlerService},
+        handler::HandlerService,
         http::Method,
         middleware::Middleware,
         route::{self, Route},
         service::BoxedService,
-        web, HttpRequest, HttpResponse,
+        web, Error, HttpRequest, HttpResponse,
     },
     path_tree::PathTree,
     std::{collections::BTreeMap, sync::Arc},
 };
 
-type InnerRoute = BoxedService<HttpRequest, HttpResponse, HandlerError>;
+type InnerRoute = BoxedService<HttpRequest, HttpResponse, Error>;
 
 #[derive(Clone)]
 pub struct BuiltApp {

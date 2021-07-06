@@ -1,9 +1,9 @@
 use crate::{
-    extractor::{Extractor, ExtractorError},
-    handler::{Handler, HandlerError, HandlerService},
+    extractor::Extractor,
+    handler::{Handler, HandlerService},
     http::Method,
     service::BoxedService,
-    HttpRequest, HttpResponse, Responder,
+    Error, HttpRequest, HttpResponse, Responder,
 };
 
 macro_rules! route {
@@ -35,7 +35,7 @@ pub(crate) fn not_found() -> HttpResponse {
 pub struct Route<'s> {
     pub(crate) method: Method,
     pub(crate) path: &'s str,
-    pub(crate) service: BoxedService<HttpRequest, HttpResponse, HandlerError>,
+    pub(crate) service: BoxedService<HttpRequest, HttpResponse, Error>,
 }
 
 impl<'s> Route<'s> {
@@ -51,7 +51,7 @@ impl<'s> Route<'s> {
     pub fn to<F, T, R>(mut self, handler: F) -> Self
     where
         F: Handler<T, R> + Send + Sync + 'static,
-        T: Extractor<Error = ExtractorError> + Send + Sync + 'static,
+        T: Extractor<Error = Error> + Send + Sync + 'static,
         R: Responder + Send + Sync + 'static,
     {
         self.service = BoxedService::new(HandlerService::new(handler));

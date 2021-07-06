@@ -1,7 +1,6 @@
 use {
     crate::{
-        app::BuiltApp, handler::HandlerError, http::Error, server::pool::ThreadPool,
-        service::Service, App, HttpRequest,
+        app::BuiltApp, http, server::pool::ThreadPool, service::Service, App, Error, HttpRequest,
     },
     std::{
         collections::BTreeMap,
@@ -104,7 +103,7 @@ impl HttpServer<SocketAddr> {
                 log::error!("unable to handle thread");
 
                 match err {
-                    ThreadError::Handler(err) => log::error!("route handler error: {:?}", err),
+                    ThreadError::Enrgy(err) => log::error!("route handler error: {:?}", err),
                     ThreadError::Http(err) => log::error!("invalid http: {:?}", err),
                     ThreadError::Io(err) => log::error!("{}", err),
                     ThreadError::ParseInt(err) => log::error!("{}", err),
@@ -132,21 +131,21 @@ impl HttpServer<SocketAddr> {
 }
 
 enum ThreadError {
-    Handler(HandlerError),
-    Http(Error),
+    Enrgy(Error),
+    Http(http::Error),
     Io(io::Error),
     ParseInt(std::num::ParseIntError),
     Utf8(std::string::FromUtf8Error),
 }
 
-impl From<HandlerError> for ThreadError {
-    fn from(err: HandlerError) -> Self {
-        ThreadError::Handler(err)
+impl From<Error> for ThreadError {
+    fn from(err: Error) -> Self {
+        ThreadError::Enrgy(err)
     }
 }
 
-impl From<Error> for ThreadError {
-    fn from(err: Error) -> Self {
+impl From<http::Error> for ThreadError {
+    fn from(err: http::Error) -> Self {
         ThreadError::Http(err)
     }
 }

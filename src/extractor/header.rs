@@ -1,8 +1,5 @@
 use {
-    crate::{
-        extractor::{Extractor, ExtractorError},
-        HttpRequest,
-    },
+    crate::{error::InternalError, extractor::Extractor, Error, HttpRequest},
     std::ops::{Deref, DerefMut},
 };
 
@@ -25,7 +22,7 @@ impl<const KEY: &'static str> DerefMut for Header<KEY> {
 }
 
 impl<const KEY: &'static str> Extractor for Header<KEY> {
-    type Error = ExtractorError;
+    type Error = Error;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         if let Some(value) = req
@@ -37,7 +34,10 @@ impl<const KEY: &'static str> Extractor for Header<KEY> {
         {
             Ok(Self { value })
         } else {
-            Err(ExtractorError::Missing)
+            Err(InternalError::BadRequest(format!(
+                "HTTP request did not contain the header `{}`",
+                KEY
+            )))
         }
     }
 }
@@ -61,7 +61,7 @@ impl<const KEY: &'static str> DerefMut for OptionalHeader<KEY> {
 }
 
 impl<const KEY: &'static str> Extractor for OptionalHeader<KEY> {
-    type Error = ExtractorError;
+    type Error = Error;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         Ok(Self {

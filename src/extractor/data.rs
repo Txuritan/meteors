@@ -1,8 +1,5 @@
 use {
-    crate::{
-        extractor::{Extractor, ExtractorError},
-        HttpRequest,
-    },
+    crate::{error::InternalError, extractor::Extractor, Error, HttpRequest},
     std::{ops::Deref, sync::Arc},
 };
 
@@ -28,7 +25,7 @@ impl<T> Extractor for Data<T>
 where
     T: Send + Sync + 'static,
 {
-    type Error = ExtractorError;
+    type Error = Error;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         if let Some(data) = req.data.get::<Data<T>>() {
@@ -36,7 +33,9 @@ where
                 data: data.data.clone(),
             })
         } else {
-            Err(ExtractorError::Missing)
+            Err(InternalError::InternalServerError(
+                "App data is not configured, to configure use App::data()",
+            ))
         }
     }
 }

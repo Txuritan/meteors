@@ -12,12 +12,7 @@ pub use self::{
     query::{OptionalQuery, Query, RawQuery},
 };
 
-use crate::HttpRequest;
-
-#[derive(Debug)]
-pub enum ExtractorError {
-    Missing,
-}
+use crate::{Error, HttpRequest};
 
 pub trait Extractor: Sized {
     type Error;
@@ -26,7 +21,7 @@ pub trait Extractor: Sized {
 }
 
 impl Extractor for () {
-    type Error = ExtractorError;
+    type Error = Error;
 
     fn extract(_req: &mut HttpRequest) -> Result<Self, Self::Error> {
         Ok(())
@@ -36,9 +31,9 @@ impl Extractor for () {
 macro_rules! tuple ({ $($param:ident)* } => {
     impl<$( $param ),*> Extractor for ($( $param, )*)
     where
-        $( $param: Extractor<Error = ExtractorError>, )*
+        $( $param: Extractor<Error = Error>, )*
     {
-        type Error = ExtractorError;
+        type Error = Error;
 
         fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
             Ok(($( $param::extract(req)?, )*))

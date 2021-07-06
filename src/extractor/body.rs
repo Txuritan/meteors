@@ -1,8 +1,5 @@
 use {
-    crate::{
-        extractor::{Extractor, ExtractorError},
-        HttpRequest,
-    },
+    crate::{extractor::Extractor, Error, HttpRequest},
     std::ops::{Deref, DerefMut},
 };
 
@@ -25,7 +22,7 @@ impl DerefMut for Body {
 }
 
 impl Extractor for Body {
-    type Error = ExtractorError;
+    type Error = Error;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         Ok(Body {

@@ -1,8 +1,5 @@
 use {
-    crate::{
-        extractor::{Extractor, ExtractorError},
-        HttpRequest,
-    },
+    crate::{error::InternalError, extractor::Extractor, Error, HttpRequest},
     std::ops::{Deref, DerefMut},
 };
 
@@ -25,13 +22,16 @@ impl<const KEY: &'static str> DerefMut for Param<KEY> {
 }
 
 impl<const KEY: &'static str> Extractor for Param<KEY> {
-    type Error = ExtractorError;
+    type Error = Error;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         if let Some(value) = req.params.get(KEY).cloned() {
             Ok(Self { value })
         } else {
-            Err(ExtractorError::Missing)
+            Err(InternalError::BadRequest(format!(
+                "HTTP request URL parameters did not contain a value with the key `{}`",
+                KEY
+            )))
         }
     }
 }
@@ -55,7 +55,7 @@ impl<const KEY: &'static str> DerefMut for OptionalParam<KEY> {
 }
 
 impl<const KEY: &'static str> Extractor for OptionalParam<KEY> {
-    type Error = ExtractorError;
+    type Error = Error;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         Ok(Self {

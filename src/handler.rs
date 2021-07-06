@@ -1,26 +1,11 @@
 use {
-    crate::{
-        extractor::{Extractor, ExtractorError},
-        service::Service,
-        HttpRequest, HttpResponse, Responder,
-    },
+    crate::{extractor::Extractor, service::Service, Error, HttpRequest, HttpResponse, Responder},
     std::marker::PhantomData,
 };
 
-#[derive(Debug)]
-pub enum HandlerError {
-    Extractor(ExtractorError),
-}
-
-impl From<ExtractorError> for HandlerError {
-    fn from(err: ExtractorError) -> Self {
-        HandlerError::Extractor(err)
-    }
-}
-
 pub trait Handler<T, R>
 where
-    T: Extractor,
+    T: Extractor<Error = Error>,
     R: Responder,
 {
     fn call(&self, param: T) -> R;
@@ -29,7 +14,7 @@ where
 pub struct HandlerService<F, T, R>
 where
     F: Handler<T, R>,
-    T: Extractor,
+    T: Extractor<Error = Error>,
     R: Responder,
 {
     inner: F,
@@ -39,7 +24,7 @@ where
 impl<F, T, R> HandlerService<F, T, R>
 where
     F: Handler<T, R>,
-    T: Extractor,
+    T: Extractor<Error = Error>,
     R: Responder,
 {
     pub(crate) fn new(fun: F) -> Self {
@@ -53,19 +38,19 @@ where
 impl<F, T, R> Service<HttpRequest> for HandlerService<F, T, R>
 where
     F: Handler<T, R>,
-    T: Extractor<Error = ExtractorError>,
+    T: Extractor<Error = Error>,
     R: Responder,
 {
     type Response = HttpResponse;
 
-    type Error = HandlerError;
+    type Error = Error;
 
     fn call(&self, req: &mut HttpRequest) -> Result<Self::Response, Self::Error> {
         let param = T::extract(req)?;
 
         let res = self.inner.call(param);
 
-        Ok(res.respond_to(&*req))
+        res.respond_to(&*req)
     }
 }
 
@@ -85,7 +70,7 @@ macro_rules! tuple (
         impl<FUN, $($param,)* R> Handler<($($param,)*), R> for FUN
         where
             FUN: Fn($($param),*) -> R,
-            $($param: Extractor<Error = ExtractorError>,)*
+            $($param: Extractor<Error = Error>,)*
             R: Responder,
         {
             #[allow(non_snake_case)]
