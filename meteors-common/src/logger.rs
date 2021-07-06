@@ -10,59 +10,53 @@ use {
 };
 
 pub fn init() -> Result<()> {
+    let bypass = env::var("METEORS_LOG_ALL").is_ok();
+    let level = if bypass {
+        LevelFilter::Trace
+    } else {
+        LevelFilter::Info
+    };
+
     log::set_boxed_logger(Box::new(Logger {
-        bypass: env::var("METEORS_LOG_ALL").is_ok(),
-        pid: std::process::id(),
+        bypass,
         out: io::stdout(),
-        level: LevelFilter::Trace,
+        level,
     }))?;
-    log::set_max_level(LevelFilter::Trace);
+    log::set_max_level(level);
 
     Ok(())
 }
 
 pub struct Logger {
     bypass: bool,
-    pid: u32,
     out: Stdout,
     level: LevelFilter,
 }
 
 impl Logger {
     fn print(&self, record: &Record<'_>) -> Result<()> {
-        if record.target().starts_with("tiny_http") {
-            return Ok(());
-        }
-
         let mut out = self.out.lock();
 
         write!(
             &mut out,
             "{} ",
-            Utc::now().format("%d %b %Y %T%.3f").bright_black()
-        )?;
-
-        write!(
-            &mut out,
-            "{}[{}] ",
-            "meteors".green(),
-            self.pid.bright_purple(),
-        )?;
-
-        write!(
-            &mut out,
-            "{: <21} ",
-            record.target().trim_start_matches("meteors_").bright_red()
+            Utc::now().format("%b %d %T").bright_black()
         )?;
 
         #[allow(clippy::write_literal)]
         match record.level() {
-            Level::Error => write!(&mut out, "[{: <5}] ", "ERROR".bright_red())?,
-            Level::Warn => write!(&mut out, "[{: <5}] ", "WARN".bright_yellow())?,
-            Level::Info => write!(&mut out, "[{: <5}] ", "INFO".bright_blue())?,
-            Level::Debug => write!(&mut out, "[{: <5}] ", "DEBUG".green())?,
-            Level::Trace => write!(&mut out, "[{: <5}] ", "TRACE")?,
+            Level::Error => write!(&mut out, "{: <5} ", "ERROR".bright_red())?,
+            Level::Warn => write!(&mut out, "{: <5} ", "WARN".bright_yellow())?,
+            Level::Info => write!(&mut out, "{: <5} ", "INFO".bright_blue())?,
+            Level::Debug => write!(&mut out, "{: <5} ", "DEBUG".green())?,
+            Level::Trace => write!(&mut out, "{: <5} ", "TRACE")?,
         };
+
+        write!(
+            &mut out,
+            "{: <21} ",
+            record.target().trim_start_matches("meteors_").cyan()
+        )?;
 
         writeln!(&mut out, "{}", record.args())?;
 

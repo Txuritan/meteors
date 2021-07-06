@@ -37,16 +37,14 @@ impl Action for Command {
     // write updated index
     #[allow(clippy::needless_collect)] // clippy doesn't detect that the keys are being removed
     fn run(&self) -> Result<()> {
-        debug!("{} building index", "+".bright_black());
+        debug!("building index");
 
         let mut database = Database::open()?;
 
         let mut known_ids = Vec::new();
 
         debug!(
-            "{} {} checking data",
-            "+".bright_black(),
-            "+".bright_black(),
+            "checking data",
         );
 
         for entry in FileIter::new(fs::read_dir(&database.data_path)?) {
@@ -64,26 +62,23 @@ impl Action for Command {
             match index.stories.remove(&id) {
                 Some(story) => {
                     debug!(
-                        "  {} removing missing story: {}",
-                        "|".bright_black(),
+                        "  removing missing story: {}",
                         story.file_name.bright_green(),
                     );
                 }
                 None => {
                     warn!(
-                        "  {} removing nonexistent story with id `{}`",
-                        "|".bright_black(),
+                        "  removing nonexistent story with id `{}`",
                         id.bright_blue(),
                     );
                 }
             }
         }
 
-        debug!("{} {} done", "+".bright_black(), "+".bright_black());
+        debug!("done");
 
         trace!(
-            "{} found {} stories",
-            "+".bright_black(),
+            "found {} stories",
             index.stories.len().bright_purple(),
         );
 
@@ -216,8 +211,7 @@ where
             // or it was edited in some way
             // either way the index entry needed to be updated
             debug!(
-                "  {} found updated story: {}",
-                "|".bright_black(),
+                "  found updated story: {}",
                 name.bright_green(),
             );
 
@@ -225,8 +219,7 @@ where
         }
     } else {
         debug!(
-            "  {} found new story: {}",
-            "|".bright_black(),
+            "  found new story: {}",
             name.bright_green(),
         );
 

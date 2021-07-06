@@ -39,7 +39,7 @@ impl Database {
         let temp_path = cur.join("temp");
 
         let database = if index_path.exists() {
-            debug!("{} found existing", "+".bright_black());
+            debug!("found existing");
 
             let mut decoder = GzDecoder::new(File::open(&index_path)?);
 
@@ -59,7 +59,7 @@ impl Database {
                 lock_maps: BTreeMap::new(),
             }
         } else {
-            debug!("{} not found, creating", "+".bright_black());
+            debug!("not found, creating");
 
             Self {
                 inner: Meteors {
@@ -219,7 +219,7 @@ impl Database {
     }
 
     pub fn save(&self) -> Result<()> {
-        debug!("{} writing index", "+".bright_black());
+        debug!("writing index");
 
         let mut buf = Vec::new();
 

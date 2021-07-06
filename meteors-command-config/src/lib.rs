@@ -64,25 +64,25 @@ impl Action for GetCommand {
 
         match self.key.as_str() {
             key @ "theme" => {
-                info!(target: "config", "{} Value of {}: {}", "+".bright_black(), key.bright_blue(), settings.theme.as_class().bright_yellow());
+                info!(target: "config", "Value of {}: {}", key.bright_blue(), settings.theme.as_class().bright_yellow());
             }
             key @ "sync-key" | key @ "sync_key" => {
-                info!(target: "config", "{} Value of {}: {}", "+".bright_black(), key.bright_blue(), settings.sync_key.bright_yellow());
+                info!(target: "config", "Value of {}: {}", key.bright_blue(), settings.sync_key.bright_yellow());
             }
             key if key.starts_with("nodes.") => {
                 let index = key.trim_start_matches("nodes.").parse::<usize>()?;
 
                 if let Some(node) = settings.nodes.get(index) {
-                    info!(target: "config", "{} {} Value of sync node {}:", "+".bright_black(), "+".bright_black(), index.purple());
-                    info!(target: "config", "  {} name: {}", "+".bright_black(), node.name.bright_yellow());
-                    info!(target: "config", "  {} key: {}", "+".bright_black(), node.key.bright_yellow());
-                    info!(target: "config", "  {} port: {}", "+".bright_black(), node.port.bright_yellow());
+                    info!(target: "config", "Value of sync node {}:", index.purple());
+                    info!(target: "config", "  name: {}", node.name.bright_yellow());
+                    info!(target: "config", "  key: {}", node.key.bright_yellow());
+                    info!(target: "config", "  port: {}", node.port.bright_yellow());
                 } else {
-                    error!(target: "config", "{} {} Sync node {} does not exist", "+".bright_black(), "+".bright_black(), index.purple());
+                    error!(target: "config", "Sync node {} does not exist", index.purple());
                 }
             }
             key => {
-                error!(target: "config", "{} Unknown config key {}", "+".bright_black(), key.yellow());
+                error!(target: "config", "Unknown config key {}", key.yellow());
             }
         }
 
@@ -110,7 +110,7 @@ impl Action for SetCommand {
                     "light" => Some(Theme::Light),
                     "dark" => Some(Theme::Dark),
                     _ => {
-                        error!(target: "config", "{} Unknown {} value: {}", "+".bright_black(), key.bright_blue(), self.value.bright_red());
+                        error!(target: "config", "Unknown {} value: {}", key.bright_blue(), self.value.bright_red());
 
                         None
                     }
@@ -119,17 +119,17 @@ impl Action for SetCommand {
                 if let Some(theme) = theme {
                     settings.theme = theme;
 
-                    info!(target: "config", "{} {} set to {}", "+".bright_black(), key.bright_blue(), settings.theme.as_class().bright_yellow());
+                    info!(target: "config", "{} set to {}", key.bright_blue(), settings.theme.as_class().bright_yellow());
                 }
             }
             key @ "sync-key" | key @ "sync_key" => {
-                error!(target: "config", "{} Setting of {} is not allowed", "+".bright_black(), key.bright_blue());
+                error!(target: "config", "Setting of {} is not allowed", key.bright_blue());
             }
             key if key.starts_with("nodes.") => {
-                error!(target: "config", "{} Setting of {} is not allowed, use the {} or {} command", "+".bright_black(), "nodes".bright_blue(), "push".green(), "pop".green());
+                error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "push".green(), "pop".green());
             }
             key => {
-                error!(target: "config", "{} Unknown config key {}", "+".bright_black(), key.yellow());
+                error!(target: "config", "Unknown config key {}", key.yellow());
             }
         }
 
@@ -159,10 +159,10 @@ impl Action for PushCommand {
 
         match self.key.as_str() {
             "theme" => {
-                error!(target: "config", "{} Setting of {} is not allowed, use the {} or {} command", "+".bright_black(), "nodes".bright_blue(), "get".green(), "set".green());
+                error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
             }
             "sync-key" | "sync_key" => {
-                error!(target: "config", "{} Setting of {} is not allowed, use the {} or {} command", "+".bright_black(), "nodes".bright_blue(), "get".green(), "set".green());
+                error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
             }
             "nodes" => {
                 let mut values = self.value.split(',');
@@ -182,11 +182,11 @@ impl Action for PushCommand {
                         port: port.parse::<u16>()?,
                     });
                 } else {
-                    error!(target: "config", "{} Invalid sync node information", "+".bright_black());
+                    error!(target: "config", "Invalid sync node information");
                 }
             }
             key => {
-                error!(target: "config", "{} Unknown config key {}", "+".bright_black(), key.yellow());
+                error!(target: "config", "Unknown config key {}", key.yellow());
             }
         }
 
@@ -212,10 +212,10 @@ impl Action for PopCommand {
 
         match self.key.as_str() {
             "theme" => {
-                error!(target: "config", "{} Setting of {} is not allowed, use the {} or {} command", "+".bright_black(), "nodes".bright_blue(), "get".green(), "set".green());
+                error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
             }
             "sync-key" | "sync_key" => {
-                error!(target: "config", "{} Setting of {} is not allowed, use the {} or {} command", "+".bright_black(), "nodes".bright_blue(), "get".green(), "set".green());
+                error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
             }
             key if key.starts_with("nodes.") => {
                 let index = key.trim_start_matches("nodes.").parse::<usize>()?;
@@ -223,16 +223,16 @@ impl Action for PopCommand {
                 if settings.nodes.get(index).is_some() {
                     let node = settings.nodes.remove(index);
 
-                    info!(target: "config", "{} {} Removed sync node {} with value:", "+".bright_black(), "+".bright_black(), index.purple());
-                    info!(target: "config", "  {} name: {}", "+".bright_black(), node.name.bright_yellow());
-                    info!(target: "config", "  {} key: {}", "+".bright_black(), node.key.bright_yellow());
-                    info!(target: "config", "  {} port: {}", "+".bright_black(), node.port.bright_yellow());
+                    info!(target: "config", "Removed sync node {} with value:", index.purple());
+                    info!(target: "config", "  name: {}", node.name.bright_yellow());
+                    info!(target: "config", "  key: {}", node.key.bright_yellow());
+                    info!(target: "config", "  port: {}", node.port.bright_yellow());
                 } else {
-                    error!(target: "config", "{} {} Sync node {} does not exist", "+".bright_black(), "+".bright_black(), index.purple());
+                    error!(target: "config", "Sync node {} does not exist", index.purple());
                 }
             }
             key => {
-                error!(target: "config", "{} Unknown config key {}", "+".bright_black(), key.yellow());
+                error!(target: "config", "Unknown config key {}", key.yellow());
             }
         }
 

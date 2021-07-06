@@ -58,8 +58,7 @@ impl Action for Command {
             let mut db = Database::open()?;
 
             trace!(
-                "{} with {} stories",
-                "+".bright_black(),
+                "with {} stories",
                 db.index().stories.len().bright_purple(),
             );
 
@@ -84,8 +83,7 @@ impl Action for Command {
         .bind(addr);
 
         info!(
-            "{} sever listening on: {}",
-            "+".bright_black(),
+            "sever listening on: {}",
             addr.bright_purple()
         );
 
@@ -131,9 +129,7 @@ impl Middleware for LoggerMiddleware {
 
         info!(
             target: "command_serve::router",
-            "{} {} {}/{} {} {}",
-            "+".bright_black(),
-            "+".bright_black(),
+            "{}/{} {} {}",
             "HTTP".bright_yellow(),
             req.version(),
             to_colored_string(&req.method()),
@@ -153,9 +149,7 @@ impl Middleware for LoggerMiddleware {
 
         info!(
             target: "command_serve::router",
-            "{} {} {} {}ms",
-            "+".bright_black(),
-            "+".bright_black(),
+            "{} {}ms",
             match res.status().0 {
                 200 => format!("{}", "200".green()),
                 404 => format!("{}", "404".bright_yellow()),

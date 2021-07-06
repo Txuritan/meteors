@@ -15,14 +15,12 @@ pub mod prelude {
 }
 
 pub fn action<T>(name: &'static str, ctx: &T, run: fn(&T) -> anyhow::Result<()>) {
-    use owo_colors::OwoColorize as _;
-
     // TODO: make this a indented log
     if let Err(err) = run(ctx) {
-        log::error!("{} unable to run command `{}`", "+".bright_black(), name);
+        log::error!("unable to run command `{}`", name);
 
         for cause in err.chain() {
-            log::error!("{} {:?}", "+".bright_black(), cause);
+            log::error!("{:?}", cause);
         }
     }
 }
