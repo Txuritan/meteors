@@ -1,6 +1,6 @@
 [package]
 name = "enrgy"
-version = "0.1.0"
+version = "0.2.0"
 authors = [ "Txuritan <txuritan@protonmail.com>" ]
 edition = "2018"
 
@@ -8,6 +8,8 @@ description = "A (nightly) insecure lightweight synchronous Actix-like HTTP serv
 repository = "https://github.com/Txuritan/enrgy"
 
 license = "MIT"
+
+keywords = [ "synchronous", "http", "server", "nightly", "insecure" ]
 
 [dependencies]
 ctrlc = "3.1"
