@@ -4,9 +4,9 @@ version = "0.1.0"
 authors = [ "Txuritan <txuritan@protonmail.com>" ]
 edition = "2018"
 
-workspace = ".."
+workspace = "../../.."
 
 [dependencies]
-common = { path = "../meteors-common", package = "meteors-common" }
+common = { path = "../../common", package = "meteors-common" }
 
 argh = "0.1"

@@ -6,12 +6,12 @@ edition = "2018"
 
 license = "MIT"
 
-workspace = ".."
+workspace = "../../.."
 
 [dependencies]
-common = { path = "../meteors-common", package = "meteors-common" }
+common = { path = "../../common", package = "meteors-common" }
 
-format-ao3 = { path = "../meteors-format-ao3", package = "meteors-format-ao3" }
+format-ao3 = { path = "../../format/ao3", package = "meteors-format-ao3" }
 
 argh = "0.1"
 xxhash-rust = { version = "0.8", features = [ "xxh3" ] }

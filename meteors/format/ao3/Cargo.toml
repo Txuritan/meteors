@@ -6,12 +6,12 @@ edition = "2018"
 
 license = "MIT"
 
-workspace = ".."
+workspace = "../../.."
 
 [dependencies]
-common = { path = "../meteors-common", package = "meteors-common" }
+common = { path = "../../common", package = "meteors-common" }
 
-query = { path = "../query" }
+query = { path = "../../../query" }
 
 flate2 = "1.0"
 zip = { version = "0.5", default-features = false, features = [ "deflate" ] }

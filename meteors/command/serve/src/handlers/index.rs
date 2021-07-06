@@ -36,5 +36,5 @@ pub fn index(db: web::Data<Database>) -> HttpResponse {
 pub fn favicon() -> HttpResponse {
     HttpResponse::ok()
         .header("Content-Type", "image/x-icon")
-        .body(Vec::from(&include_bytes!("../../../assets/noel.ico")[..]))
+        .body(Vec::from(&include_bytes!("../../../../assets/noel.ico")[..]))
 }

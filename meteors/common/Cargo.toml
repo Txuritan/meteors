@@ -6,10 +6,10 @@ edition = "2018"
 
 license = "MIT"
 
-workspace = ".."
+workspace = "../.."
 
 [dependencies]
-aloene = { path = "../aloene" }
+aloene = { path = "../../aloene" }
 
 anyhow = "1.0"
 either = "1.6"

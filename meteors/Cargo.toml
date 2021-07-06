@@ -9,11 +9,11 @@ license = "MIT"
 workspace = ".."
 
 [dependencies]
-common = { path = "../meteors-common", package = "meteors-common" }
+common = { path = "./common", package = "meteors-common" }
 
-command-config = { path = "../meteors-command-config", package = "meteors-command-config" }
-command-index = { path = "../meteors-command-index", package = "meteors-command-index" }
-command-serve = { path = "../meteors-command-serve", package = "meteors-command-serve" }
+command-config = { path = "./command/config", package = "meteors-command-config" }
+command-index = { path = "./command/index", package = "meteors-command-index" }
+command-serve = { path = "./command/serve", package = "meteors-command-serve" }
 
 argh = "0.1"
 
