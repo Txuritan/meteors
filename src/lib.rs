@@ -38,6 +38,15 @@ mod test_compile {
     use super::*;
 
     #[test]
+    fn test_responder() {
+        fn index() -> impl Responder {
+            "Hello World!"
+        }
+
+        App::new().service(web::get("/").to(index));
+    }
+
+    #[test]
     fn test_str() {
         fn index() -> &'static str {
             "Hello World!"
@@ -53,6 +62,15 @@ mod test_compile {
         }
 
         App::new().service(web::get("/").to(index));
+    }
+
+    #[test]
+    fn test_string_param() {
+        fn index(name: web::Param<"name">) -> String {
+            format!("Hello {}!", *name)
+        }
+
+        App::new().service(web::get("/:name").to(index));
     }
 
     #[derive(Debug)]

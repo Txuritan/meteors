@@ -14,7 +14,7 @@ fn index() -> impl Responder {
 }
 
 fn greet(name: web::Param<"name">) -> impl Responder {
-    format!("Hello {}!", &name)
+    format!("Hello {}!", *name)
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
