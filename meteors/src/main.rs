@@ -4,7 +4,7 @@
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use common::{prelude::*, Action as _};
+use common::prelude::*;
 
 #[derive(argh::FromArgs)]
 #[argh(description = "an offline archive of our own viewer")]
@@ -28,13 +28,13 @@ fn main() -> Result<()> {
 
     match args.cmd {
         SubCommand::Config(cmd) => {
-            cmd.run()?;
+            command_config::run(cmd)?;
         }
         SubCommand::Index(cmd) => {
-            cmd.run()?;
+            command_index::run(cmd)?;
         }
         SubCommand::Serve(cmd) => {
-            cmd.run()?;
+            command_serve::run(cmd)?;
         }
     }
 

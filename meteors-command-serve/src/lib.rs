@@ -10,7 +10,7 @@ mod search;
 mod utils;
 
 use {
-    common::{database::Database, prelude::*, Action},
+    common::{database::Database, prelude::*},
     enrgy::{middleware::Middleware, web, App, HttpServer},
     std::time::Instant,
     std::{
@@ -40,57 +40,56 @@ pub struct Command {
     port: u16,
 }
 
-impl Action for Command {
-    fn run(&self) -> Result<()> {
-        // let stop = Arc::new(AtomicBool::new(false));
+#[inline(never)]
+pub fn run(command: Command) -> Result<()> {
+    // let stop = Arc::new(AtomicBool::new(false));
 
-        // ctrlc::set_handler({
-        //     let stop = Arc::clone(&stop);
+    // ctrlc::set_handler({
+    //     let stop = Arc::clone(&stop);
 
-        //     move || {
-        //         stop.store(true, Ordering::SeqCst);
-        //     }
-        // })?;
+    //     move || {
+    //         stop.store(true, Ordering::SeqCst);
+    //     }
+    // })?;
 
-        let addr: SocketAddr = (self.host.parse::<Ipv4Addr>()?, self.port).into();
+    let addr: SocketAddr = (command.host.parse::<Ipv4Addr>()?, command.port).into();
 
-        let database = Arc::new({
-            let mut db = Database::open()?;
+    let database = Arc::new({
+        let mut db = Database::open()?;
 
-            trace!("with {} stories", db.index().stories.len().bright_purple(),);
+        trace!("with {} stories", db.index().stories.len().bright_purple(),);
 
-            db.lock_data()?;
+        db.lock_data()?;
 
-            db
-        });
+        db
+    });
 
-        let server = HttpServer::new(
-            App::new()
-                .data(database.clone())
-                .service(web::get("/").to(handlers::index))
-                .service(web::get("/download").to(handlers::download_get))
-                .service(web::post("/download").to(handlers::download_post))
-                .service(web::get("/story/:id/:chapter").to(handlers::story))
-                .service(web::get("/search").to(handlers::search))
-                .service(web::get("/search2").to(handlers::search_v2))
-                .service(web::get("/style.css").to(handlers::style))
-                .service(web::get("/favicon.ico").to(handlers::favicon))
-                .wrap(LoggerMiddleware),
-        )
-        .bind(addr);
+    let server = HttpServer::new(
+        App::new()
+            .data(database.clone())
+            .service(web::get("/").to(handlers::index))
+            .service(web::get("/download").to(handlers::download_get))
+            .service(web::post("/download").to(handlers::download_post))
+            .service(web::get("/story/:id/:chapter").to(handlers::story))
+            .service(web::get("/search").to(handlers::search))
+            .service(web::get("/search2").to(handlers::search_v2))
+            .service(web::get("/style.css").to(handlers::style))
+            .service(web::get("/favicon.ico").to(handlers::favicon))
+            .wrap(LoggerMiddleware),
+    )
+    .bind(addr);
 
-        info!("sever listening on: {}", addr.bright_purple());
+    info!("sever listening on: {}", addr.bright_purple());
 
-        server.run()?;
+    server.run()?;
 
-        if let Ok(mut database) = Arc::try_unwrap(database) {
-            database.unlock_data()?;
-        } else {
-            error!("unable to unwrap database, not unlocking data");
-        }
-
-        Ok(())
+    if let Ok(mut database) = Arc::try_unwrap(database) {
+        database.unlock_data()?;
+    } else {
+        error!("unable to unwrap database, not unlocking data");
     }
+
+    Ok(())
 }
 
 struct LoggerMiddleware;

@@ -2,7 +2,6 @@ use common::{
     database::Database,
     models::{Node, Theme},
     prelude::*,
-    Action,
 };
 
 #[derive(argh::FromArgs)]
@@ -16,25 +15,23 @@ pub struct Command {
     cmd: SubCommand,
 }
 
-impl Action for Command {
-    fn run(&self) -> Result<()> {
-        match &self.cmd {
-            SubCommand::Get(cmd) => {
-                cmd.run()?;
-            }
-            SubCommand::Set(cmd) => {
-                cmd.run()?;
-            }
-            SubCommand::Push(cmd) => {
-                cmd.run()?;
-            }
-            SubCommand::Pop(cmd) => {
-                cmd.run()?;
-            }
+pub fn run(command: Command) -> Result<()> {
+    match command.cmd {
+        SubCommand::Get(cmd) => {
+            get_run(cmd)?;
         }
-
-        Ok(())
+        SubCommand::Set(cmd) => {
+            set_run(cmd)?;
+        }
+        SubCommand::Push(cmd) => {
+            push_run(cmd)?;
+        }
+        SubCommand::Pop(cmd) => {
+            pop_run(cmd)?;
+        }
     }
+
+    Ok(())
 }
 
 #[derive(argh::FromArgs)]
@@ -57,37 +54,36 @@ struct GetCommand {
     key: String,
 }
 
-impl Action for GetCommand {
-    fn run(&self) -> Result<()> {
-        let database = Database::open()?;
-        let settings = database.settings();
+#[inline(never)]
+fn get_run(command: GetCommand) -> Result<()> {
+    let database = Database::open()?;
+    let settings = database.settings();
 
-        match self.key.as_str() {
-            key @ "theme" => {
-                info!(target: "config", "Value of {}: {}", key.bright_blue(), settings.theme.as_class().bright_yellow());
-            }
-            key @ "sync-key" | key @ "sync_key" => {
-                info!(target: "config", "Value of {}: {}", key.bright_blue(), settings.sync_key.bright_yellow());
-            }
-            key if key.starts_with("nodes.") => {
-                let index = key.trim_start_matches("nodes.").parse::<usize>()?;
+    match command.key.as_str() {
+        key @ "theme" => {
+            info!(target: "config", "Value of {}: {}", key.bright_blue(), settings.theme.as_class().bright_yellow());
+        }
+        key @ "sync-key" | key @ "sync_key" => {
+            info!(target: "config", "Value of {}: {}", key.bright_blue(), settings.sync_key.bright_yellow());
+        }
+        key if key.starts_with("nodes.") => {
+            let index = key.trim_start_matches("nodes.").parse::<usize>()?;
 
-                if let Some(node) = settings.nodes.get(index) {
-                    info!(target: "config", "Value of sync node {}:", index.purple());
-                    info!(target: "config", "  name: {}", node.name.bright_yellow());
-                    info!(target: "config", "  key: {}", node.key.bright_yellow());
-                    info!(target: "config", "  port: {}", node.port.bright_yellow());
-                } else {
-                    error!(target: "config", "Sync node {} does not exist", index.purple());
-                }
-            }
-            key => {
-                error!(target: "config", "Unknown config key {}", key.yellow());
+            if let Some(node) = settings.nodes.get(index) {
+                info!(target: "config", "Value of sync node {}:", index.purple());
+                info!(target: "config", "  name: {}", node.name.bright_yellow());
+                info!(target: "config", "  key: {}", node.key.bright_yellow());
+                info!(target: "config", "  port: {}", node.port.bright_yellow());
+            } else {
+                error!(target: "config", "Sync node {} does not exist", index.purple());
             }
         }
-
-        Ok(())
+        key => {
+            error!(target: "config", "Unknown config key {}", key.yellow());
+        }
     }
+
+    Ok(())
 }
 
 #[derive(argh::FromArgs)]
@@ -99,44 +95,43 @@ struct SetCommand {
     value: String,
 }
 
-impl Action for SetCommand {
-    fn run(&self) -> Result<()> {
-        let mut database = Database::open()?;
-        let settings = database.settings_mut();
+#[inline(never)]
+fn set_run(command: SetCommand) -> Result<()> {
+    let mut database = Database::open()?;
+    let settings = database.settings_mut();
 
-        match self.key.as_str() {
-            key @ "theme" => {
-                let theme = match self.value.to_lowercase().as_str() {
-                    "light" => Some(Theme::Light),
-                    "dark" => Some(Theme::Dark),
-                    _ => {
-                        error!(target: "config", "Unknown {} value: {}", key.bright_blue(), self.value.bright_red());
+    match command.key.as_str() {
+        key @ "theme" => {
+            let theme = match command.value.to_lowercase().as_str() {
+                "light" => Some(Theme::Light),
+                "dark" => Some(Theme::Dark),
+                _ => {
+                    error!(target: "config", "Unknown {} value: {}", key.bright_blue(), command.value.bright_red());
 
-                        None
-                    }
-                };
-
-                if let Some(theme) = theme {
-                    settings.theme = theme;
-
-                    info!(target: "config", "{} set to {}", key.bright_blue(), settings.theme.as_class().bright_yellow());
+                    None
                 }
-            }
-            key @ "sync-key" | key @ "sync_key" => {
-                error!(target: "config", "Setting of {} is not allowed", key.bright_blue());
-            }
-            key if key.starts_with("nodes.") => {
-                error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "push".green(), "pop".green());
-            }
-            key => {
-                error!(target: "config", "Unknown config key {}", key.yellow());
+            };
+
+            if let Some(theme) = theme {
+                settings.theme = theme;
+
+                info!(target: "config", "{} set to {}", key.bright_blue(), settings.theme.as_class().bright_yellow());
             }
         }
-
-        database.save()?;
-
-        Ok(())
+        key @ "sync-key" | key @ "sync_key" => {
+            error!(target: "config", "Setting of {} is not allowed", key.bright_blue());
+        }
+        key if key.starts_with("nodes.") => {
+            error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "push".green(), "pop".green());
+        }
+        key => {
+            error!(target: "config", "Unknown config key {}", key.yellow());
+        }
     }
+
+    database.save()?;
+
+    Ok(())
 }
 
 #[derive(argh::FromArgs)]
@@ -152,46 +147,45 @@ struct PushCommand {
     value: String,
 }
 
-impl Action for PushCommand {
-    fn run(&self) -> Result<()> {
-        let mut database = Database::open()?;
-        let settings = database.settings_mut();
+#[inline(never)]
+fn push_run(command: PushCommand) -> Result<()> {
+    let mut database = Database::open()?;
+    let settings = database.settings_mut();
 
-        match self.key.as_str() {
-            "theme" => {
-                error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
-            }
-            "sync-key" | "sync_key" => {
-                error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
-            }
-            "nodes" => {
-                let mut values = self.value.split(',');
+    match command.key.as_str() {
+        "theme" => {
+            error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
+        }
+        "sync-key" | "sync_key" => {
+            error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
+        }
+        "nodes" => {
+            let mut values = command.value.split(',');
 
-                let name = values.next();
-                let key = values.next();
-                let host = values.next();
-                let port = values.next();
+            let name = values.next();
+            let key = values.next();
+            let host = values.next();
+            let port = values.next();
 
-                let zipped = name.zip(key).zip(host.zip(port));
+            let zipped = name.zip(key).zip(host.zip(port));
 
-                if let Some(((name, key), (host, port))) = zipped {
-                    settings.nodes.push(Node {
-                        name: name.to_string(),
-                        key: key.to_string(),
-                        host: host.to_string(),
-                        port: port.parse::<u16>()?,
-                    });
-                } else {
-                    error!(target: "config", "Invalid sync node information");
-                }
-            }
-            key => {
-                error!(target: "config", "Unknown config key {}", key.yellow());
+            if let Some(((name, key), (host, port))) = zipped {
+                settings.nodes.push(Node {
+                    name: name.to_string(),
+                    key: key.to_string(),
+                    host: host.to_string(),
+                    port: port.parse::<u16>()?,
+                });
+            } else {
+                error!(target: "config", "Invalid sync node information");
             }
         }
-
-        Ok(())
+        key => {
+            error!(target: "config", "Unknown config key {}", key.yellow());
+        }
     }
+
+    Ok(())
 }
 
 #[derive(argh::FromArgs)]
@@ -205,37 +199,36 @@ pub struct PopCommand {
     pub key: String,
 }
 
-impl Action for PopCommand {
-    fn run(&self) -> Result<()> {
-        let mut database = Database::open()?;
-        let settings = database.settings_mut();
+#[inline(never)]
+fn pop_run(command: PopCommand) -> Result<()> {
+    let mut database = Database::open()?;
+    let settings = database.settings_mut();
 
-        match self.key.as_str() {
-            "theme" => {
-                error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
-            }
-            "sync-key" | "sync_key" => {
-                error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
-            }
-            key if key.starts_with("nodes.") => {
-                let index = key.trim_start_matches("nodes.").parse::<usize>()?;
+    match command.key.as_str() {
+        "theme" => {
+            error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
+        }
+        "sync-key" | "sync_key" => {
+            error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
+        }
+        key if key.starts_with("nodes.") => {
+            let index = key.trim_start_matches("nodes.").parse::<usize>()?;
 
-                if settings.nodes.get(index).is_some() {
-                    let node = settings.nodes.remove(index);
+            if settings.nodes.get(index).is_some() {
+                let node = settings.nodes.remove(index);
 
-                    info!(target: "config", "Removed sync node {} with value:", index.purple());
-                    info!(target: "config", "  name: {}", node.name.bright_yellow());
-                    info!(target: "config", "  key: {}", node.key.bright_yellow());
-                    info!(target: "config", "  port: {}", node.port.bright_yellow());
-                } else {
-                    error!(target: "config", "Sync node {} does not exist", index.purple());
-                }
-            }
-            key => {
-                error!(target: "config", "Unknown config key {}", key.yellow());
+                info!(target: "config", "Removed sync node {} with value:", index.purple());
+                info!(target: "config", "  name: {}", node.name.bright_yellow());
+                info!(target: "config", "  key: {}", node.key.bright_yellow());
+                info!(target: "config", "  port: {}", node.port.bright_yellow());
+            } else {
+                error!(target: "config", "Sync node {} does not exist", index.purple());
             }
         }
-
-        todo!()
+        key => {
+            error!(target: "config", "Unknown config key {}", key.yellow());
+        }
     }
+
+    todo!()
 }

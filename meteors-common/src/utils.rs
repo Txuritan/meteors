@@ -110,7 +110,6 @@ pub fn new_id() -> String {
             let _ = getrandom::getrandom(&mut buf);
 
             u64::from_le_bytes(buf)
-
         });
 
         let mut bytes = [0_u8; STEP];
