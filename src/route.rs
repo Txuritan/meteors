@@ -6,6 +6,21 @@ use crate::{
     Error, HttpRequest, HttpResponse, Responder,
 };
 
+pub fn to<F, T, R>(handler: F) -> To
+where
+    F: Handler<T, R> + Send + Sync + 'static,
+    T: Extractor<Error = Error> + Send + Sync + 'static,
+    R: Responder + Send + Sync + 'static,
+{
+    To {
+        service: BoxedService::new(HandlerService::new(handler)),
+    }
+}
+
+pub struct To {
+    pub(crate) service: BoxedService<HttpRequest, HttpResponse, Error>,
+}
+
 macro_rules! route {
     ($($fn:ident[$method:expr],)*) => {
         $(

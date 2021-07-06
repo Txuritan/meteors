@@ -259,7 +259,7 @@ impl HttpServer<SocketAddr> {
                         .collect::<BTreeMap<_, _>>(),
                 )
             })
-            .unwrap_or_else(|| (app.not_found.clone(), BTreeMap::new()));
+            .unwrap_or_else(|| (app.default_service.clone(), BTreeMap::new()));
 
         let mut request =
             HttpRequest::from_parts(header_data, body, parameters, Arc::clone(&app.data));

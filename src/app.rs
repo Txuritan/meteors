@@ -19,14 +19,14 @@ pub struct BuiltApp {
     pub(crate) tree: Arc<BTreeMap<Method, PathTree<Arc<InnerRoute>>>>,
     pub(crate) data: Arc<Extensions>,
     pub(crate) middleware: Arc<Vec<Box<dyn Middleware + Send + Sync + 'static>>>,
-    pub(crate) not_found: Arc<InnerRoute>,
+    pub(crate) default_service: Arc<InnerRoute>,
 }
 
 pub struct App {
     tree: BTreeMap<Method, PathTree<Arc<InnerRoute>>>,
     data: Extensions,
     middleware: Vec<Box<dyn Middleware + Send + Sync + 'static>>,
-    not_found: Arc<InnerRoute>,
+    default_service: Arc<InnerRoute>,
 }
 
 impl App {
@@ -60,12 +60,18 @@ impl App {
         self
     }
 
+    pub fn default_service(mut self, service: route::To) -> Self {
+        self.default_service = Arc::new(service.service);
+
+        self
+    }
+
     pub fn build(self) -> BuiltApp {
         BuiltApp {
             tree: Arc::new(self.tree),
             data: Arc::new(self.data),
             middleware: Arc::new(self.middleware),
-            not_found: self.not_found,
+            default_service: self.default_service,
         }
     }
 }
@@ -76,7 +82,7 @@ impl Default for App {
             tree: BTreeMap::new(),
             data: Extensions::new(),
             middleware: Vec::new(),
-            not_found: Arc::new(BoxedService::new(HandlerService::new(route::not_found))),
+            default_service: Arc::new(BoxedService::new(HandlerService::new(route::not_found))),
         }
     }
 }

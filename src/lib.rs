@@ -19,7 +19,10 @@ pub mod error;
 pub use crate::{app::App, responder::Responder, server::HttpServer};
 
 #[doc(inline)]
-pub use crate::{http::{request::HttpRequest, response::HttpResponse}, error::Error};
+pub use crate::{
+    error::Error,
+    http::{request::HttpRequest, response::HttpResponse},
+};
 
 pub mod web {
     pub use crate::{
@@ -27,7 +30,7 @@ pub mod web {
             Body, Data, Header, OptionalHeader, OptionalParam, OptionalQuery, Param, Query,
             RawQuery,
         },
-        route::{connect, delete, get, head, options, patch, post, put, trace},
+        route::{connect, delete, get, head, options, patch, post, put, to, trace},
     };
 }
 
