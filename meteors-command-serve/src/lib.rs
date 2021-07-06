@@ -57,10 +57,7 @@ impl Action for Command {
         let database = Arc::new({
             let mut db = Database::open()?;
 
-            trace!(
-                "with {} stories",
-                db.index().stories.len().bright_purple(),
-            );
+            trace!("with {} stories", db.index().stories.len().bright_purple(),);
 
             db.lock_data()?;
 
@@ -82,10 +79,7 @@ impl Action for Command {
         )
         .bind(addr);
 
-        info!(
-            "sever listening on: {}",
-            addr.bright_purple()
-        );
+        info!("sever listening on: {}", addr.bright_purple());
 
         server.run()?;
 

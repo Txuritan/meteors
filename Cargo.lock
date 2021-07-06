@@ -402,7 +402,6 @@ version = "0.1.0"
 dependencies = [
  "aloene",
  "anyhow",
- "chrono",
  "either",
  "flate2",
  "fs2",

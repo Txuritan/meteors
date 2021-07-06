@@ -43,9 +43,7 @@ impl Action for Command {
 
         let mut known_ids = Vec::new();
 
-        debug!(
-            "checking data",
-        );
+        debug!("checking data",);
 
         for entry in FileIter::new(fs::read_dir(&database.data_path)?) {
             handle_entry(&mut database, &mut known_ids, entry?)?;
@@ -77,10 +75,7 @@ impl Action for Command {
 
         debug!("done");
 
-        trace!(
-            "found {} stories",
-            index.stories.len().bright_purple(),
-        );
+        trace!("found {} stories", index.stories.len().bright_purple(),);
 
         database.save()?;
 
@@ -210,18 +205,12 @@ where
             // either it was overwritten with a new version
             // or it was edited in some way
             // either way the index entry needed to be updated
-            debug!(
-                "  found updated story: {}",
-                name.bright_green(),
-            );
+            debug!("  found updated story: {}", name.bright_green(),);
 
             Ok(Some((id.clone(), hash, bytes)))
         }
     } else {
-        debug!(
-            "  found new story: {}",
-            name.bright_green(),
-        );
+        debug!("  found new story: {}", name.bright_green(),);
 
         let id = new_id(&index.stories);
 

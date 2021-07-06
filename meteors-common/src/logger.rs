@@ -1,6 +1,6 @@
 use {
     crate::prelude::*,
-    chrono::Utc,
+    // chrono::Utc,
     log::{Level, LevelFilter, Log, Metadata, Record},
     owo_colors::OwoColorize as _,
     std::{
@@ -37,11 +37,12 @@ impl Logger {
     fn print(&self, record: &Record<'_>) -> Result<()> {
         let mut out = self.out.lock();
 
-        write!(
-            &mut out,
-            "{} ",
-            Utc::now().format("%b %d %T").bright_black()
-        )?;
+        // TODO: use sometime like humantime (might have to fork) as chrono is kinda heavy
+        // write!(
+        //     &mut out,
+        //     "{} ",
+        //     Utc::now().format("%b %d %T").bright_black()
+        // )?;
 
         #[allow(clippy::write_literal)]
         match record.level() {

@@ -12,7 +12,6 @@ workspace = ".."
 aloene = { path = "../aloene" }
 
 anyhow = "1.0"
-chrono = { version = "0.4", default-features = false, features = [ "clock" ] }
 either = "1.6"
 flate2 = "1.0"
 fs2 = "0.4"
