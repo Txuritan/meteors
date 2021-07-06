@@ -4,10 +4,10 @@ use {
         utils,
     },
     common::{database::Database, prelude::*},
-    enrgy::{Data, HttpResponse},
+    enrgy::{web, HttpResponse},
 };
 
-pub fn index(db: Data<Database>) -> HttpResponse {
+pub fn index(db: web::Data<Database>) -> HttpResponse {
     utils::wrap(|| {
         let mut stories = db
             .index()

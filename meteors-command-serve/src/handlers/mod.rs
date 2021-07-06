@@ -12,10 +12,10 @@ pub use crate::handlers::{
 
 use {
     crate::utils,
-    enrgy::{HttpResponse, OptionalHeader, StatusCode},
+    enrgy::{http, web, HttpResponse},
 };
 
-pub fn style(header: OptionalHeader<"If-None-Match">) -> HttpResponse {
+pub fn style(header: web::OptionalHeader<"If-None-Match">) -> HttpResponse {
     utils::wrap(|| {
         static CSS: &str = include_str!("../../assets/style.css");
         // RELEASE: change anytime theres a release and the style gets updated
@@ -31,7 +31,7 @@ pub fn style(header: OptionalHeader<"If-None-Match">) -> HttpResponse {
 
         if let Some(header) = header.as_deref() {
             if header == CSS_TAG {
-                return Ok(res.status(StatusCode(304)).finish());
+                return Ok(res.status(http::StatusCode(304)).finish());
             }
         }
 

@@ -11,16 +11,11 @@ mod utils;
 
 use {
     common::{database::Database, prelude::*, Action},
-    enrgy::{get, post, App, HttpServer, Middleware},
+    enrgy::{middleware::Middleware, web, App, HttpServer},
     std::time::Instant,
     std::{
         net::{Ipv4Addr, SocketAddr},
-        sync::{
-            atomic::{AtomicBool, Ordering},
-            Arc,
-        },
-        thread,
-        time::Duration,
+        sync::Arc,
     },
 };
 
@@ -76,14 +71,14 @@ impl Action for Command {
         let server = HttpServer::new(
             App::new()
                 .data(database.clone())
-                .service(get("/").to(handlers::index))
-                .service(get("/download").to(handlers::download_get))
-                .service(post("/download").to(handlers::download_post))
-                .service(get("/story/:id/:chapter").to(handlers::story))
-                .service(get("/search").to(handlers::search))
-                .service(get("/search2").to(handlers::search_v2))
-                .service(get("/style.css").to(handlers::style))
-                .service(get("/favicon.ico").to(handlers::favicon))
+                .service(web::get("/").to(handlers::index))
+                .service(web::get("/download").to(handlers::download_get))
+                .service(web::post("/download").to(handlers::download_post))
+                .service(web::get("/story/:id/:chapter").to(handlers::story))
+                .service(web::get("/search").to(handlers::search))
+                .service(web::get("/search2").to(handlers::search_v2))
+                .service(web::get("/style.css").to(handlers::style))
+                .service(web::get("/favicon.ico").to(handlers::favicon))
                 .wrap(LoggerMiddleware),
         )
         .bind(addr);
@@ -110,7 +105,7 @@ struct LoggerMiddleware;
 
 impl Middleware for LoggerMiddleware {
     fn before(&self, req: &mut enrgy::HttpRequest) {
-        use enrgy::Method;
+        use enrgy::http::Method;
 
         let earlier = Instant::now();
 

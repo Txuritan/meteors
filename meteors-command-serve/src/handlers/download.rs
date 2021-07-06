@@ -4,11 +4,11 @@ use {
         utils,
     },
     common::{database::Database, prelude::*},
-    enrgy::{Body, Data, HttpResponse},
+    enrgy::{web, HttpResponse},
     std::fs,
 };
 
-pub fn download_get(db: Data<Database>) -> HttpResponse {
+pub fn download_get(db: web::Data<Database>) -> HttpResponse {
     utils::wrap(|| {
         let body = Layout::new(
             Width::Slim,
@@ -22,7 +22,7 @@ pub fn download_get(db: Data<Database>) -> HttpResponse {
     })
 }
 
-pub fn download_post(db: Data<Database>, body: Body) -> HttpResponse {
+pub fn download_post(db: web::Data<Database>, body: web::Body) -> HttpResponse {
     utils::wrap(|| {
         let mut parse = form_urlencoded::parse(&body);
 

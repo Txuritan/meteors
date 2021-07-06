@@ -4,10 +4,14 @@ use {
         utils,
     },
     common::{database::Database, prelude::*},
-    enrgy::{Data, HttpResponse, Param},
+    enrgy::{web, HttpResponse},
 };
 
-pub fn story(db: Data<Database>, id: Param<"id">, index: Param<"chapter">) -> HttpResponse {
+pub fn story(
+    db: web::Data<Database>,
+    id: web::Param<"id">,
+    index: web::Param<"chapter">,
+) -> HttpResponse {
     utils::wrap(|| {
         let index: usize = index.parse().map_err(anyhow::Error::from)?;
 

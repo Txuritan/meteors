@@ -5,12 +5,12 @@ use {
         utils,
     },
     common::{database::Database, prelude::*},
-    enrgy::{Data, HttpResponse, Query, RawQuery},
+    enrgy::{web, HttpResponse},
     qstring::QString,
     std::borrow::Cow,
 };
 
-fn rebuild_query(raw_query: &RawQuery) -> Cow<'static, str> {
+fn rebuild_query(raw_query: &web::RawQuery) -> Cow<'static, str> {
     if raw_query.is_empty() {
         Cow::from(String::new())
     } else {
@@ -22,7 +22,11 @@ fn rebuild_query(raw_query: &RawQuery) -> Cow<'static, str> {
     }
 }
 
-pub fn search(db: Data<Database>, search: Query<"search">, query: RawQuery) -> HttpResponse {
+pub fn search(
+    db: web::Data<Database>,
+    search: web::Query<"search">,
+    query: web::RawQuery,
+) -> HttpResponse {
     utils::wrap(|| {
         let ids = search::search(&*db, &search);
 
@@ -51,7 +55,7 @@ pub fn search(db: Data<Database>, search: Query<"search">, query: RawQuery) -> H
     })
 }
 
-pub fn search_v2(db: Data<Database>, query: RawQuery) -> HttpResponse {
+pub fn search_v2(db: web::Data<Database>, query: web::RawQuery) -> HttpResponse {
     utils::wrap(|| {
         let mut stories = db.index().stories.iter().collect::<Vec<_>>();
 
