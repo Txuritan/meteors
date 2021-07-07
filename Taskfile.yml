@@ -12,3 +12,9 @@ tasks:
       CARGO_NET_GIT_FETCH_WITH_CLI: false
     cmds:
       - cargo +nightly build -Z build-std=panic_abort,std --release --target x86_64-pc-windows-msvc
+
+  build-tailwind:
+    env:
+      NODE_ENV: production
+    cmds:
+      - npx tailwindcss -c tailwind.config.js -i meteors/command/serve/assets/index.css -o meteors/command/serve/assets/dist/index.css --minify
