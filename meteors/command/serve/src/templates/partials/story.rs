@@ -10,6 +10,8 @@ use {
     std::borrow::Cow,
 };
 
+#[derive(opal::Template)]
+#[template(path = "partials/story.hbs")]
 pub struct StoryCard<'s> {
     pub id: &'s str,
 
@@ -83,5 +85,3 @@ impl<'s> StoryCard<'s> {
         &self.info.title
     }
 }
-
-include!("story.hbs.rs");

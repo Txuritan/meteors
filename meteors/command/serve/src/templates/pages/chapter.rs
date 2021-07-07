@@ -1,5 +1,7 @@
 use crate::templates::partials::StoryCard;
 
+#[derive(opal::Template)]
+#[template(path = "pages/chapter.hbs")]
 pub struct Chapter<'s> {
     pub card: StoryCard<'s>,
     pub chapter: &'s str,
@@ -15,5 +17,3 @@ impl<'s> Chapter<'s> {
         }
     }
 }
-
-include!("chapter.hbs.rs");

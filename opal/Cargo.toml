@@ -7,3 +7,4 @@ edition = "2018"
 workspace = ".."
 
 [dependencies]
+opal-macros = { path = "./macros" }

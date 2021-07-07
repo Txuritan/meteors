@@ -1,5 +1,7 @@
 use {crate::templates::Width, common::models::Theme, opal::Template, std::borrow::Cow};
 
+#[derive(opal::Template)]
+#[template(path = "layout.hbs")]
 pub struct Layout<B>
 where
     B: Template,
@@ -35,5 +37,3 @@ where
         }
     }
 }
-
-include!("layout.hbs.rs");

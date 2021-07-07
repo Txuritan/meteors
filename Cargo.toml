@@ -10,9 +10,9 @@ members = [
     "meteors/common",
     "meteors/format/ao3",
     "opal",
+    "opal/macros",
     "query",
     "query/macros",
-    "xtask",
 ]
 
 [profile.release]

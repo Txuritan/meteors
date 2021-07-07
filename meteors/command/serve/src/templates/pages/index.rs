@@ -1,5 +1,7 @@
 use crate::templates::partials::StoryCard;
 
+#[derive(opal::Template)]
+#[template(path = "pages/index.hbs")]
 pub struct Index<'s> {
     pub stories: Vec<StoryCard<'s>>,
 }
@@ -9,5 +11,3 @@ impl<'s> Index<'s> {
         Self { stories }
     }
 }
-
-include!("index.hbs.rs");

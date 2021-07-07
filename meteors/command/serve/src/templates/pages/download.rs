@@ -1,3 +1,5 @@
+#[derive(opal::Template)]
+#[template(path = "pages/download.hbs")]
 pub struct Download {}
 
 impl Download {
@@ -5,5 +7,3 @@ impl Download {
         Self {}
     }
 }
-
-include!("download.hbs.rs");
