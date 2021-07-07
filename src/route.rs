@@ -1,24 +1,32 @@
-use crate::{
-    extractor::Extractor,
-    handler::{Handler, HandlerService},
-    http::Method,
-    service::BoxedService,
-    Error, HttpRequest, HttpResponse, Responder,
+use {
+    crate::{
+        extractor::Extractor,
+        handler::{Handler, HandlerService},
+        http::Method,
+        service::BoxedService,
+        Error, HttpRequest, HttpResponse, Responder,
+    },
+    std::marker::PhantomData,
 };
 
-pub fn to<F, T, R>(handler: F) -> Route<'static>
+pub fn to<F, T, R>(handler: F) -> Route<'static, T>
 where
     F: Handler<T, R> + Send + Sync + 'static,
     T: Extractor<Error = Error> + Send + Sync + 'static,
     R: Responder + Send + Sync + 'static,
 {
-    Route::new(None, None).to(handler)
+    Route {
+        method: None,
+        path: None,
+        service: BoxedService::new(HandlerService::new(handler)),
+        _t: PhantomData,
+    }
 }
 
 macro_rules! route {
     ($($fn:ident[$method:expr],)*) => {
         $(
-            pub fn $fn(path: &str) -> Route {
+            pub fn $fn(path: &str) -> Route<'_, M> {
                 Route::new(Some($method), Some(path))
             }
         )*
@@ -41,22 +49,30 @@ pub(crate) fn not_found() -> HttpResponse {
     HttpResponse::not_found().finish()
 }
 
-pub struct Route<'s> {
+pub struct M;
+
+pub struct T;
+
+pub struct Route<'s, K> {
     pub(crate) method: Option<Method>,
     pub(crate) path: Option<&'s str>,
     pub(crate) service: BoxedService<HttpRequest, HttpResponse, Error>,
+    _t: PhantomData<K>,
 }
 
-impl<'s> Route<'s> {
+impl<'s, K> Route<'s, K> {
     #[inline]
     pub(crate) fn new(method: Option<Method>, path: Option<&'s str>) -> Self {
         Self {
             method,
             path,
             service: BoxedService::new(HandlerService::new(not_found)),
+            _t: PhantomData,
         }
     }
+}
 
+impl<'s> Route<'s, M> {
     pub fn to<F, T, R>(mut self, handler: F) -> Self
     where
         F: Handler<T, R> + Send + Sync + 'static,
