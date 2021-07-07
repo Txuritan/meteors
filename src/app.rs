@@ -52,7 +52,7 @@ impl App {
         self
     }
 
-    pub fn service(mut self, route: Route<'_, route::M>) -> Self {
+    pub fn service(mut self, route: Route<'_, route::RM>) -> Self {
         debug_assert!(route.method.is_none(), "Route method is missing, you are passing a Route created by `to` into `App::service` this is not allowed");
         debug_assert!(route.path.is_none(), "Route path is missing, you are passing a Route created by `to` into `App::service` this is not allowed");
 
@@ -77,7 +77,7 @@ impl App {
         self
     }
 
-    pub fn default_service(mut self, service: Route<'static, route::T>) -> Self {
+    pub fn default_service(mut self, service: Route<'static, route::RT>) -> Self {
         self.default_service = Arc::new(service.service);
 
         self

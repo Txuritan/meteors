@@ -9,7 +9,7 @@ use {
     std::marker::PhantomData,
 };
 
-pub fn to<F, T, R>(handler: F) -> Route<'static, T>
+pub fn to<F, T, R>(handler: F) -> Route<'static, RT>
 where
     F: Handler<T, R> + Send + Sync + 'static,
     T: Extractor<Error = Error> + Send + Sync + 'static,
@@ -26,7 +26,7 @@ where
 macro_rules! route {
     ($($fn:ident[$method:expr],)*) => {
         $(
-            pub fn $fn(path: &str) -> Route<'_, M> {
+            pub fn $fn(path: &str) -> Route<'_, RM> {
                 Route::new(Some($method), Some(path))
             }
         )*
@@ -49,9 +49,9 @@ pub(crate) fn not_found() -> HttpResponse {
     HttpResponse::not_found().finish()
 }
 
-pub struct M;
+pub struct RM;
 
-pub struct T;
+pub struct RT;
 
 pub struct Route<'s, K> {
     pub(crate) method: Option<Method>,
@@ -72,7 +72,7 @@ impl<'s, K> Route<'s, K> {
     }
 }
 
-impl<'s> Route<'s, M> {
+impl<'s> Route<'s, RM> {
     pub fn to<F, T, R>(mut self, handler: F) -> Self
     where
         F: Handler<T, R> + Send + Sync + 'static,
