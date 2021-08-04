@@ -1,0 +1,14 @@
+<div class="sm:px-6 lg:px-8 text-sm" aria-hidden="true">
+    <div class="border-t border-gray-700"></div>
+    <div class="flex">
+        <div class="flex-auto">
+            {{ self.prev.render(writer) }}
+        </div>
+        {{ #for part in self.parts.iter() }}
+            {{ part.render(writer) }}
+        {{ /for }}
+        <div class="flex-auto flex justify-end">
+            {{ self.next.render(writer) }}
+        </div>
+    </div>
+</div>
