@@ -9,6 +9,7 @@ members = [
     "meteors/command/serve",
     "meteors/common",
     "meteors/format/ao3",
+    "mini-html-parser",
     "opal",
     "opal/macros",
     "query",
