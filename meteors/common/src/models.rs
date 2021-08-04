@@ -30,6 +30,17 @@ impl<T> std::ops::DerefMut for Existing<T> {
     }
 }
 
+// Aloene isn't actually used here, its just to satisfy trait bounds
+impl<T> Aloene for Existing<T> {
+    fn deserialize<R: std::io::Read>(_reader: &mut R) -> std::io::Result<Self> {
+        panic!("this should never be called")
+    }
+
+    fn serialize<W: std::io::Write>(&self, _writer: &mut W) -> std::io::Result<()> {
+        panic!("this should never be called")
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub enum FileKind {
     Epub,
@@ -103,12 +114,18 @@ pub struct Index {
     pub generals: BTreeMap<String, Entity>,
 }
 
+pub type Story = CoreStory<StoryMeta>;
+pub type ResolvedStory = CoreStory<ResolvedStoryMeta>;
+
 #[derive(Debug, Clone, PartialEq, Aloene)]
-pub struct Story {
+pub struct CoreStory<Meta>
+where
+    Meta: Aloene,
+{
     pub file_name: String,
     pub file_hash: u64,
     pub info: StoryInfo,
-    pub meta: StoryMeta,
+    pub meta: Meta,
     pub site: Site,
     pub chapters: Vec<Chapter>,
 }
@@ -120,16 +137,22 @@ pub struct StoryInfo {
     pub summary: String,
 }
 
+pub type StoryMeta = StoryMetaCore<String>;
+pub type ResolvedStoryMeta = StoryMetaCore<Existing<Entity>>;
+
 #[derive(Debug, Clone, PartialEq, Aloene)]
-pub struct StoryMeta {
+pub struct StoryMetaCore<Entity>
+where
+    Entity: Aloene,
+{
     pub rating: Rating,
-    pub authors: Vec<String>,
-    pub categories: Vec<String>,
-    pub origins: Vec<String>,
-    pub warnings: Vec<String>,
-    pub pairings: Vec<String>,
-    pub characters: Vec<String>,
-    pub generals: Vec<String>,
+    pub authors: Vec<Entity>,
+    pub categories: Vec<Entity>,
+    pub origins: Vec<Entity>,
+    pub warnings: Vec<Entity>,
+    pub pairings: Vec<Entity>,
+    pub characters: Vec<Entity>,
+    pub generals: Vec<Entity>,
 }
 
 /// Nested message and enum types in `Meta`.
@@ -191,29 +214,4 @@ pub struct Chapter {
     pub summary: Option<String>,
     pub start_notes: Option<Range<usize>>,
     pub end_notes: Option<Range<usize>>,
-}
-
-pub mod resolved {
-    use super::{Entity, Existing, Rating};
-
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct Story {
-        pub file_name: String,
-        pub file_hash: u64,
-        pub info: super::StoryInfo,
-        pub meta: StoryMeta,
-        pub chapters: Vec<super::Chapter>,
-    }
-
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct StoryMeta {
-        pub rating: Rating,
-        pub authors: Vec<Existing<Entity>>,
-        pub categories: Vec<Existing<Entity>>,
-        pub origins: Vec<Existing<Entity>>,
-        pub warnings: Vec<Existing<Entity>>,
-        pub pairings: Vec<Existing<Entity>>,
-        pub characters: Vec<Existing<Entity>>,
-        pub generals: Vec<Existing<Entity>>,
-    }
 }

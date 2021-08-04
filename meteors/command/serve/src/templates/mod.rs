@@ -28,15 +28,6 @@ pub enum TagKind {
 }
 
 impl TagKind {
-    pub const fn class(self) -> &'static str {
-        match self {
-            TagKind::Warning => "warning",
-            TagKind::Pairing => "pairing",
-            TagKind::Character => "character",
-            TagKind::General => "general",
-        }
-    }
-
     pub const fn classes(self) -> &'static str {
         match self {
             TagKind::Warning => "bg-red-400 hover:bg-red-500",

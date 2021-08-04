@@ -1,7 +1,7 @@
 use {
     common::{
         database::Database,
-        models::{resolved, Entity, Existing, Index, StoryInfo, StoryMeta},
+        models::{Entity, Existing, Index, ResolvedStory, ResolvedStoryMeta, StoryInfo, StoryMeta},
         prelude::*,
     },
     enrgy::HttpResponse,
@@ -80,11 +80,11 @@ pub mod http {
     }
 }
 
-static STORY_CACHE: Lazy<RwLock<BTreeMap<String, resolved::Story>>> =
+static STORY_CACHE: Lazy<RwLock<BTreeMap<String, ResolvedStory>>> =
     Lazy::new(|| RwLock::new(BTreeMap::new()));
 
 #[allow(clippy::ptr_arg)]
-pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, resolved::Story)> {
+pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, ResolvedStory)> {
     if let Some(story) = STORY_CACHE
         .read()
         .map_err(|err| anyhow!("unable to get lock on cache: {}", err))?
@@ -135,15 +135,16 @@ pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, 
     let info = &story_ref.info;
     let meta = &story_ref.meta;
 
-    let story = resolved::Story {
+    let story = ResolvedStory {
         file_name: story_ref.file_name.clone(),
         file_hash: story_ref.file_hash,
         chapters: story_ref.chapters.clone(),
+        site: story_ref.site,
         info: StoryInfo {
             title: info.title.clone(),
             summary: info.summary.clone(),
         },
-        meta: resolved::StoryMeta {
+        meta: ResolvedStoryMeta {
             rating: meta.rating,
             categories: values(index, meta, &Kind::Categories).context("categories")?,
             authors: values(index, meta, &Kind::Authors).context("authors")?,

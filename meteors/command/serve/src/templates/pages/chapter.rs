@@ -1,4 +1,4 @@
-use crate::templates::partials::{StoryPartial, Pagination};
+use crate::templates::partials::{Pagination, StoryPartial};
 
 #[derive(opal::Template)]
 #[template(path = "pages/chapter.hbs")]
@@ -14,7 +14,11 @@ impl<'s> Chapter<'s> {
         Self {
             chapter,
             index,
-            pagination: Pagination::new(format!("/story/{}", card.id), index as u32, card.len as u32),
+            pagination: Pagination::new(
+                format!("/story/{}", card.id),
+                index as u32,
+                card.len as u32,
+            ),
             card,
         }
     }

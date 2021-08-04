@@ -13,7 +13,9 @@ pub fn aloene_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
     let stream = match derive.data {
         syn::Data::Enum(data_enum) => enumeration::derive(derive.ident, data_enum),
-        syn::Data::Struct(data_struct) => structure::derive(derive.ident, data_struct),
+        syn::Data::Struct(data_struct) => {
+            structure::derive(derive.ident, data_struct, derive.generics)
+        }
         _ => {
             syn_err!(derive, "Aloene can not be used on `union`s")
         }

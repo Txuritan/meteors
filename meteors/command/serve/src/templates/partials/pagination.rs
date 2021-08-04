@@ -65,24 +65,24 @@ impl Pagination {
         };
 
         let buff = buff
-        .into_iter()
-        .map(|pager| match pager {
-            Pager::Num(active, page) => Link {
-                state: if active {
-                    LinkState::Active
-                } else {
-                    LinkState::Normal
+            .into_iter()
+            .map(|pager| match pager {
+                Pager::Num(active, page) => Link {
+                    state: if active {
+                        LinkState::Active
+                    } else {
+                        LinkState::Normal
+                    },
+                    href: format!("{}/{}", url, page),
+                    text: page.into_readable().to_string(),
                 },
-                href: format!("{}/{}", url, page),
-                text: page.into_readable().to_string(),
-            },
-            Pager::Ellipse => Link {
-                state: LinkState::Normal,
-                href: "#".into(),
-                text: "..".into(),
-            },
-        })
-        .collect::<Vec<_>>();
+                Pager::Ellipse => Link {
+                    state: LinkState::Normal,
+                    href: "#".into(),
+                    text: "..".into(),
+                },
+            })
+            .collect::<Vec<_>>();
 
         (prev, buff, next)
     }

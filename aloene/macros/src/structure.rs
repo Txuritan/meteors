@@ -1,4 +1,8 @@
-pub fn derive(struct_name: syn::Ident, data_struct: syn::DataStruct) -> proc_macro2::TokenStream {
+pub fn derive(
+    struct_name: syn::Ident,
+    data_struct: syn::DataStruct,
+    generics: syn::Generics,
+) -> proc_macro2::TokenStream {
     let field_iter = data_struct.fields.iter().map(|field| {
         let ident = field.ident.as_ref().unwrap();
 
@@ -8,8 +12,15 @@ pub fn derive(struct_name: syn::Ident, data_struct: syn::DataStruct) -> proc_mac
     let de_iter = data_struct.fields.iter().map(de_field);
     let se_iter = data_struct.fields.iter().map(se_field);
 
+    let syn::Generics {
+        lt_token,
+        params,
+        gt_token,
+        where_clause,
+    } = generics;
+
     quote::quote! {
-        impl ::aloene::Aloene for #struct_name {
+        impl #lt_token #params #gt_token ::aloene::Aloene for #struct_name #lt_token #params #gt_token #where_clause {
             fn deserialize<R: ::std::io::Read>(reader: &mut R) -> ::std::io::Result<Self> {
                 ::aloene::assert_byte!(reader, ::aloene::bytes::Container::STRUCT);
 

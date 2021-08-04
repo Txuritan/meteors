@@ -4,7 +4,7 @@ use {
         TagKind,
     },
     common::{
-        models::{resolved, Entity, Existing, Rating, StoryInfo},
+        models::{Entity, Existing, Rating, ResolvedStory, ResolvedStoryMeta, StoryInfo},
         prelude::*,
     },
     std::borrow::Cow,
@@ -31,10 +31,10 @@ pub struct StoryPartial<'s> {
 impl<'s> StoryPartial<'s> {
     pub fn new(
         id: &'s str,
-        story: resolved::Story,
+        story: ResolvedStory,
         query: Option<Cow<'static, str>>,
     ) -> Result<Self> {
-        let resolved::StoryMeta {
+        let ResolvedStoryMeta {
             rating,
             authors,
             categories,
