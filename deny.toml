@@ -20,7 +20,9 @@ skip = []
 [sources]
 unknown-registry = "deny"
 unknown-git = "deny"
-allow-git = []
+allow-git = [
+    "https://github.com/Txuritan/enrgy",
+]
 
 [licenses]
 unlicensed = "deny"
