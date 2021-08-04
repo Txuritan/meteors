@@ -8,20 +8,11 @@
     <link rel="stylesheet" href="/style.css">
 </head>
 
-<body>
-    <header>
-        <nav>
-            <a href="/{{ #if let Some(query) = self.query.as_ref() }}{{ query }}{{ /if }}" class="brand">local archive</a>
-            <div class="spacer"></div>
-            <form method="get" action="/search">
-                <input id="search" name="search" type="text" placeholder="search" value="" aria-label="Search" />
-            </form>
-        </nav>
-    </header>
-    <hr />
-    <section>
+<body class="bg-gray-900">
+    {{ self.nav.render(writer) }}
+    <div class="max-w-7xl mx-auto">
         {{ self.body.render(writer) }}
-    </section>
+    </div>
 </body>
 
 </html>

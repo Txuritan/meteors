@@ -17,7 +17,7 @@ use {
 
 pub fn style(header: web::OptionalHeader<"If-None-Match">) -> HttpResponse {
     utils::wrap(|| {
-        static CSS: &str = include_str!("../../assets/style.css");
+        static CSS: &str = include_str!("../../assets/dist/index.css");
         // RELEASE: change anytime theres a release and the style gets updated
         static CSS_TAG: &str = "f621e1d55cbee8397c906c7d72d0fb9a4520a06be6218abeccff1ffcf75f00b3";
 

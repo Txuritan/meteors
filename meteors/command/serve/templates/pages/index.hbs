@@ -5,7 +5,9 @@
         {{ #for (i, story) in self.stories.iter().enumerate() }}
             {{ story.render(writer) }}
             {{ #if i != len }}
-                <hr />
+                <div class="hidden sm:block sm:px-6 lg:px-8 text-sm" aria-hidden="true">
+                    <div class="border-t border-gray-700"></div>
+                </div>
             {{ /if }}
         {{ /for }}
     {{ /if }}

@@ -15,9 +15,9 @@ pub fn index(db: web::Data<Database>) -> HttpResponse {
             .keys()
             .map(|id| {
                 utils::get_story_full(&*db, id)
-                    .and_then(|(id, story)| partials::StoryCard::new(id, story, None))
+                    .and_then(|(id, story)| partials::StoryPartial::new(id, story, None))
             })
-            .collect::<Result<Vec<partials::StoryCard<'_>>>>()?;
+            .collect::<Result<Vec<partials::StoryPartial<'_>>>>()?;
 
         stories.sort_by(|a, b| a.title().cmp(b.title()));
 

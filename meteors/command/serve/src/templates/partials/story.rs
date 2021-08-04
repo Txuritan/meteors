@@ -1,10 +1,10 @@
 use {
     crate::templates::{
-        partials::{OriginList, TagList},
+        partials::{Contrast, Link, OriginList, TagList},
         TagKind,
     },
     common::{
-        models::{resolved, Entity, Rating, StoryInfo},
+        models::{resolved, Entity, Rating, StoryInfo, Existing},
         prelude::*,
     },
     std::borrow::Cow,
@@ -12,15 +12,15 @@ use {
 
 #[derive(opal::Template)]
 #[template(path = "partials/story.hbs")]
-pub struct StoryCard<'s> {
+pub struct StoryPartial<'s> {
     pub id: &'s str,
 
     pub len: usize,
     pub info: StoryInfo,
 
     pub rating: Rating,
-    pub categories: Vec<Entity>,
-    pub authors: Vec<Entity>,
+    pub categories: Vec<Existing<Entity>>,
+    pub authors: Vec<Existing<Entity>>,
 
     pub origins: OriginList,
     pub tags: TagList,
@@ -28,7 +28,7 @@ pub struct StoryCard<'s> {
     pub query: Option<Cow<'static, str>>,
 }
 
-impl<'s> StoryCard<'s> {
+impl<'s> StoryPartial<'s> {
     pub fn new(
         id: &'s str,
         story: resolved::Story,
@@ -45,7 +45,7 @@ impl<'s> StoryCard<'s> {
             generals,
         } = story.meta;
 
-        Ok(StoryCard {
+        Ok(StoryPartial {
             id,
 
             len: story.chapters.len(),
@@ -75,7 +75,7 @@ impl<'s> StoryCard<'s> {
         })
     }
 
-    fn push(tags: &mut Vec<(TagKind, Entity)>, kind: TagKind, list: Vec<Entity>) {
+    fn push(tags: &mut Vec<(TagKind, Existing<Entity>)>, kind: TagKind, list: Vec<Existing<Entity>>) {
         for entity in list {
             tags.push((kind, entity));
         }

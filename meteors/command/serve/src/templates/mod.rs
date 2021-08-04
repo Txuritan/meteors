@@ -36,4 +36,13 @@ impl TagKind {
             TagKind::General => "general",
         }
     }
+
+    pub const fn classes(self) -> &'static str {
+        match self {
+            TagKind::Warning => "bg-red-400 hover:bg-red-500",
+            TagKind::Pairing => "bg-yellow-400 hover:bg-yellow-500",
+            TagKind::Character => "bg-blue-400 hover:bg-blue-500",
+            TagKind::General => "bg-gray-400 hover:bg-gray-500",
+        }
+    }
 }

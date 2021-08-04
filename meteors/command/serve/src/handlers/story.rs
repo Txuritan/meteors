@@ -23,7 +23,11 @@ pub fn story(
             db.settings().theme,
             story.info.title.clone(),
             None,
-            pages::Chapter::new(partials::StoryCard::new(&id, story, None)?, &chapter, index),
+            pages::Chapter::new(
+                partials::StoryPartial::new(&id, story, None)?,
+                &chapter,
+                index,
+            ),
         );
 
         Ok(crate::res!(200; body))

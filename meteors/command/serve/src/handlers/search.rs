@@ -36,7 +36,7 @@ pub fn search(
             .iter()
             .map(|id| {
                 utils::get_story_full(&*db, id).and_then(|(id, story)| {
-                    partials::StoryCard::new(id, story, Some(query.clone()))
+                    partials::StoryPartial::new(id, story, Some(query.clone()))
                 })
             })
             .collect::<Result<Vec<_>>>()?;
@@ -74,7 +74,7 @@ pub fn search_v2(db: web::Data<Database>, query: web::RawQuery) -> HttpResponse 
             .into_iter()
             .map(|(id, _)| {
                 utils::get_story_full(&*db, id).and_then(|(id, story)| {
-                    partials::StoryCard::new(id, story, Some(query.clone()))
+                    partials::StoryPartial::new(id, story, Some(query.clone()))
                 })
             })
             .collect::<Result<Vec<_>>>()?;

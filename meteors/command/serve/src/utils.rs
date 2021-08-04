@@ -2,7 +2,7 @@ use {
     common::{
         database::Database,
         models::{
-            resolved, {Entity, Index, StoryInfo, StoryMeta},
+            resolved, Entity, Index, StoryInfo, StoryMeta, Existing,
         },
         prelude::*,
     },
@@ -106,7 +106,7 @@ pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, 
         Generals,
     }
 
-    fn values(index: &Index, meta: &StoryMeta, kind: &Kind) -> Result<Vec<Entity>> {
+    fn values(index: &Index, meta: &StoryMeta, kind: &Kind) -> Result<Vec<Existing<Entity>>> {
         let (map, keys) = match kind {
             Kind::Categories => (&index.categories, &meta.categories),
             Kind::Authors => (&index.authors, &meta.authors),
@@ -121,6 +121,7 @@ pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, 
             .map(|id| {
                 map.get(id)
                     .cloned()
+                    .map(|entity| Existing::new(id.clone(), entity))
                     .ok_or_else(|| anyhow!("entity with id `{}` does not exist", id))
             })
             .collect::<Result<Vec<_>>>()

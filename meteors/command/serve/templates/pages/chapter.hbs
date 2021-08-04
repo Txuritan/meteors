@@ -2,9 +2,15 @@
     {{ let len = self.card.len; }}
     {{ let id = self.card.id; }}
     {{ self.card.render(writer) }}
-    <hr />
-    {{ self.chapter }}
-    <hr />
+    <div class="hidden sm:block sm:px-6 lg:px-8 text-sm" aria-hidden="true">
+        <div class="border-t border-gray-700"></div>
+    </div>
+    <div class="px-3 sm:px-6 lg:px-8 my-2 text-opacity-90 text-white p-wrapper">
+        {{ self.chapter }}
+    </div>
+    <div class="hidden sm:block sm:px-6 lg:px-8 text-sm" aria-hidden="true">
+        <div class="border-t border-gray-700"></div>
+    </div>
     {{ #if len != 1 }}
         <footer>
             <nav>

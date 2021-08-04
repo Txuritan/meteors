@@ -1,0 +1,1 @@
+<a href="{{ self.href }}" class=" text-white hover:text-blue-400 transition-colors duration-75 rounded focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-blue-400 {{ #if self.contrast == Contrast::High }} text-opacity-90 {{ else }} {{ #if self.contrast == Contrast::Low }} text-opacity-60 {{ else }} text-opacity-40 {{ /if }} {{ /if }}">{{ self.text }}</a>

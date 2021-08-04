@@ -1,0 +1,71 @@
+<nav>
+    <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 pt-2">
+        <div class="relative flex items-center justify-between h-10">
+            <div class="absolute inset-y-0 left-0 flex items-center md:hidden">
+                <!-- Mobile menu button-->
+                <button id="mobile-menu-button" type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 transition-colors duration-75 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white" aria-controls="mobile-menu" aria-expanded="false">
+                    <span class="sr-only">Open main menu</span>
+                    <svg id="mobile-menu-open" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    <svg id="mobile-menu-close" class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div class="flex-1 flex items-center justify-center md:items-stretch md:justify-start">
+                <div class="flex-shrink-0 flex items-center">
+                    <a href="/" class="text-white hover:text-blue-400 transition-colors duration-75 font-bold tracking-widest my-2 rounded focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-blue-400">meteors</a>
+                </div>
+                <div class="hidden md:block md:ml-3">
+                    <div class="flex">
+                        {{ #for entry in self.entries.iter() }}
+                            {{ entry.render(writer) }}
+                        {{ /for }}
+                    </div>
+                </div>
+            </div>
+            <div class="flex-inital flex items-center justify-center md:items-stretch md:justify-start">
+                <div class="hidden md:block md:ml-3">
+                    <input type="text" class=" text-white bg-gray-700 px-2 py-1 rounded focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-blue-400" placeholder="search">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile menu, show/hide based on menu state. -->
+    <div id="mobile-menu" class="hidden">
+        <div class="px-2 pt-2 pb-3 space-y-1">
+            <div class="flex flex-col">
+                {{ #for entry in self.entries.iter() }}
+                    {{ entry.render(writer) }}
+                {{ /for }}
+
+                <input type="text" class="text-white bg-gray-700 px-3 py-1 rounded w-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-blue-400" placeholder="search">
+            </div>
+        </div>
+    </div>
+</nav>
+
+<script>
+    let isOpen = false;
+
+    const mobileMenu = document.getElementById("mobile-menu");
+
+    const mobileMenuOpen = document.getElementById("mobile-menu-open");
+    const mobileMenuClose = document.getElementById("mobile-menu-close");
+
+    mobileMenuOpen.classList.add("block");
+    mobileMenuClose.classList.add("hidden");
+
+    document.getElementById("mobile-menu-button").addEventListener("click", () => {
+        mobileMenuOpen.classList.toggle("block");
+        mobileMenuOpen.classList.toggle("hidden");
+
+        mobileMenuClose.classList.toggle("hidden");
+        mobileMenuClose.classList.toggle("block");
+
+        mobileMenu.classList.toggle("hidden");
+        mobileMenu.classList.toggle("md:hidden");
+    });
+</script>

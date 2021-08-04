@@ -1,4 +1,9 @@
-use {crate::templates::Width, common::models::Theme, opal::Template, std::borrow::Cow};
+use {
+    crate::templates::{partials::nav, Width},
+    common::models::Theme,
+    opal::Template,
+    std::borrow::Cow,
+};
 
 #[derive(opal::Template)]
 #[template(path = "layout.hbs")]
@@ -9,6 +14,7 @@ where
     width: Width,
     theme: Theme,
     title: String,
+    nav: nav::Nav,
     query: Option<Cow<'static, str>>,
     body: B,
 }
@@ -33,6 +39,7 @@ where
             theme,
             title: title.to_string(),
             query,
+            nav: nav::NAV,
             body,
         }
     }

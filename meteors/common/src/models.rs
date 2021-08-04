@@ -3,6 +3,33 @@ use {
     std::{collections::BTreeMap, ops::Range},
 };
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct Existing<T> {
+    pub id: String,
+
+    inner: T,
+}
+
+impl<T> Existing<T> {
+    pub fn new(id: String, inner: T) -> Self {
+        Self { id, inner }
+    }
+}
+
+impl<T> std::ops::Deref for Existing<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
+    }
+}
+
+impl<T> std::ops::DerefMut for Existing<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.inner
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Aloene)]
 pub enum Site {
     ArchiveOfOurOwn,
@@ -161,7 +188,7 @@ pub struct Chapter {
 }
 
 pub mod resolved {
-    use super::{Entity, Rating};
+    use super::{Entity, Rating, Existing};
 
     #[derive(Debug, Clone, PartialEq)]
     pub struct Story {
@@ -175,12 +202,12 @@ pub mod resolved {
     #[derive(Debug, Clone, PartialEq)]
     pub struct StoryMeta {
         pub rating: Rating,
-        pub authors: Vec<Entity>,
-        pub categories: Vec<Entity>,
-        pub origins: Vec<Entity>,
-        pub warnings: Vec<Entity>,
-        pub pairings: Vec<Entity>,
-        pub characters: Vec<Entity>,
-        pub generals: Vec<Entity>,
+        pub authors: Vec<Existing<Entity>>,
+        pub categories: Vec<Existing<Entity>>,
+        pub origins: Vec<Existing<Entity>>,
+        pub warnings: Vec<Existing<Entity>>,
+        pub pairings: Vec<Existing<Entity>>,
+        pub characters: Vec<Existing<Entity>>,
+        pub generals: Vec<Existing<Entity>>,
     }
 }

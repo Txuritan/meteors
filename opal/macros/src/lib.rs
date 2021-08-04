@@ -94,7 +94,13 @@ pub fn template_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
         }
     };
 
+    let source_ident = quote::format_ident!("{}_SOURCE", ident.to_string().to_uppercase());
+    let source_path = template_path.to_str().unwrap();
+
     let tokens = quote::quote! {
+        #[allow(dead_code)]
+        const #source_ident: &str = include_str!(#source_path);
+
         impl #lt_token #params #gt_token ::opal::Template for #ident #lt_token #params #gt_token #where_clause {
             fn size_hint(&self) -> usize {
                 let mut hint = 0;
@@ -237,14 +243,16 @@ fn write_render(tokens: &[Stage4]) -> Result<proc_macro2::TokenStream, proc_macr
     for token in tokens {
         match token {
             Stage4::Expr(expr) => {
-                let expr = proc_macro2::TokenStream::from_str(expr)?;
+                let expr = proc_macro2::TokenStream::from_str(
+                    &expr.replace('{', "{{").replace('}', "}}"),
+                )?;
 
                 stream = quote::quote! {
                     #stream
 
                     write!(writer, "{}", #expr)?;
                 };
-            },
+            }
             Stage4::ExprAssign(expr) => {
                 let expr = proc_macro2::TokenStream::from_str(expr.trim())?;
 
@@ -253,7 +261,7 @@ fn write_render(tokens: &[Stage4]) -> Result<proc_macro2::TokenStream, proc_macr
 
                     #expr
                 };
-            },
+            }
             Stage4::ExprRender(expr) => {
                 let expr = proc_macro2::TokenStream::from_str(expr.trim())?;
 
@@ -262,7 +270,7 @@ fn write_render(tokens: &[Stage4]) -> Result<proc_macro2::TokenStream, proc_macr
 
                     #expr?;
                 };
-            },
+            }
             Stage4::If(cond, if_tokens, else_tokens) => {
                 let inner_stream = write_render(if_tokens)?;
 
@@ -302,12 +310,14 @@ fn write_render(tokens: &[Stage4]) -> Result<proc_macro2::TokenStream, proc_macr
                 };
             }
             Stage4::Other(other) => {
+                let other = other.replace('{', "{{").replace('}', "}}");
+
                 stream = quote::quote! {
                     #stream
 
                     write!(writer, #other)?;
                 };
-            },
+            }
         }
     }
 
