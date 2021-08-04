@@ -1,6 +1,6 @@
 use {
     crate::{
-        models::{Entity, Index, Meteors, Settings, Theme},
+        models::{Entity, Index, Meteors, Settings, Theme, Version},
         prelude::*,
         utils::FileIter,
     },
@@ -63,6 +63,7 @@ impl Database {
 
             Self {
                 inner: Meteors {
+                    version: Version::V1,
                     index: Index {
                         stories: BTreeMap::new(),
                         categories: BTreeMap::new(),

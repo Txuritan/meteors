@@ -1,7 +1,5 @@
 use {
-    crate::templates::{
-        partials::{Contrast, Link},
-    },
+    crate::templates::partials::{Contrast, Link},
     common::models::{Entity, Existing},
 };
 

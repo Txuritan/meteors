@@ -1,9 +1,7 @@
 use {
     common::{
         database::Database,
-        models::{
-            resolved, Entity, Index, StoryInfo, StoryMeta, Existing,
-        },
+        models::{resolved, Entity, Existing, Index, StoryInfo, StoryMeta},
         prelude::*,
     },
     enrgy::HttpResponse,

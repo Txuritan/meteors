@@ -30,12 +30,6 @@ impl<T> std::ops::DerefMut for Existing<T> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Aloene)]
-pub enum Site {
-    ArchiveOfOurOwn,
-    Unknown,
-}
-
 #[derive(Debug, Clone, Copy)]
 pub enum FileKind {
     Epub,
@@ -49,8 +43,14 @@ pub struct Entity {
 
 #[derive(Debug, Clone, PartialEq, Aloene)]
 pub struct Meteors {
+    pub version: Version,
     pub settings: Settings,
     pub index: Index,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Aloene)]
+pub enum Version {
+    V1,
 }
 
 #[derive(Debug, Clone, PartialEq, Aloene)]
@@ -109,7 +109,7 @@ pub struct Story {
     pub file_hash: u64,
     pub info: StoryInfo,
     pub meta: StoryMeta,
-    // pub site: Site,
+    pub site: Site,
     pub chapters: Vec<Chapter>,
 }
 
@@ -178,6 +178,12 @@ impl Rating {
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Aloene)]
+pub enum Site {
+    ArchiveOfOurOwn,
+    Unknown,
+}
+
 #[derive(Debug, Clone, PartialEq, Aloene)]
 pub struct Chapter {
     pub title: String,
@@ -188,7 +194,7 @@ pub struct Chapter {
 }
 
 pub mod resolved {
-    use super::{Entity, Rating, Existing};
+    use super::{Entity, Existing, Rating};
 
     #[derive(Debug, Clone, PartialEq)]
     pub struct Story {

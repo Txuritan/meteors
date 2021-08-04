@@ -4,7 +4,7 @@
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use {common::prelude::*, std::{env}};
+use {common::prelude::*, std::env};
 
 fn main() -> Result<()> {
     common::logger::init()?;

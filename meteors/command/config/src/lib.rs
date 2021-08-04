@@ -55,7 +55,9 @@ fn run_get(mut args: common::Args) -> Result<()> {
         return Ok(());
     }
 
-    let key = args.next().ok_or_else(|| anyhow::anyhow!("`config get` is missing `key` value"))?;
+    let key = args
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("`config get` is missing `key` value"))?;
 
     match key.as_str() {
         key @ "theme" => {
@@ -103,8 +105,12 @@ fn run_set(mut args: common::Args) -> Result<()> {
         return Ok(());
     }
 
-    let key = args.next().ok_or_else(|| anyhow::anyhow!("`config set` is missing `key` value"))?;
-    let value = args.next().ok_or_else(|| anyhow::anyhow!("`config set` is missing `value` value"))?;
+    let key = args
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("`config set` is missing `key` value"))?;
+    let value = args
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("`config set` is missing `value` value"))?;
 
     match key.as_str() {
         key @ "theme" => {
@@ -159,8 +165,12 @@ fn run_push(mut args: common::Args) -> Result<()> {
         return Ok(());
     }
 
-    let key = args.next().ok_or_else(|| anyhow::anyhow!("`config push` is missing `key` value"))?;
-    let value = args.next().ok_or_else(|| anyhow::anyhow!("`config push` is missing `value` value"))?;
+    let key = args
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("`config push` is missing `key` value"))?;
+    let value = args
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("`config push` is missing `value` value"))?;
 
     match key.as_str() {
         "theme" => {
@@ -216,7 +226,9 @@ fn run_pop(mut args: common::Args) -> Result<()> {
         return Ok(());
     }
 
-    let key = args.next().ok_or_else(|| anyhow::anyhow!("`config pop` is missing `key` value"))?;
+    let key = args
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("`config pop` is missing `key` value"))?;
 
     match key.as_str() {
         "theme" => {

@@ -9,14 +9,13 @@ use {
     std::{
         collections::BTreeMap,
         ffi::OsStr,
-        hash::Hasher as _,
         fs::{self, DirEntry},
+        hash::Hasher as _,
         io::{Cursor, Read as _},
         path::Path,
     },
     zip::{result::ZipError, ZipArchive},
 };
-
 
 // open index
 // create id list
@@ -180,7 +179,7 @@ where
     let bytes = fs::read(&path)?;
 
     let hash = {
-        let mut hasher  = crc32fast::Hasher::default();
+        let mut hasher = crc32fast::Hasher::default();
 
         hasher.write(&bytes[..]);
 
@@ -233,7 +232,7 @@ fn add_to_index(
     let story = Story {
         file_name: name.to_string(),
         file_hash: hash,
-        // site,
+        site,
         chapters: chapters
             .chapters
             .into_iter()

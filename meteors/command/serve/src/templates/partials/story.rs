@@ -4,7 +4,7 @@ use {
         TagKind,
     },
     common::{
-        models::{resolved, Entity, Rating, StoryInfo, Existing},
+        models::{resolved, Entity, Existing, Rating, StoryInfo},
         prelude::*,
     },
     std::borrow::Cow,
@@ -75,7 +75,11 @@ impl<'s> StoryPartial<'s> {
         })
     }
 
-    fn push(tags: &mut Vec<(TagKind, Existing<Entity>)>, kind: TagKind, list: Vec<Existing<Entity>>) {
+    fn push(
+        tags: &mut Vec<(TagKind, Existing<Entity>)>,
+        kind: TagKind,
+        list: Vec<Existing<Entity>>,
+    ) {
         for entity in list {
             tags.push((kind, entity));
         }
