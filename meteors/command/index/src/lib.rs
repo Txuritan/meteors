@@ -9,6 +9,7 @@ use {
     std::{
         collections::BTreeMap,
         ffi::OsStr,
+        hash::Hasher as _,
         fs::{self, DirEntry},
         io::{Cursor, Read as _},
         path::Path,
@@ -16,13 +17,6 @@ use {
     zip::{result::ZipError, ZipArchive},
 };
 
-#[derive(argh::FromArgs)]
-#[argh(
-    subcommand,
-    name = "index",
-    description = "builds or updates the index"
-)]
-pub struct Command {}
 
 // open index
 // create id list
@@ -35,7 +29,7 @@ pub struct Command {}
 // write updated index
 #[allow(clippy::needless_collect)] // clippy doesn't detect that the keys are being removed
 #[inline(never)]
-pub fn run(_command: Command) -> Result<()> {
+pub fn run(_args: common::Args) -> Result<()> {
     debug!("building index");
 
     let mut database = Database::open()?;
@@ -185,7 +179,13 @@ where
 {
     let bytes = fs::read(&path)?;
 
-    let hash = xxhash_rust::xxh3::xxh3_64(&bytes[..]);
+    let hash = {
+        let mut hasher  = crc32fast::Hasher::default();
+
+        hasher.write(&bytes[..]);
+
+        hasher.finish()
+    };
 
     let index = db.index();
 

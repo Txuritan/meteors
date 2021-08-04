@@ -4,62 +4,60 @@ use common::{
     prelude::*,
 };
 
-#[derive(argh::FromArgs)]
-#[argh(
-    subcommand,
-    name = "config",
-    description = "access and change the config"
-)]
-pub struct Command {
-    #[argh(subcommand)]
-    cmd: SubCommand,
-}
-
-pub fn run(command: Command) -> Result<()> {
-    match command.cmd {
-        SubCommand::Get(cmd) => {
-            get_run(cmd)?;
+pub fn run(mut args: common::Args) -> Result<()> {
+    match args.next().as_deref() {
+        Some("--help") => {
+            println!("Usage:");
+            println!("  meteors config <COMMAND> [<ARGS>]");
+            println!();
+            println!("Options:");
+            println!("  --help");
+            println!();
+            println!("Commands:");
+            println!("  get             get and prints a configuration key");
+            println!("  set             set a configuration key");
+            println!("  push            add a entry onto a configuration list key");
+            println!("  pop             remove an entry onto a configuration list key");
         }
-        SubCommand::Set(cmd) => {
-            set_run(cmd)?;
+        Some("get") => {
+            run_get(args)?;
         }
-        SubCommand::Push(cmd) => {
-            push_run(cmd)?;
+        Some("set") => {
+            run_set(args)?;
         }
-        SubCommand::Pop(cmd) => {
-            pop_run(cmd)?;
+        Some("push") => {
+            run_push(args)?;
         }
+        Some("pop") => {
+            run_pop(args)?;
+        }
+        _ => {}
     }
 
     Ok(())
 }
 
-#[derive(argh::FromArgs)]
-#[argh(subcommand)]
-enum SubCommand {
-    Get(GetCommand),
-    Set(SetCommand),
-    Push(PushCommand),
-    Pop(PopCommand),
-}
-
-#[derive(argh::FromArgs)]
-#[argh(
-    subcommand,
-    name = "get",
-    description = "get and prints a configuration key"
-)]
-struct GetCommand {
-    #[argh(positional, description = "the key to get")]
-    key: String,
-}
-
 #[inline(never)]
-fn get_run(command: GetCommand) -> Result<()> {
+fn run_get(mut args: common::Args) -> Result<()> {
     let database = Database::open()?;
     let settings = database.settings();
 
-    match command.key.as_str() {
+    if args.peek().map(|a| a == "--help").unwrap_or_default() {
+        println!("Usage:");
+        println!("  meteors config get <KEY>");
+        println!();
+        println!("Options:");
+        println!("  --help");
+        println!();
+        println!("Arguments:");
+        println!("  key             the key to get");
+
+        return Ok(());
+    }
+
+    let key = args.next().ok_or_else(|| anyhow::anyhow!("`config get` is missing `key` value"))?;
+
+    match key.as_str() {
         key @ "theme" => {
             info!(target: "config", "Value of {}: {}", key.bright_blue(), settings.theme.as_class().bright_yellow());
         }
@@ -86,27 +84,35 @@ fn get_run(command: GetCommand) -> Result<()> {
     Ok(())
 }
 
-#[derive(argh::FromArgs)]
-#[argh(subcommand, name = "set", description = "set a configuration key")]
-struct SetCommand {
-    #[argh(positional, description = "the key to set")]
-    key: String,
-    #[argh(positional, description = "the value to set the key to")]
-    value: String,
-}
-
 #[inline(never)]
-fn set_run(command: SetCommand) -> Result<()> {
+fn run_set(mut args: common::Args) -> Result<()> {
     let mut database = Database::open()?;
     let settings = database.settings_mut();
 
-    match command.key.as_str() {
+    if args.peek().map(|a| a == "--help").unwrap_or_default() {
+        println!("Usage:");
+        println!("  meteors config set <KEY> <VALUE>");
+        println!();
+        println!("Options:");
+        println!("  --help");
+        println!();
+        println!("Arguments:");
+        println!("  key             the key to set");
+        println!("  value           the value to set the key to");
+
+        return Ok(());
+    }
+
+    let key = args.next().ok_or_else(|| anyhow::anyhow!("`config set` is missing `key` value"))?;
+    let value = args.next().ok_or_else(|| anyhow::anyhow!("`config set` is missing `value` value"))?;
+
+    match key.as_str() {
         key @ "theme" => {
-            let theme = match command.value.to_lowercase().as_str() {
+            let theme = match value.to_lowercase().as_str() {
                 "light" => Some(Theme::Light),
                 "dark" => Some(Theme::Dark),
                 _ => {
-                    error!(target: "config", "Unknown {} value: {}", key.bright_blue(), command.value.bright_red());
+                    error!(target: "config", "Unknown {} value: {}", key.bright_blue(), value.bright_red());
 
                     None
                 }
@@ -134,25 +140,29 @@ fn set_run(command: SetCommand) -> Result<()> {
     Ok(())
 }
 
-#[derive(argh::FromArgs)]
-#[argh(
-    subcommand,
-    name = "push",
-    description = "add a entry onto a configuration list key"
-)]
-struct PushCommand {
-    #[argh(positional, description = "the list key to add to")]
-    key: String,
-    #[argh(positional, description = "the value to set the key to")]
-    value: String,
-}
-
 #[inline(never)]
-fn push_run(command: PushCommand) -> Result<()> {
+fn run_push(mut args: common::Args) -> Result<()> {
     let mut database = Database::open()?;
     let settings = database.settings_mut();
 
-    match command.key.as_str() {
+    if args.peek().map(|a| a == "--help").unwrap_or_default() {
+        println!("Usage:");
+        println!("  meteors config push <KEY> <VALUE>");
+        println!();
+        println!("Options:");
+        println!("  --help");
+        println!();
+        println!("Arguments:");
+        println!("  key             the list to add to");
+        println!("  value           the value to add to the list");
+
+        return Ok(());
+    }
+
+    let key = args.next().ok_or_else(|| anyhow::anyhow!("`config push` is missing `key` value"))?;
+    let value = args.next().ok_or_else(|| anyhow::anyhow!("`config push` is missing `value` value"))?;
+
+    match key.as_str() {
         "theme" => {
             error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
         }
@@ -160,7 +170,7 @@ fn push_run(command: PushCommand) -> Result<()> {
             error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
         }
         "nodes" => {
-            let mut values = command.value.split(',');
+            let mut values = value.split(',');
 
             let name = values.next();
             let key = values.next();
@@ -188,23 +198,27 @@ fn push_run(command: PushCommand) -> Result<()> {
     Ok(())
 }
 
-#[derive(argh::FromArgs)]
-#[argh(
-    subcommand,
-    name = "pop",
-    description = "remove an entry onto a configuration list key"
-)]
-pub struct PopCommand {
-    #[argh(positional, description = "the list key to remove from")]
-    pub key: String,
-}
-
 #[inline(never)]
-fn pop_run(command: PopCommand) -> Result<()> {
+fn run_pop(mut args: common::Args) -> Result<()> {
     let mut database = Database::open()?;
     let settings = database.settings_mut();
 
-    match command.key.as_str() {
+    if args.peek().map(|a| a == "--help").unwrap_or_default() {
+        println!("Usage:");
+        println!("  meteors config pop <KEY>");
+        println!();
+        println!("Options:");
+        println!("  --help");
+        println!();
+        println!("Arguments:");
+        println!("  key             the list item to remove");
+
+        return Ok(());
+    }
+
+    let key = args.next().ok_or_else(|| anyhow::anyhow!("`config pop` is missing `key` value"))?;
+
+    match key.as_str() {
         "theme" => {
             error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "get".green(), "set".green());
         }

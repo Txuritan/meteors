@@ -10,5 +10,3 @@ workspace = "../../.."
 
 [dependencies]
 common = { path = "../../common", package = "meteors-common" }
-
-argh = "0.1"

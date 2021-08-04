@@ -4,38 +4,37 @@
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
-use common::prelude::*;
-
-#[derive(argh::FromArgs)]
-#[argh(description = "an offline archive of our own viewer")]
-struct Args {
-    #[argh(subcommand)]
-    cmd: SubCommand,
-}
-
-#[derive(argh::FromArgs)]
-#[argh(subcommand)]
-enum SubCommand {
-    Config(command_config::Command),
-    Index(command_index::Command),
-    Serve(command_serve::Command),
-}
+use {common::prelude::*, std::{env}};
 
 fn main() -> Result<()> {
     common::logger::init()?;
 
-    let args: Args = argh::from_env();
+    let mut args: common::Args = env::args().skip(1).peekable();
 
-    match args.cmd {
-        SubCommand::Config(cmd) => {
-            command_config::run(cmd)?;
+    match args.next().as_deref() {
+        Some("--help") => {
+            println!("Usage:");
+            println!("  meteors");
+            println!("  meteors <COMMAND> [<ARGS>]");
+            println!();
+            println!("Options:");
+            println!("  --help");
+            println!();
+            println!("Commands:");
+            println!("  config          access and change the config");
+            println!("  index           builds or updates the index");
+            println!("  serve           run the internal web server [default]");
         }
-        SubCommand::Index(cmd) => {
-            command_index::run(cmd)?;
+        Some("config") => {
+            command_config::run(args)?;
         }
-        SubCommand::Serve(cmd) => {
-            command_serve::run(cmd)?;
+        Some("index") => {
+            command_index::run(args)?;
         }
+        Some("serve") | None => {
+            command_serve::run(args)?;
+        }
+        _ => {}
     }
 
     Ok(())

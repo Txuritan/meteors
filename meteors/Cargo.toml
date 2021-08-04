@@ -15,7 +15,5 @@ command-config = { path = "./command/config", package = "meteors-command-config"
 command-index = { path = "./command/index", package = "meteors-command-index" }
 command-serve = { path = "./command/serve", package = "meteors-command-serve" }
 
-argh = "0.1"
-
 [build-dependencies]
 embed-resource = "1.6"

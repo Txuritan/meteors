@@ -1,5 +1,5 @@
 #![allow(incomplete_features)]
-#![feature(const_generics)]
+#![feature(const_generics, option_result_unwrap_unchecked)]
 
 mod handlers;
 mod templates;
@@ -19,29 +19,8 @@ use {
     },
 };
 
-#[derive(argh::FromArgs)]
-#[argh(
-    subcommand,
-    name = "serve",
-    description = "run the internal web server"
-)]
-pub struct Command {
-    #[argh(
-        option,
-        default = r#""0.0.0.0".to_owned()"#,
-        description = "sets the server's bound IP address"
-    )]
-    host: String,
-    #[argh(
-        option,
-        default = "8723",
-        description = "sets the port that the server will listen to requests on"
-    )]
-    port: u16,
-}
-
 #[inline(never)]
-pub fn run(command: Command) -> Result<()> {
+pub fn run(mut args: common::Args) -> Result<()> {
     // let stop = Arc::new(AtomicBool::new(false));
 
     // ctrlc::set_handler({
@@ -52,7 +31,40 @@ pub fn run(command: Command) -> Result<()> {
     //     }
     // })?;
 
-    let addr: SocketAddr = (command.host.parse::<Ipv4Addr>()?, command.port).into();
+    if args.peek().map(|a| a == "--help").unwrap_or_default() {
+        println!("Usage:");
+        println!("  meteors serve <ARGS>");
+        println!();
+        println!("Options:");
+        println!("  --help");
+        println!();
+        println!("Arguments:");
+        println!("  host            sets the server's bound IP address [default: 0.0.0.0]");
+        println!("  port            sets the port that the server will listen to requests on [default: 8723]");
+
+        return Ok(());
+    }
+
+    let mut host = Ipv4Addr::new(0, 0, 0, 0);
+    let mut port = 8723;
+
+    for _ in 0..2 {
+        match args.next().as_deref() {
+            Some("--host") if args.peek().is_some() => {
+                let value = unsafe { args.next().unwrap_unchecked() };
+
+                host = value.parse::<Ipv4Addr>()?;
+            }
+            Some("--port") if args.peek().is_some() => {
+                let value = unsafe { args.next().unwrap_unchecked() };
+
+                port = value.parse::<u16>()?;
+            }
+            _ => {}
+        }
+    }
+
+    let addr: SocketAddr = (host, port).into();
 
     let database = Arc::new({
         let mut db = Database::open()?;
