@@ -16,7 +16,7 @@ pub struct HttpResponse {
 
 impl HttpResponse {
     #[allow(clippy::new_ret_no_self)]
-    pub fn new(status: StatusCode) -> HttpResponseBuilder {
+    pub const fn new(status: StatusCode) -> HttpResponseBuilder {
         HttpResponseBuilder {
             inner: Self {
                 version: Version::Http10,
@@ -27,27 +27,27 @@ impl HttpResponse {
         }
     }
 
-    pub fn ok() -> HttpResponseBuilder {
+    pub const fn ok() -> HttpResponseBuilder {
         Self::new(StatusCode::OK)
     }
 
-    pub fn not_found() -> HttpResponseBuilder {
+    pub const fn not_found() -> HttpResponseBuilder {
         Self::new(StatusCode::NOT_FOUND)
     }
 
-    pub fn internal_server_error() -> HttpResponseBuilder {
+    pub const fn internal_server_error() -> HttpResponseBuilder {
         Self::new(StatusCode::INTERNAL_SERVER_ERROR)
     }
 
-    pub fn bad_request() -> HttpResponseBuilder {
+    pub const fn bad_request() -> HttpResponseBuilder {
         Self::new(StatusCode::BAD_REQUEST)
     }
 
-    pub fn version(&self) -> Version {
+    pub const fn version(&self) -> Version {
         self.version
     }
 
-    pub fn status(&self) -> StatusCode {
+    pub const fn status(&self) -> StatusCode {
         self.status
     }
 
@@ -64,27 +64,37 @@ impl HttpResponse {
             write!(stream, "{}: {}\r\n", key, value)?;
         }
 
-        match self.body {
-            Body::None | Body::Empty => {
-                write!(stream, "Content-Length: 0\r\n")?;
-            }
-            Body::Bytes(bytes) if compress => {
+        fn write_bytes(bytes: &[u8], compress: bool, stream: &mut TcpStream) -> io::Result<()> {
+            if compress {
                 write!(stream, "Content-Encoding: deflate\r\n")?;
 
-                let compressed = miniz_oxide::deflate::compress_to_vec(&bytes, 8);
+                let compressed = miniz_oxide::deflate::compress_to_vec(bytes, 8);
 
                 write!(stream, "Content-Length: {}\r\n", compressed.len())?;
 
                 write!(stream, "\r\n")?;
 
-                stream.write_all(&compressed)?
-            }
-            Body::Bytes(bytes) => {
+                stream.write_all(&compressed)?;
+            } else {
                 write!(stream, "Content-Length: {}\r\n", bytes.len())?;
 
                 write!(stream, "\r\n")?;
 
-                stream.write_all(&bytes)?
+                stream.write_all(bytes)?;
+            }
+
+            Ok(())
+        }
+
+        match self.body {
+            Body::None | Body::Empty => {
+                write!(stream, "Content-Length: 0\r\n")?;
+            }
+            Body::Bytes(bytes) => {
+                write_bytes(bytes, compress, stream)?;
+            }
+            Body::Vector(bytes) => {
+                write_bytes(bytes.as_slice(), compress, stream)?;
             }
         }
 
@@ -97,7 +107,7 @@ pub struct HttpResponseBuilder {
 }
 
 impl HttpResponseBuilder {
-    pub fn status(mut self, status: StatusCode) -> Self {
+    pub const fn status(mut self, status: StatusCode) -> Self {
         self.inner.status = status;
 
         self

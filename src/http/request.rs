@@ -113,11 +113,11 @@ impl HttpRequest {
         })
     }
 
-    pub fn ext(&self) -> &Extensions {
+    pub const fn ext(&self) -> &Extensions {
         &self.extensions
     }
 
-    pub fn ext_mut(&mut self) -> &mut Extensions {
+    pub const fn ext_mut(&mut self) -> &mut Extensions {
         &mut self.extensions
     }
 
@@ -125,11 +125,11 @@ impl HttpRequest {
         &self.header_data.url
     }
 
-    pub fn version(&self) -> Version {
+    pub const fn version(&self) -> Version {
         self.header_data.version
     }
 
-    pub fn method(&self) -> Method {
+    pub const fn method(&self) -> Method {
         self.header_data.method
     }
 }

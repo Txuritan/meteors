@@ -7,7 +7,7 @@ pub struct Param<const KEY: &'static str> {
     value: String,
 }
 
-impl<const KEY: &'static str> Deref for Param<KEY> {
+impl<const KEY: &'static str> const Deref for Param<KEY> {
     type Target = String;
 
     fn deref(&self) -> &Self::Target {
@@ -15,7 +15,7 @@ impl<const KEY: &'static str> Deref for Param<KEY> {
     }
 }
 
-impl<const KEY: &'static str> DerefMut for Param<KEY> {
+impl<const KEY: &'static str> const DerefMut for Param<KEY> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }
@@ -40,7 +40,7 @@ pub struct OptionalParam<const KEY: &'static str> {
     value: Option<String>,
 }
 
-impl<const KEY: &'static str> Deref for OptionalParam<KEY> {
+impl<const KEY: &'static str> const Deref for OptionalParam<KEY> {
     type Target = Option<String>;
 
     fn deref(&self) -> &Self::Target {
@@ -48,7 +48,7 @@ impl<const KEY: &'static str> Deref for OptionalParam<KEY> {
     }
 }
 
-impl<const KEY: &'static str> DerefMut for OptionalParam<KEY> {
+impl<const KEY: &'static str> const DerefMut for OptionalParam<KEY> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }

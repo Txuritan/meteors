@@ -27,7 +27,7 @@ where
     T: Extractor<Error = Error>,
     R: Responder,
 {
-    pub(crate) fn new(fun: F) -> Self {
+    pub(crate) const fn new(fun: F) -> Self {
         Self {
             inner: fun,
             _phantom: PhantomData,

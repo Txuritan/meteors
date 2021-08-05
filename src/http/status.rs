@@ -8,7 +8,7 @@ macro_rules! impl_status {
                 pub const $name: Self = Self($code);
             )*
 
-            pub fn phrase(&self) -> &'static str {
+            pub const fn phrase(&self) -> &'static str {
                 match self.0 {
                     $(
                         $code => $phrase,
@@ -91,7 +91,7 @@ impl_status! {
 macro_rules! impl_status_from {
     ($( $num:ident )*) => {
         $(
-            impl From<$num> for StatusCode {
+            impl const From<$num> for StatusCode {
                 fn from(code: $num) -> Self {
                     StatusCode(code as u16)
                 }

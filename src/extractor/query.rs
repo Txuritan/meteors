@@ -68,7 +68,7 @@ pub struct RawQuery {
     value: String,
 }
 
-impl Deref for RawQuery {
+impl const Deref for RawQuery {
     type Target = String;
 
     fn deref(&self) -> &Self::Target {
@@ -76,7 +76,7 @@ impl Deref for RawQuery {
     }
 }
 
-impl DerefMut for RawQuery {
+impl const DerefMut for RawQuery {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }

@@ -16,7 +16,7 @@ impl<Request, Response, Error> BoxedService<Request, Response, Error> {
         T: Service<Request, Response = Response, Error = Error> + Send + Sync + 'static,
     {
         Self {
-            inner: Box::new(inner),
+            inner: box inner,
         }
     }
 }

@@ -1,5 +1,5 @@
 #![allow(incomplete_features)]
-#![feature(const_generics)]
+#![feature(box_syntax, const_btree_new, const_fn_trait_bound, const_generics, const_trait_impl, const_mut_refs)]
 
 mod extractor;
 

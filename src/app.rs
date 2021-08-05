@@ -47,7 +47,7 @@ impl App {
     where
         M: Middleware + Send + Sync + 'static,
     {
-        self.middleware.push(Box::new(middleware));
+        self.middleware.push(box middleware);
 
         self
     }

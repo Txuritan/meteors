@@ -9,9 +9,9 @@ pub struct Extensions {
 
 impl Extensions {
     #[inline]
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
-            inner: BTreeMap::default(),
+            inner: BTreeMap::new(),
         }
     }
 
@@ -21,7 +21,7 @@ impl Extensions {
         }
 
         self.inner
-            .insert(TypeId::of::<T>(), Box::new(val))
+            .insert(TypeId::of::<T>(), box val)
             .and_then(downcast_owned)
     }
 
@@ -34,7 +34,7 @@ impl Extensions {
     }
 }
 
-impl Default for Extensions {
+impl const Default for Extensions {
     fn default() -> Self {
         Self::new()
     }

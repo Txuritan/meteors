@@ -7,7 +7,7 @@ pub struct Header<const KEY: &'static str> {
     value: String,
 }
 
-impl<const KEY: &'static str> Deref for Header<KEY> {
+impl<const KEY: &'static str> const Deref for Header<KEY> {
     type Target = String;
 
     fn deref(&self) -> &Self::Target {
@@ -15,7 +15,7 @@ impl<const KEY: &'static str> Deref for Header<KEY> {
     }
 }
 
-impl<const KEY: &'static str> DerefMut for Header<KEY> {
+impl<const KEY: &'static str> const DerefMut for Header<KEY> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }
@@ -46,7 +46,7 @@ pub struct OptionalHeader<const KEY: &'static str> {
     value: Option<String>,
 }
 
-impl<const KEY: &'static str> Deref for OptionalHeader<KEY> {
+impl<const KEY: &'static str> const Deref for OptionalHeader<KEY> {
     type Target = Option<String>;
 
     fn deref(&self) -> &Self::Target {
@@ -54,7 +54,7 @@ impl<const KEY: &'static str> Deref for OptionalHeader<KEY> {
     }
 }
 
-impl<const KEY: &'static str> DerefMut for OptionalHeader<KEY> {
+impl<const KEY: &'static str> const DerefMut for OptionalHeader<KEY> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }

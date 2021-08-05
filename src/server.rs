@@ -21,13 +21,13 @@ pub enum RunError {
     Signal(ctrlc::Error),
 }
 
-impl From<std::io::Error> for RunError {
+impl const From<std::io::Error> for RunError {
     fn from(err: std::io::Error) -> Self {
         Self::Io(err)
     }
 }
 
-impl From<ctrlc::Error> for RunError {
+impl const From<ctrlc::Error> for RunError {
     fn from(err: ctrlc::Error) -> Self {
         Self::Signal(err)
     }
@@ -42,7 +42,7 @@ impl fmt::Display for RunError {
     }
 }
 
-impl std::error::Error for RunError {
+impl const std::error::Error for RunError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             RunError::Io(err) => Some(err),
@@ -138,31 +138,31 @@ enum ThreadError {
     Utf8(std::string::FromUtf8Error),
 }
 
-impl From<Error> for ThreadError {
+impl const From<Error> for ThreadError {
     fn from(err: Error) -> Self {
         ThreadError::Enrgy(err)
     }
 }
 
-impl From<http::Error> for ThreadError {
+impl const From<http::Error> for ThreadError {
     fn from(err: http::Error) -> Self {
         ThreadError::Http(err)
     }
 }
 
-impl From<io::Error> for ThreadError {
+impl const From<io::Error> for ThreadError {
     fn from(err: io::Error) -> Self {
         ThreadError::Io(err)
     }
 }
 
-impl From<std::num::ParseIntError> for ThreadError {
+impl const From<std::num::ParseIntError> for ThreadError {
     fn from(v: std::num::ParseIntError) -> Self {
         Self::ParseInt(v)
     }
 }
 
-impl From<std::string::FromUtf8Error> for ThreadError {
+impl const From<std::string::FromUtf8Error> for ThreadError {
     fn from(err: std::string::FromUtf8Error) -> Self {
         ThreadError::Utf8(err)
     }

@@ -7,7 +7,7 @@ pub struct Body {
     value: Vec<u8>,
 }
 
-impl Deref for Body {
+impl const Deref for Body {
     type Target = Vec<u8>;
 
     fn deref(&self) -> &Self::Target {
@@ -15,7 +15,7 @@ impl Deref for Body {
     }
 }
 
-impl DerefMut for Body {
+impl const DerefMut for Body {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }
