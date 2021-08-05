@@ -128,7 +128,7 @@ impl<T: fmt::Display> fmt::Display for InternalError<T> {
     }
 }
 
-impl<T> const ResponseError for InternalError<T>
+impl<T> ResponseError for InternalError<T>
 where
     T: fmt::Debug + fmt::Display + 'static,
 {

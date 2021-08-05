@@ -42,7 +42,7 @@ impl fmt::Display for RunError {
     }
 }
 
-impl const std::error::Error for RunError {
+impl std::error::Error for RunError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             RunError::Io(err) => Some(err),
