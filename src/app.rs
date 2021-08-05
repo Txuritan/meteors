@@ -5,10 +5,10 @@ use {
         http::Method,
         middleware::Middleware,
         route::{self, Route},
+        router::PathTree,
         service::BoxedService,
         web, Error, HttpRequest, HttpResponse,
     },
-    path_tree::PathTree,
     std::{collections::BTreeMap, sync::Arc},
 };
 
