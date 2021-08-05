@@ -262,7 +262,7 @@ impl HttpServer<SocketAddr> {
             .unwrap_or_else(|| (app.default_service.clone(), BTreeMap::new()));
 
         let compress = if let Some(header) = header_data.headers.get("Accept-Encoding") {
-            header.contains("gzip")
+            header.contains("deflate")
         } else {
             false
         };

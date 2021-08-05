@@ -69,19 +69,9 @@ impl HttpResponse {
                 write!(stream, "Content-Length: 0\r\n")?;
             }
             Body::Bytes(bytes) if compress => {
-                write!(stream, "Content-Encoding: gzip\r\n")?;
+                write!(stream, "Content-Encoding: deflate\r\n")?;
 
-                let compressed = {
-                    let mut buf = Vec::with_capacity(bytes.len());
-
-                    {
-                        let mut encoder = flate2::write::GzEncoder::new(&mut buf, flate2::Compression::default());
-
-                        encoder.write_all(&bytes)?;
-                    }
-
-                    buf
-                };
+                let compressed = miniz_oxide::deflate::compress_to_vec(&bytes, 8);
 
                 write!(stream, "Content-Length: {}\r\n", compressed.len())?;
 
