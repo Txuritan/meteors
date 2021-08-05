@@ -1,11 +1,9 @@
-use {
-    crate::{
-        extractor::Extractor,
-        handler::{Handler, HandlerService},
-        http::Method,
-        service::BoxedService,
-        Error, HttpRequest, HttpResponse, Responder,
-    },
+use crate::{
+    extractor::Extractor,
+    handler::{Handler, HandlerService},
+    http::Method,
+    service::BoxedService,
+    Error, HttpRequest, HttpResponse, Responder,
 };
 
 pub fn to<F, T, R>(handler: F) -> Route<'static>

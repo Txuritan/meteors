@@ -53,15 +53,9 @@ impl App {
     }
 
     pub fn service(mut self, route: Route<'_>) -> Self {
-        let node = self
-            .tree
-            .entry(route.method)
-            .or_insert_with(PathTree::new);
+        let node = self.tree.entry(route.method).or_insert_with(PathTree::new);
 
-        node.insert(
-            route.path,
-            Arc::new(route.service),
-        );
+        node.insert(route.path, Arc::new(route.service));
 
         self
     }

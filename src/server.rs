@@ -261,6 +261,12 @@ impl HttpServer<SocketAddr> {
             })
             .unwrap_or_else(|| (app.default_service.clone(), BTreeMap::new()));
 
+        let compress = if let Some(header) = header_data.headers.get("Accept-Encoding") {
+            header.contains("gzip")
+        } else {
+            false
+        };
+
         let mut request =
             HttpRequest::from_parts(header_data, body, parameters, Arc::clone(&app.data));
 
@@ -274,7 +280,7 @@ impl HttpServer<SocketAddr> {
             middleware.after(&request, &response);
         }
 
-        response.into_stream(&mut stream)?;
+        response.into_stream(compress, &mut stream)?;
 
         Ok(())
     }
