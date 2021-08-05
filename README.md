@@ -35,3 +35,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 Q: Why the name 'enrgy'?
 
 A: I was trying to come up with a name and miss-spelled energy.
+
+Q: Why does this exist?
+
+A: I needed  a `actix-web` like server library, I also wanted to mess around with unstable features.
