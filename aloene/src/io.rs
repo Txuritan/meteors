@@ -2,40 +2,38 @@
 
 use std::io::{Error, ErrorKind, Read, Result, Write};
 
-macro_rules! impl_fn {
-    ($size:ident, $read:ident, $write:ident) => {
-        pub fn $read<R: std::io::Read>(reader: &mut R) -> std::io::Result<$size> {
-            let mut buff: [u8; std::mem::size_of::<$size>()] = [0; std::mem::size_of::<$size>()];
+macro impl_fn($size:ident, $read:ident, $write:ident) {
+    pub fn $read<R: std::io::Read>(reader: &mut R) -> std::io::Result<$size> {
+        let mut buff: [u8; std::mem::size_of::<$size>()] = [0; std::mem::size_of::<$size>()];
 
-            reader.read_exact(&mut buff)?;
+        reader.read_exact(&mut buff)?;
 
-            Ok($size::from_le_bytes(buff))
-        }
+        Ok($size::from_le_bytes(buff))
+    }
 
-        pub fn $write<W: std::io::Write>(writer: &mut W, num: $size) -> std::io::Result<()> {
-            let bytes: [u8; std::mem::size_of::<$size>()] = num.to_le_bytes();
+    pub fn $write<W: std::io::Write>(writer: &mut W, num: $size) -> std::io::Result<()> {
+        let bytes: [u8; std::mem::size_of::<$size>()] = num.to_le_bytes();
 
-            writer.write_all(bytes.as_ref())?;
+        writer.write_all(bytes.as_ref())?;
 
-            Ok(())
-        }
-    };
+        Ok(())
+    }
 }
 
-impl_fn!(f32, read_f32, write_f32);
-impl_fn!(f64, read_f64, write_f64);
+self::impl_fn!(f32, read_f32, write_f32);
+self::impl_fn!(f64, read_f64, write_f64);
 
-impl_fn!(i8, read_i8, write_i8);
-impl_fn!(i16, read_i16, write_i16);
-impl_fn!(i32, read_i32, write_i32);
-impl_fn!(i64, read_i64, write_i64);
-impl_fn!(isize, read_isize, write_isize);
+self::impl_fn!(i8, read_i8, write_i8);
+self::impl_fn!(i16, read_i16, write_i16);
+self::impl_fn!(i32, read_i32, write_i32);
+self::impl_fn!(i64, read_i64, write_i64);
+self::impl_fn!(isize, read_isize, write_isize);
 
-impl_fn!(u8, read_u8, write_u8);
-impl_fn!(u16, read_u16, write_u16);
-impl_fn!(u32, read_u32, write_u32);
-impl_fn!(u64, read_u64, write_u64);
-impl_fn!(usize, read_usize, write_usize);
+self::impl_fn!(u8, read_u8, write_u8);
+self::impl_fn!(u16, read_u16, write_u16);
+self::impl_fn!(u32, read_u32, write_u32);
+self::impl_fn!(u64, read_u64, write_u64);
+self::impl_fn!(usize, read_usize, write_usize);
 
 pub fn read_length<R: Read>(reader: &mut R) -> Result<usize> {
     let mut number: u64 = 0;
@@ -97,23 +95,23 @@ pub mod structure {
         std::io::{Read, Result, Write},
     };
 
-    macro_rules! impl_fn {
+    macro impl_fn {
         (read, $typ:ident, $read:ident, $value:expr) => {
             pub fn $read<R: Read>(reader: &mut R) -> Result<$typ> {
-                assert_byte!(reader, Value::STRING);
+                crate::assert_byte!(reader, Value::STRING);
 
                 let _field = io::read_string(reader)?;
 
-                assert_byte!(reader, Container::VALUE);
-                assert_byte!(reader, $value);
+                crate::assert_byte!(reader, Container::VALUE);
+                crate::assert_byte!(reader, $value);
 
                 let value = io::$read(reader)?;
 
                 Ok(value)
             }
-        };
+        },
         ([$typ:ident, &$typ_ref:ident], $read:ident, $write:ident, $value:expr) => {
-            impl_fn!(read, $typ, $read, $value);
+            self::impl_fn!(read, $typ, $read, $value);
 
             pub fn $write<W: Write>(writer: &mut W, key: &str, value: &$typ_ref) -> Result<()> {
                 io::write_u8(writer, Value::STRING)?;
@@ -127,9 +125,9 @@ pub mod structure {
 
                 Ok(())
             }
-        };
+        },
         ($typ:ident, $read:ident, $write:ident, $value:expr) => {
-            impl_fn!(read, $typ, $read, $value);
+            self::impl_fn!(read, $typ, $read, $value);
 
             pub fn $write<W: Write>(writer: &mut W, key: &str, value: $typ) -> Result<()> {
                 io::write_u8(writer, Value::STRING)?;
@@ -143,23 +141,23 @@ pub mod structure {
 
                 Ok(())
             }
-        };
+        },
     }
 
-    impl_fn!(f32, read_f32, write_f32, Value::FLOAT_32);
-    impl_fn!(f64, read_f64, write_f64, Value::FLOAT_64);
+    self::impl_fn!(f32, read_f32, write_f32, Value::FLOAT_32);
+    self::impl_fn!(f64, read_f64, write_f64, Value::FLOAT_64);
 
-    impl_fn!(i8, read_i8, write_i8, Value::SIGNED_8);
-    impl_fn!(i16, read_i16, write_i16, Value::SIGNED_16);
-    impl_fn!(i32, read_i32, write_i32, Value::SIGNED_32);
-    impl_fn!(i64, read_i64, write_i64, Value::SIGNED_64);
-    impl_fn!(isize, read_isize, write_isize, Value::SIGNED_SIZE);
+    self::impl_fn!(i8, read_i8, write_i8, Value::SIGNED_8);
+    self::impl_fn!(i16, read_i16, write_i16, Value::SIGNED_16);
+    self::impl_fn!(i32, read_i32, write_i32, Value::SIGNED_32);
+    self::impl_fn!(i64, read_i64, write_i64, Value::SIGNED_64);
+    self::impl_fn!(isize, read_isize, write_isize, Value::SIGNED_SIZE);
 
-    impl_fn!(u8, read_u8, write_u8, Value::UNSIGNED_8);
-    impl_fn!(u16, read_u16, write_u16, Value::UNSIGNED_16);
-    impl_fn!(u32, read_u32, write_u32, Value::UNSIGNED_32);
-    impl_fn!(u64, read_u64, write_u64, Value::UNSIGNED_64);
-    impl_fn!(usize, read_usize, write_usize, Value::UNSIGNED_SIZE);
+    self::impl_fn!(u8, read_u8, write_u8, Value::UNSIGNED_8);
+    self::impl_fn!(u16, read_u16, write_u16, Value::UNSIGNED_16);
+    self::impl_fn!(u32, read_u32, write_u32, Value::UNSIGNED_32);
+    self::impl_fn!(u64, read_u64, write_u64, Value::UNSIGNED_64);
+    self::impl_fn!(usize, read_usize, write_usize, Value::UNSIGNED_SIZE);
 
-    impl_fn!([String, &str], read_string, write_string, Value::STRING);
+    self::impl_fn!([String, &str], read_string, write_string, Value::STRING);
 }

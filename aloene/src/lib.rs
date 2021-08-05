@@ -1,10 +1,7 @@
-#[macro_export]
-macro_rules! assert_byte {
-    ($reader:ident, $byte:expr) => {
-        let byte = $crate::io::read_u8($reader)?;
+#![feature(decl_macro)]
 
-        debug_assert_eq!($byte, byte);
-    };
+pub macro assert_byte($reader: ident, $byte: expr) {
+    debug_assert_eq!($byte, $crate::io::read_u8($reader)?);
 }
 
 pub mod bytes;

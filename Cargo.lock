@@ -144,12 +144,13 @@ dependencies = [
 
 [[package]]
 name = "enrgy"
-version = "0.2.1"
-source = "git+https://github.com/Txuritan/enrgy#91d5ca19b8e7fad416e2d62fee3533359aa42360"
+version = "0.2.2"
+source = "git+https://github.com/Txuritan/enrgy#ad3fd394d3f31d39bafe800adf22d3e9028583c2"
 dependencies = [
  "ctrlc",
  "form_urlencoded",
  "log",
+ "miniz_oxide",
  "path-tree",
  "percent-encoding",
 ]
@@ -324,11 +325,11 @@ dependencies = [
  "anyhow",
  "either",
  "fastrand",
- "flate2",
  "fs2",
  "getrandom",
  "log",
  "memmap2",
+ "miniz_oxide",
  "owo-colors",
 ]
 

@@ -10,7 +10,7 @@ use {
 // TODO: maybe write a container before v is serialized
 impl<K: Ord + Aloene, V: Aloene> Aloene for BTreeMap<K, V> {
     fn deserialize<R: Read>(reader: &mut R) -> Result<Self> {
-        assert_byte!(reader, Container::MAP);
+        crate::assert_byte!(reader, Container::MAP);
 
         let len = io::read_length(reader)?;
 
@@ -42,7 +42,7 @@ impl<K: Ord + Aloene, V: Aloene> Aloene for BTreeMap<K, V> {
 
 impl<T: Aloene> Aloene for Vec<T> {
     fn deserialize<R: Read>(reader: &mut R) -> Result<Self> {
-        assert_byte!(reader, Container::ARRAY);
+        crate::assert_byte!(reader, Container::ARRAY);
 
         let len = io::read_length(reader)?;
 
@@ -93,7 +93,7 @@ impl<T: Aloene> Aloene for Option<T> {
 
 impl Aloene for Range<usize> {
     fn deserialize<R: Read>(reader: &mut R) -> Result<Self> {
-        assert_byte!(reader, Container::STRUCT);
+        crate::assert_byte!(reader, Container::STRUCT);
 
         let start = io::structure::read_usize(reader)?;
         let end = io::structure::read_usize(reader)?;

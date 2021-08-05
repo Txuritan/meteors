@@ -5,7 +5,7 @@ use {
 
 impl Aloene for bool {
     fn deserialize<R: Read>(reader: &mut R) -> Result<Self> {
-        assert_byte!(reader, Value::BOOL);
+        crate::assert_byte!(reader, Value::BOOL);
 
         let byte = io::read_u8(reader)?;
 
@@ -23,7 +23,7 @@ impl Aloene for bool {
 
 impl Aloene for String {
     fn deserialize<R: Read>(reader: &mut R) -> Result<Self> {
-        assert_byte!(reader, Value::STRING);
+        crate::assert_byte!(reader, Value::STRING);
 
         let length = io::read_length(reader)?;
 

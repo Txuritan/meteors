@@ -1,5 +1,5 @@
 #![allow(incomplete_features)]
-#![feature(const_generics, option_result_unwrap_unchecked)]
+#![feature(const_generics, decl_macro, option_result_unwrap_unchecked)]
 
 mod handlers;
 mod templates;
@@ -18,6 +18,8 @@ use {
         sync::Arc,
     },
 };
+
+pub use self::router::res;
 
 #[inline(never)]
 pub fn run(mut args: common::Args) -> Result<()> {
@@ -87,7 +89,7 @@ pub fn run(mut args: common::Args) -> Result<()> {
             .service(web::get("/search2").to(handlers::search_v2))
             .service(web::get("/style.css").to(handlers::style))
             .service(web::get("/favicon.ico").to(handlers::favicon))
-            .default_service(web::to(|| -> enrgy::HttpResponse { res!(404) }))
+            .default_service(web::to(|| -> enrgy::HttpResponse { crate::res!(404) }))
             .wrap(LoggerMiddleware),
     )
     .bind(addr);

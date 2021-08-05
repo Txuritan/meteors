@@ -5,7 +5,6 @@ use {
         utils::FileIter,
     },
     aloene::Aloene as _,
-    flate2::{read::GzDecoder, write::GzEncoder, Compression},
     fs2::FileExt as _,
     memmap2::Mmap,
     std::{
@@ -13,7 +12,6 @@ use {
         env,
         ffi::OsStr,
         fs::{self, File},
-        io::{self, Read as _, Write as _},
         mem,
         path::PathBuf,
     },
@@ -35,17 +33,22 @@ impl Database {
         let cur = env::current_dir()?.canonicalize()?;
 
         let data_path = cur.join("data");
-        let index_path = cur.join("meteors.aloe.gz");
+        let index_path = cur.join("meteors.aloe.dfl");
         let temp_path = cur.join("temp");
 
         let database = if index_path.exists() {
             debug!("found existing");
 
-            let mut decoder = GzDecoder::new(File::open(&index_path)?);
+            // let mut decoder = GzDecoder::new(File::open(&index_path)?);
 
-            let mut bytes = Vec::new();
+            // let mut bytes = Vec::new();
 
-            decoder.read_to_end(&mut bytes)?;
+            // decoder.read_to_end(&mut bytes)?;
+
+            let content = fs::read(&index_path)?;
+
+            let bytes = miniz_oxide::inflate::decompress_to_vec(&content)
+                .map_err(|err| anyhow::anyhow!("{:?}", err))?;
 
             let inner = Meteors::deserialize(&mut std::io::Cursor::new(bytes))?;
 
@@ -226,11 +229,15 @@ impl Database {
 
         Meteors::serialize(&self.inner, &mut buf)?;
 
-        let mut encoder = GzEncoder::new(File::create(&self.index_path)?, Compression::best());
+        // let mut encoder = GzEncoder::new(File::create(&self.index_path)?, Compression::best());
 
-        io::copy(&mut &buf[..], &mut encoder)?;
+        // io::copy(&mut &buf[..], &mut encoder)?;
 
-        encoder.flush()?;
+        // encoder.flush()?;
+
+        let compressed = miniz_oxide::deflate::compress_to_vec(&buf, 10);
+
+        fs::write(&self.index_path, &compressed)?;
 
         Ok(())
     }

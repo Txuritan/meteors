@@ -1,0 +1,80 @@
+<div class="grid grid-cols-4">
+    <main class="col-span-3"></main>
+
+    <aside>
+        <form>
+            <button class="block w-full py-2 my-1 rounded text-sm text-center text-white text-opacity-60 hover:text-opacity-90 bg-gray-800 hover:bg-indigo-600">sort and filter</button>
+
+            <p class="py-1 text-white text-opacity-60 font-semibold">sort by</p>
+            <div aria-hidden="true"><div class="border-t border-gray-700"></div></div>
+            <select id="cars">
+                <option value="volvo">Volvo</option>
+                <option value="saab">Saab</option>
+                <option value="opel">Opel</option>
+                <option value="audi">Audi</option>
+            </select>
+
+            <div class="py-1">
+                <p class="py-1 text-white text-opacity-60 font-semibold">include</p>
+                <div aria-hidden="true"><div class="border-t border-gray-700"></div></div>
+                <details class="py-0.5">
+                    <summary class="text-white text-opacity-60">ratings</summary>
+                    <span class="block py-0.5"><input class="h-4 w-4 bg-gray-300 text-indigo-600 focus:ring-indigo-500 border-gray-900" type="radio" name="rating" id="general" value="general" /><label for="general" class="pl-2 text-white text-opacity-60">General (10,759)</label></span>
+                    <span class="block py-0.5"><input class="h-4 w-4 bg-gray-300 text-indigo-600 focus:ring-indigo-500 border-gray-900" type="radio" name="rating" id="teen" value="teen" /><label for="teen" class="pl-2 text-white text-opacity-60">Teen (9,447)</label></span>
+                    <span class="block py-0.5"><input class="h-4 w-4 bg-gray-300 text-indigo-600 focus:ring-indigo-500 border-gray-900" type="radio" name="rating" id="explicit" value="explicit" /><label for="explicit" class="pl-2 text-white text-opacity-60">Explicit (4,965)</label></span>
+                    <span class="block py-0.5"><input class="h-4 w-4 bg-gray-300 text-indigo-600 focus:ring-indigo-500 border-gray-900" type="radio" name="rating" id="mature" value="mature" /><label for="mature" class="pl-2 text-white text-opacity-60">Mature (2,832)</label></span>
+                    <span class="block py-0.5"><input class="h-4 w-4 bg-gray-300 text-indigo-600 focus:ring-indigo-500 border-gray-900" type="radio" name="rating" id="not-rated" value="not-rated" /><label for="not-rated" class="pl-2 text-white text-opacity-60">Not Rated (1,816)</label></span>
+                </details>
+                <details class="py-0.5">
+                    <summary class="text-white text-opacity-60">warnings</summary>
+                    <span class="block py-0.5"><input class="h-4 w-4 bg-gray-300 text-indigo-600 focus:ring-indigo-500 border-gray-900 rounded" type="checkbox" name="warnings" id="no-warnings-apply" value="no-warnings-apply" /><label class="pl-2 text-sm text-white text-opacity-60" for="no-warnings-apply">No Warnings Apply (17,118)</label></span>
+                    <span class="block py-0.5"><input class="h-4 w-4 bg-gray-300 text-indigo-600 focus:ring-indigo-500 border-gray-900 rounded" type="checkbox" name="warnings" id="creator-chose-not-to-use-warnings" value="creator-chose-not-to-use-warnings" /><label for="creator-chose-not-to-use-warnings" class="pl-2 text-sm text-white text-opacity-60">Creator Chose Not To Use Warnings (9,072)</label></span>
+                </details>
+                <details class="py-0.5">
+                    <summary class="text-white text-opacity-60">fandoms</summary>
+                    <p>Epcot is a theme park at Walt Disney World Resort featuring exciting attractions, international pavilions, award-winning fireworks and seasonal special events.</p>
+                </details>
+                <details class="py-0.5">
+                    <summary class="text-white text-opacity-60">relationships</summary>
+                    <p>Epcot is a theme park at Walt Disney World Resort featuring exciting attractions, international pavilions, award-winning fireworks and seasonal special events.</p>
+                </details>
+                <details class="py-0.5">
+                    <summary class="text-white text-opacity-60">characters</summary>
+                    <p>Epcot is a theme park at Walt Disney World Resort featuring exciting attractions, international pavilions, award-winning fireworks and seasonal special events.</p>
+                </details>
+            </div>
+
+            <div class="py-1">
+                <p class="py-1 text-white text-opacity-60 font-semibold">exclude</p>
+                <div aria-hidden="true"><div class="border-t border-gray-700"></div></div>
+                <details class="py-0.5">
+                    <summary class="text-white text-opacity-60">ratings</summary>
+                    <span class="block py-0.5 text-white text-opacity-60 hover:text-opacity-90"><input type="radio" name="rating" id="general" value="general" /><label for="general" class="pl-2">General (10,759)</label></span>
+                    <span class="block py-0.5"><input type="radio" name="rating" id="teen" value="teen" /><label for="teen" class="pl-2 text-white text-opacity-60">Teen (9,447)</label></span>
+                    <span class="block py-0.5"><input type="radio" name="rating" id="explicit" value="explicit" /><label for="explicit" class="pl-2 text-white text-opacity-60">Explicit (4,965)</label></span>
+                    <span class="block py-0.5"><input type="radio" name="rating" id="mature" value="mature" /><label for="mature" class="pl-2 text-white text-opacity-60">Mature (2,832)</label></span>
+                    <span class="block py-0.5"><input type="radio" name="rating" id="not-rated" value="not-rated" /><label for="not-rated" class="pl-2 text-white text-opacity-60">Not Rated (1,816)</label></span>
+                </details>
+                <details class="py-0.5">
+                    <summary class="text-white text-opacity-60">warnings</summary>
+                    <span class="block py-0.5"><input type="checkbox" name="warnings" id="no-warnings-apply" value="no-warnings-apply" /><label for="no-warnings-apply" class="pl-2 text-white text-opacity-60">No Warnings Apply (17,118)</label></span>
+                    <span class="block py-0.5"><input type="checkbox" name="warnings" id="creator-chose-not-to-use-warnings" value="creator-chose-not-to-use-warnings" /><label for="creator-chose-not-to-use-warnings" class="pl-2 text-white text-opacity-60">Creator Chose Not To Use Warnings (9,072)</label></span>
+                </details>
+                <details class="py-0.5">
+                    <summary class="text-white text-opacity-60">fandoms</summary>
+                    <p>Epcot is a theme park at Walt Disney World Resort featuring exciting attractions, international pavilions, award-winning fireworks and seasonal special events.</p>
+                </details>
+                <details class="py-0.5">
+                    <summary class="text-white text-opacity-60">relationships</summary>
+                    <p>Epcot is a theme park at Walt Disney World Resort featuring exciting attractions, international pavilions, award-winning fireworks and seasonal special events.</p>
+                </details>
+                <details class="py-0.5">
+                    <summary class="text-white text-opacity-60">characters</summary>
+                    <p>Epcot is a theme park at Walt Disney World Resort featuring exciting attractions, international pavilions, award-winning fireworks and seasonal special events.</p>
+                </details>
+            </div>
+
+            <button class="block w-full py-2 my-1 rounded text-sm text-center text-white text-opacity-60 hover:text-opacity-90 bg-gray-800 hover:bg-indigo-600">sort and filter</button>
+        </form>
+    </aside>
+</div>

@@ -284,19 +284,19 @@ impl<'i> From<Vec<&(Cow<'i, str>, Cow<'i, str>)>> for Group<'i> {
     }
 }
 
-macro_rules! help {
+macro help {
     (bound; $db:ident, $iter:ident, $text:ident, $var:ident, $mem:ident) => {{
         BoundIter::$var(
             $iter.filter(move |(_, s)| any_by_text(&$db.index().$mem, &s.meta.$mem, &$text)),
         )
-    }};
+    }},
     (retain; $db:ident, $stories:ident, $include:ident, $text:ident, $mem:ident) => {{
         $stories.retain(|id| {
             let story = $db.index().stories.get(id).unwrap();
 
             !(&$include ^ any_by_text(&$db.index().$mem, &story.meta.$mem, &$text))
         });
-    }};
+    }},
 }
 
 #[derive(Debug, PartialEq)]

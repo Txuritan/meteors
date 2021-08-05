@@ -1,10 +1,6 @@
 use {
     crate::prelude::*,
-    flate2::{read::GzDecoder, write::GzEncoder},
-    std::{
-        fs::{self, DirEntry},
-        io::{Read, Write},
-    },
+    std::fs::{self, DirEntry},
 };
 
 pub struct FileIter(fs::ReadDir);
@@ -37,53 +33,6 @@ impl Iterator for FileIter {
             }
         } else {
             None
-        }
-    }
-}
-
-pub enum Reader<IO>
-where
-    IO: Read,
-{
-    Encoded(GzDecoder<IO>),
-    Raw(IO),
-}
-
-impl<IO> Read for Reader<IO>
-where
-    IO: Read,
-{
-    fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        match self {
-            Reader::Encoded(io) => io.read(buf),
-            Reader::Raw(io) => io.read(buf),
-        }
-    }
-}
-
-pub enum Writer<IO>
-where
-    IO: Write,
-{
-    Encoded(GzEncoder<IO>),
-    Raw(IO),
-}
-
-impl<IO> Write for Writer<IO>
-where
-    IO: Write,
-{
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        match self {
-            Writer::Encoded(io) => io.write(buf),
-            Writer::Raw(io) => io.write(buf),
-        }
-    }
-
-    fn flush(&mut self) -> std::io::Result<()> {
-        match self {
-            Writer::Encoded(io) => io.flush(),
-            Writer::Raw(io) => io.flush(),
         }
     }
 }
