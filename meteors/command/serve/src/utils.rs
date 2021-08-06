@@ -44,14 +44,7 @@ pub mod http {
 
         let temp_file_path = temp_path.join(&url);
 
-        let shell = if cfg!(target_os = "windows") {
-            "cmd"
-        } else {
-            "sh"
-        };
-
-        let output = Command::new(shell)
-            .args(&["/C", "curl"])
+        let output = common::utils::command("curl")
             .arg("-L")
             .arg("-o")
             .arg(&temp_file_path)

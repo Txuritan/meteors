@@ -10,8 +10,7 @@ use {
         prelude::*,
     },
     query::Document,
-    std::{convert::TryFrom, io::Cursor, ops::Range},
-    zip::ZipArchive,
+    std::{convert::TryFrom, io::Cursor, ops::Range, path::Path},
 };
 
 #[derive(Debug, PartialEq)]
@@ -47,7 +46,7 @@ pub struct ParsedChapter {
 }
 
 pub fn parse_epub(
-    mut archive: ZipArchive<Cursor<Vec<u8>>>,
+    path: &Path,
 ) -> Result<(ParsedInfo, ParsedMeta, ParsedChapters)> {
     todo!()
 }

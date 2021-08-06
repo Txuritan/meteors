@@ -42,10 +42,8 @@ pub fn assert_byte<R: std::io::Read>(reader: &mut R, expected: u8) -> Result<(),
     let got = read_u8(reader)?;
 
     if got != expected {
-        return Err(Error::InvalidByte { expected, got })
+        return Err(Error::InvalidByte { expected, got });
     }
-
-    debug_assert_eq!(expected, got);
 
     Ok(())
 }

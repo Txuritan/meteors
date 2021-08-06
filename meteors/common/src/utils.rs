@@ -1,7 +1,28 @@
 use {
     crate::prelude::*,
-    std::fs::{self, DirEntry},
+    std::{
+        fs::{self, DirEntry},
+        process::Command,
+    },
 };
+
+pub fn command(arg: &str) -> Command {
+    let shell = if cfg!(target_os = "windows") {
+        "cmd"
+    } else {
+        "sh"
+    };
+
+    let mut cmd = Command::new(shell);
+
+    if cfg!(target_os = "windows") {
+        cmd.args(&["/C", arg]);
+    } else {
+        cmd.args(&[arg]);
+    }
+
+    cmd
+}
 
 pub struct FileIter(fs::ReadDir);
 

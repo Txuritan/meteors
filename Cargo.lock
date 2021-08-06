@@ -329,10 +329,8 @@ dependencies = [
 name = "meteors-format-ao3"
 version = "0.1.0"
 dependencies = [
- "flate2",
  "meteors-common",
  "query",
- "zip",
 ]
 
 [[package]]

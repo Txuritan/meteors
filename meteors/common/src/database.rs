@@ -36,6 +36,9 @@ impl Database {
         let index_path = cur.join("meteors.aloe.dfl");
         let temp_path = cur.join("temp");
 
+        fs::create_dir_all(&data_path)?;
+        fs::create_dir_all(&temp_path)?;
+
         let database = if index_path.exists() {
             debug!("found existing");
 
@@ -44,8 +47,8 @@ impl Database {
             let bytes = miniz_oxide::inflate::decompress_to_vec(&content)
                 .map_err(|err| anyhow::anyhow!("unable to decompress index: {:?}", err))?;
 
-            let inner = Meteors::deserialize(&mut std::io::Cursor::new(bytes))
-                .context("unable to deserialize index")?;
+            let inner =
+                Meteors::deserialize(&mut &bytes[..]).context("unable to deserialize index")?;
 
             Self {
                 inner,

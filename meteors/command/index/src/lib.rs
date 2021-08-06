@@ -11,10 +11,8 @@ use {
         ffi::OsStr,
         fs::{self, DirEntry},
         hash::Hasher as _,
-        io::{Cursor, Read as _},
         path::Path,
     },
-    zip::{result::ZipError, ZipArchive},
 };
 
 // open index
@@ -74,11 +72,6 @@ pub fn run(_args: common::Args) -> Result<()> {
     Ok(())
 }
 
-enum FileKindReader {
-    Epub(ZipArchive<Cursor<Vec<u8>>>),
-    Html(String),
-}
-
 fn handle_entry(db: &mut Database, known_ids: &mut Vec<String>, entry: DirEntry) -> Result<()> {
     let path = entry.path();
     let ext = path.extension().and_then(OsStr::to_str);
@@ -88,30 +81,86 @@ fn handle_entry(db: &mut Database, known_ids: &mut Vec<String>, entry: DirEntry)
         .and_then(OsStr::to_str)
         .ok_or_else(|| anyhow!("File `{}` does not have a file name", path.display()))?;
 
-    let pair = match ext {
+    let file_kind = match ext {
         Some("epub") => Some(FileKind::Epub),
         Some("html") => Some(FileKind::Html),
         _ => None,
     };
 
-    if let Some(kind) = pair {
-        let data = handle_file(db, known_ids, &path, name)
+    if let Some(kind) = file_kind {
+        let details = handle_file(db, known_ids, &path, name)
             .with_context(|| format!("While reading file {}", name))?;
 
-        if let Some((id, hash, bytes)) = data {
-            let (site, reader) = detect_site(kind, bytes)?;
-
-            let parsed = match reader {
-                FileKindReader::Epub(archive) => match site {
-                    Site::ArchiveOfOurOwn => format_ao3::parse_epub(archive),
-                    Site::Unknown => todo!(),
-                },
-                FileKindReader::Html(text) => match site {
-                    Site::ArchiveOfOurOwn => format_ao3::parse_html(&text),
-                    Site::Unknown => todo!(),
-                },
+        if let Some((id, hash)) = details {
+            struct Detector {
+                content: &'static str,
+                html: &'static str,
             }
-            .with_context(|| name.to_owned())?;
+
+            static DETECTOR_AO3: Detector = Detector {
+                content: "<dc:publisher>Archive of Our Own</dc:publisher>",
+                html: r#"Posted originally on the <a href="http://archiveofourown.org/">Archive of Our Own</a>"#,
+            };
+
+            let temp_file_path = db.temp_path.join(&name.trim_end_matches(".epub"));
+
+            let site = match kind {
+                FileKind::Epub => {
+                    let output = common::utils::command("unzip")
+                        .arg(&path)
+                        .arg("-d")
+                        .arg(&temp_file_path)
+                        .output()?;
+
+                    match output.status.code() {
+                        Some(0) | Some(1) => {
+                            let content_opf = temp_file_path.join("content.opf");
+                            let text = fs::read_to_string(&content_opf)?;
+
+                            if text.contains(DETECTOR_AO3.content) {
+                                Site::ArchiveOfOurOwn
+                            } else {
+                                Site::Unknown
+                            }
+                        }
+                        Some(code) => {
+                            anyhow::bail!("unable to decompress epub, unzip status code: {}", code);
+                        }
+                        None => {
+                            anyhow::bail!("unable to decompress epub, no status code");
+                        }
+                    }
+                }
+                FileKind::Html => {
+                    let text = fs::read_to_string(&path)?;
+
+                    if text.contains(DETECTOR_AO3.html) {
+                        Site::ArchiveOfOurOwn
+                    } else {
+                        Site::Unknown
+                    }
+                }
+            };
+
+            let parsed = match site {
+                Site::ArchiveOfOurOwn => match kind {
+                    FileKind::Epub => {
+                        let parsed = format_ao3::parse_epub(&temp_file_path);
+
+                        fs::remove_dir_all(&temp_file_path)?;
+
+                        parsed?
+                    },
+                    FileKind::Html => {
+                        let text = fs::read_to_string(&path)?;
+
+                        format_ao3::parse_html(&text)?
+                    },
+                },
+                Site::Unknown => {
+                    return Ok(());
+                },
+            };
 
             add_to_index(db, name, hash, id, site, parsed);
         }
@@ -120,59 +169,12 @@ fn handle_entry(db: &mut Database, known_ids: &mut Vec<String>, entry: DirEntry)
     Ok(())
 }
 
-fn detect_site(kind: FileKind, bytes: Vec<u8>) -> Result<(Site, FileKindReader)> {
-    struct Detector {
-        content: &'static str,
-        html: &'static str,
-    }
-
-    static DETECTOR_AO3: Detector = Detector {
-        content: "<dc:publisher>Archive of Our Own</dc:publisher>",
-        html: "Posted originally on the <a href=\"http://archiveofourown.org/\">Archive of Our Own</a>",
-    };
-
-    match kind {
-        FileKind::Epub => {
-            let mut archive = ZipArchive::new(Cursor::new(bytes))?;
-
-            let site = match archive.by_name("content.opf") {
-                Ok(mut file) => {
-                    let mut text = String::with_capacity(file.size() as usize);
-
-                    let _ = file.read_to_string(&mut text)?;
-
-                    if text.contains(DETECTOR_AO3.content) {
-                        Site::ArchiveOfOurOwn
-                    } else {
-                        Site::Unknown
-                    }
-                }
-                Err(ZipError::FileNotFound) => Site::Unknown,
-                Err(err) => return Err(err.into()),
-            };
-
-            Ok((site, FileKindReader::Epub(archive)))
-        }
-        FileKind::Html => {
-            let text = String::from_utf8(bytes)?;
-
-            let site = if text.contains(DETECTOR_AO3.html) {
-                Site::ArchiveOfOurOwn
-            } else {
-                Site::Unknown
-            };
-
-            Ok((site, FileKindReader::Html(text)))
-        }
-    }
-}
-
 fn handle_file<P>(
     db: &mut Database,
     known_ids: &mut Vec<String>,
     path: P,
     name: &str,
-) -> Result<Option<(String, u64, Vec<u8>)>>
+) -> Result<Option<(String, u64)>>
 where
     P: AsRef<Path>,
 {
@@ -204,7 +206,7 @@ where
             // either way the index entry needed to be updated
             debug!("  found updated story: {}", name.bright_green(),);
 
-            Ok(Some((id.clone(), hash, bytes)))
+            Ok(Some((id.clone(), hash)))
         }
     } else {
         debug!("  found new story: {}", name.bright_green(),);
@@ -213,7 +215,7 @@ where
 
         known_ids.push(id.clone());
 
-        Ok(Some((id, hash, bytes)))
+        Ok(Some((id, hash)))
     }
 }
 
