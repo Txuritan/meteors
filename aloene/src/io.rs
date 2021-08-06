@@ -1,9 +1,12 @@
 //! Interior IO util, use at own risk.
 
-use std::io::{Error, ErrorKind, Read, Result, Write};
+use {
+    crate::Error,
+    std::io::{Read, Write},
+};
 
 macro impl_fn($size:ident, $read:ident, $write:ident) {
-    pub fn $read<R: std::io::Read>(reader: &mut R) -> std::io::Result<$size> {
+    pub fn $read<R: std::io::Read>(reader: &mut R) -> Result<$size, Error> {
         let mut buff: [u8; std::mem::size_of::<$size>()] = [0; std::mem::size_of::<$size>()];
 
         reader.read_exact(&mut buff)?;
@@ -11,7 +14,7 @@ macro impl_fn($size:ident, $read:ident, $write:ident) {
         Ok($size::from_le_bytes(buff))
     }
 
-    pub fn $write<W: std::io::Write>(writer: &mut W, num: $size) -> std::io::Result<()> {
+    pub fn $write<W: std::io::Write>(writer: &mut W, num: $size) -> Result<(), Error> {
         let bytes: [u8; std::mem::size_of::<$size>()] = num.to_le_bytes();
 
         writer.write_all(bytes.as_ref())?;
@@ -35,7 +38,19 @@ self::impl_fn!(u32, read_u32, write_u32);
 self::impl_fn!(u64, read_u64, write_u64);
 self::impl_fn!(usize, read_usize, write_usize);
 
-pub fn read_length<R: Read>(reader: &mut R) -> Result<usize> {
+pub fn assert_byte<R: std::io::Read>(reader: &mut R, expected: u8) -> Result<(), Error> {
+    let got = read_u8(reader)?;
+
+    if got != expected {
+        return Err(Error::InvalidByte { expected, got })
+    }
+
+    debug_assert_eq!(expected, got);
+
+    Ok(())
+}
+
+pub fn read_length<R: Read>(reader: &mut R) -> Result<usize, Error> {
     let mut number: u64 = 0;
     let mut count = 0;
 
@@ -52,7 +67,7 @@ pub fn read_length<R: Read>(reader: &mut R) -> Result<usize> {
     }
 }
 
-pub fn write_length<W: Write>(writer: &mut W, mut length: usize) -> Result<()> {
+pub fn write_length<W: Write>(writer: &mut W, mut length: usize) -> Result<(), Error> {
     loop {
         let write = (length & 0x7F) as u8;
 
@@ -68,7 +83,7 @@ pub fn write_length<W: Write>(writer: &mut W, mut length: usize) -> Result<()> {
     }
 }
 
-pub fn read_string<R: Read>(reader: &mut R) -> Result<String> {
+pub fn read_string<R: Read>(reader: &mut R) -> Result<String, Error> {
     let length = read_length(reader)?;
 
     let mut buffer = Vec::with_capacity(length);
@@ -77,10 +92,10 @@ pub fn read_string<R: Read>(reader: &mut R) -> Result<String> {
         buffer.push(read_u8(reader)?);
     }
 
-    String::from_utf8(buffer).map_err(|_| Error::from(ErrorKind::InvalidData))
+    Ok(String::from_utf8(buffer)?)
 }
 
-pub fn write_string<W: Write>(writer: &mut W, text: &str) -> Result<()> {
+pub fn write_string<W: Write>(writer: &mut W, text: &str) -> Result<(), Error> {
     let bytes = text.as_bytes();
 
     write_length(writer, bytes.len())?;
@@ -91,19 +106,19 @@ pub fn write_string<W: Write>(writer: &mut W, text: &str) -> Result<()> {
 
 pub mod structure {
     use {
-        crate::{bytes::*, io},
-        std::io::{Read, Result, Write},
+        crate::{bytes::*, io, Error},
+        std::io::{Read, Write},
     };
 
     macro impl_fn {
         (read, $typ:ident, $read:ident, $value:expr) => {
-            pub fn $read<R: Read>(reader: &mut R) -> Result<$typ> {
-                crate::assert_byte!(reader, Value::STRING);
+            pub fn $read<R: Read>(reader: &mut R) -> Result<$typ, Error> {
+                io::assert_byte(reader, Value::STRING)?;
 
                 let _field = io::read_string(reader)?;
 
-                crate::assert_byte!(reader, Container::VALUE);
-                crate::assert_byte!(reader, $value);
+                io::assert_byte(reader, Container::VALUE)?;
+                io::assert_byte(reader, $value)?;
 
                 let value = io::$read(reader)?;
 
@@ -113,7 +128,7 @@ pub mod structure {
         ([$typ:ident, &$typ_ref:ident], $read:ident, $write:ident, $value:expr) => {
             self::impl_fn!(read, $typ, $read, $value);
 
-            pub fn $write<W: Write>(writer: &mut W, key: &str, value: &$typ_ref) -> Result<()> {
+            pub fn $write<W: Write>(writer: &mut W, key: &str, value: &$typ_ref) -> Result<(), Error> {
                 io::write_u8(writer, Value::STRING)?;
 
                 io::write_string(writer, key)?;
@@ -129,7 +144,7 @@ pub mod structure {
         ($typ:ident, $read:ident, $write:ident, $value:expr) => {
             self::impl_fn!(read, $typ, $read, $value);
 
-            pub fn $write<W: Write>(writer: &mut W, key: &str, value: $typ) -> Result<()> {
+            pub fn $write<W: Write>(writer: &mut W, key: &str, value: $typ) -> Result<(), Error> {
                 io::write_u8(writer, Value::STRING)?;
 
                 io::write_string(writer, key)?;

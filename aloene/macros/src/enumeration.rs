@@ -1,23 +1,30 @@
 pub fn derive(enum_name: syn::Ident, data_enum: syn::DataEnum) -> proc_macro2::TokenStream {
     let fn_variant_names = enum_variant_name(&enum_name, &data_enum);
 
+    let variants = data_enum
+        .variants
+        .iter()
+        .map(|variant| variant.ident.to_string());
+
     let de_match = data_enum.variants.iter().map(de_variant);
     let se_match = data_enum.variants.iter().map(se_variant);
 
     quote::quote! {
         impl ::aloene::Aloene for #enum_name {
-            fn deserialize<R: ::std::io::Read>(reader: &mut R) -> ::std::io::Result<Self> {
-                ::aloene::assert_byte!(reader, ::aloene::bytes::Container::VARIANT);
+            fn deserialize<R: ::std::io::Read>(reader: &mut R) -> ::std::result::Result<Self, ::aloene::Error> {
+                ::aloene::io::assert_byte(reader, ::aloene::bytes::Container::VARIANT)?;
 
-                ::aloene::assert_byte!(reader, ::aloene::bytes::Value::STRING);
+                ::aloene::io::assert_byte(reader, ::aloene::bytes::Value::STRING)?;
 
-                match ::aloene::io::read_string(reader)?.as_str() {
+                let variant = ::aloene::io::read_string(reader)?;
+
+                match variant.as_str() {
                     #( #de_match )*
-                    _ => Err(::std::io::Error::from(::std::io::ErrorKind::InvalidData)),
+                    _ => Err(::aloene::Error::UnknownVariant { expected: &[ #( #variants ),* ], got: variant }),
                 }
             }
 
-            fn serialize<W: ::std::io::Write>(&self, writer: &mut W) -> ::std::io::Result<()> {
+            fn serialize<W: ::std::io::Write>(&self, writer: &mut W) -> ::std::result::Result<(), ::aloene::Error> {
                 #fn_variant_names
 
                 ::aloene::io::write_u8(writer, ::aloene::bytes::Container::VARIANT)?;
@@ -46,7 +53,7 @@ fn de_variant(variant: &syn::Variant) -> proc_macro2::TokenStream {
             // let fields = named.named.iter().map(super::structure::de_field);
 
             // quote::quote! {
-            //     ::aloene::assert_byte!(reader, ::aloene::bytes::Container::STRUCT);
+            //     ::aloene::io::assert_byte(reader, ::aloene::bytes::Container::STRUCT)?;
 
             //     #( #fields )*
 
@@ -64,7 +71,7 @@ fn de_variant(variant: &syn::Variant) -> proc_macro2::TokenStream {
             // });
 
             // quote::quote! {
-            //     ::aloene::assert_byte!(reader, ::aloene::bytes::Container::ARRAY);
+            //     ::aloene::io::assert_byte(reader, ::aloene::bytes::Container::ARRAY)?;
 
             //     #( #fields )*
             // }
@@ -76,7 +83,7 @@ fn de_variant(variant: &syn::Variant) -> proc_macro2::TokenStream {
         }
         syn::Fields::Unit => {
             quote::quote! {
-                ::aloene::assert_byte!(reader, ::aloene::bytes::Container::UNIT);
+                ::aloene::io::assert_byte(reader, ::aloene::bytes::Container::UNIT)?;
 
                 Ok(Self::#variant_ident)
             }

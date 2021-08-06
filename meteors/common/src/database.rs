@@ -39,18 +39,13 @@ impl Database {
         let database = if index_path.exists() {
             debug!("found existing");
 
-            // let mut decoder = GzDecoder::new(File::open(&index_path)?);
-
-            // let mut bytes = Vec::new();
-
-            // decoder.read_to_end(&mut bytes)?;
-
             let content = fs::read(&index_path)?;
 
             let bytes = miniz_oxide::inflate::decompress_to_vec(&content)
-                .map_err(|err| anyhow::anyhow!("{:?}", err))?;
+                .map_err(|err| anyhow::anyhow!("unable to decompress index: {:?}", err))?;
 
-            let inner = Meteors::deserialize(&mut std::io::Cursor::new(bytes))?;
+            let inner = Meteors::deserialize(&mut std::io::Cursor::new(bytes))
+                .context("unable to deserialize index")?;
 
             Self {
                 inner,
@@ -227,13 +222,7 @@ impl Database {
 
         let mut buf = Vec::new();
 
-        Meteors::serialize(&self.inner, &mut buf)?;
-
-        // let mut encoder = GzEncoder::new(File::create(&self.index_path)?, Compression::best());
-
-        // io::copy(&mut &buf[..], &mut encoder)?;
-
-        // encoder.flush()?;
+        Meteors::serialize(&self.inner, &mut buf).context("unable to serialize index")?;
 
         let compressed = miniz_oxide::deflate::compress_to_vec(&buf, 10);
 

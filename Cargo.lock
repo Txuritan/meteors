@@ -145,13 +145,12 @@ dependencies = [
 [[package]]
 name = "enrgy"
 version = "0.2.2"
-source = "git+https://github.com/Txuritan/enrgy#ad3fd394d3f31d39bafe800adf22d3e9028583c2"
+source = "git+https://github.com/Txuritan/enrgy#6702016d2afbc1d49d101635070b66de57d44137"
 dependencies = [
  "ctrlc",
  "form_urlencoded",
  "log",
  "miniz_oxide",
- "path-tree",
  "percent-encoding",
 ]
 
@@ -421,12 +420,6 @@ name = "owo-colors"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2fe43bf372b08cc9ccee5144715db59c79ab00168bbe4cf0d274dc0d5f64d7f"
-
-[[package]]
-name = "path-tree"
-version = "0.1.12"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "284ddd88011a675276be272a00d0d5277ac7859e55bd454d58398aac1e01b8dc"
 
 [[package]]
 name = "percent-encoding"

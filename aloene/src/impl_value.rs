@@ -1,11 +1,11 @@
 use {
-    crate::{bytes::*, io, Aloene},
-    std::io::{Error, ErrorKind, Read, Result, Write},
+    crate::{bytes::*, io, Aloene, Result},
+    std::io::{Read, Write},
 };
 
 impl Aloene for bool {
     fn deserialize<R: Read>(reader: &mut R) -> Result<Self> {
-        crate::assert_byte!(reader, Value::BOOL);
+        io::assert_byte(reader, Value::BOOL)?;
 
         let byte = io::read_u8(reader)?;
 
@@ -23,27 +23,15 @@ impl Aloene for bool {
 
 impl Aloene for String {
     fn deserialize<R: Read>(reader: &mut R) -> Result<Self> {
-        crate::assert_byte!(reader, Value::STRING);
+        io::assert_byte(reader, Value::STRING)?;
 
-        let length = io::read_length(reader)?;
-
-        let mut buffer = Vec::with_capacity(length);
-
-        for _ in 0..length {
-            buffer.push(io::read_u8(reader)?);
-        }
-
-        String::from_utf8(buffer).map_err(|_| Error::from(ErrorKind::InvalidData))
+        io::read_string(reader)
     }
 
     fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
         io::write_u8(writer, Value::STRING)?;
 
-        let bytes = self.as_bytes();
-
-        io::write_length(writer, bytes.len())?;
-
-        writer.write_all(bytes)?;
+        io::write_string(writer, self)?;
 
         Ok(())
     }

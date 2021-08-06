@@ -1,8 +1,8 @@
 use {
-    crate::{bytes::*, io, Aloene},
+    crate::{bytes::*, io, Aloene, Error, Result},
     std::{
         collections::BTreeMap,
-        io::{Error, ErrorKind, Read, Result, Write},
+        io::{Read, Write},
         ops::Range,
     },
 };
@@ -10,7 +10,7 @@ use {
 // TODO: maybe write a container before v is serialized
 impl<K: Ord + Aloene, V: Aloene> Aloene for BTreeMap<K, V> {
     fn deserialize<R: Read>(reader: &mut R) -> Result<Self> {
-        crate::assert_byte!(reader, Container::MAP);
+        io::assert_byte(reader, Container::MAP)?;
 
         let len = io::read_length(reader)?;
 
@@ -42,7 +42,7 @@ impl<K: Ord + Aloene, V: Aloene> Aloene for BTreeMap<K, V> {
 
 impl<T: Aloene> Aloene for Vec<T> {
     fn deserialize<R: Read>(reader: &mut R) -> Result<Self> {
-        crate::assert_byte!(reader, Container::ARRAY);
+        io::assert_byte(reader, Container::ARRAY)?;
 
         let len = io::read_length(reader)?;
 
@@ -73,7 +73,10 @@ impl<T: Aloene> Aloene for Option<T> {
         match io::read_u8(reader)? {
             Container::NONE => Ok(None),
             Container::SOME => Ok(Some(T::deserialize(reader)?)),
-            _ => Err(Error::from(ErrorKind::InvalidData)),
+            byte => Err(Error::InvalidContainers {
+                expected: (Container::NONE, Container::SOME),
+                got: byte,
+            }),
         }
     }
 
@@ -93,7 +96,7 @@ impl<T: Aloene> Aloene for Option<T> {
 
 impl Aloene for Range<usize> {
     fn deserialize<R: Read>(reader: &mut R) -> Result<Self> {
-        crate::assert_byte!(reader, Container::STRUCT);
+        io::assert_byte(reader, Container::STRUCT)?;
 
         let start = io::structure::read_usize(reader)?;
         let end = io::structure::read_usize(reader)?;

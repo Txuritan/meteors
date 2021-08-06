@@ -2,6 +2,5 @@
 /target
 
 /data
-/meteors.aloe.gz
-/meteors.pb.gz
+/meteors.aloe.dfl
 *.exe

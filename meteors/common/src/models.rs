@@ -32,11 +32,11 @@ impl<T> std::ops::DerefMut for Existing<T> {
 
 // Aloene isn't actually used here, its just to satisfy trait bounds
 impl<T> Aloene for Existing<T> {
-    fn deserialize<R: std::io::Read>(_reader: &mut R) -> std::io::Result<Self> {
+    fn deserialize<R: std::io::Read>(_reader: &mut R) -> Result<Self, aloene::Error> {
         panic!("this should never be called")
     }
 
-    fn serialize<W: std::io::Write>(&self, _writer: &mut W) -> std::io::Result<()> {
+    fn serialize<W: std::io::Write>(&self, _writer: &mut W) -> Result<(), aloene::Error> {
         panic!("this should never be called")
     }
 }

@@ -1,22 +1,21 @@
 #![feature(decl_macro)]
 
-pub macro assert_byte($reader: ident, $byte: expr) {
-    debug_assert_eq!($byte, $crate::io::read_u8($reader)?);
-}
-
 pub mod bytes;
-
 pub mod io;
+
+mod error;
 
 mod impl_element;
 mod impl_value;
 
-pub use aloene_macros::Aloene;
+pub use {self::error::Error, aloene_macros::Aloene};
+
+pub(crate) type Result<T> = std::result::Result<T, Error>;
 
 pub trait Aloene: Sized {
-    fn deserialize<R: std::io::Read>(reader: &mut R) -> std::io::Result<Self>;
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> Result<Self>;
 
-    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> std::io::Result<()>;
+    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> Result<()>;
 }
 
 pub mod test_utils {

@@ -21,15 +21,15 @@ pub fn derive(
 
     quote::quote! {
         impl #lt_token #params #gt_token ::aloene::Aloene for #struct_name #lt_token #params #gt_token #where_clause {
-            fn deserialize<R: ::std::io::Read>(reader: &mut R) -> ::std::io::Result<Self> {
-                ::aloene::assert_byte!(reader, ::aloene::bytes::Container::STRUCT);
+            fn deserialize<R: ::std::io::Read>(reader: &mut R) -> ::std::result::Result<Self, ::aloene::Error> {
+                ::aloene::io::assert_byte(reader, ::aloene::bytes::Container::STRUCT)?;
 
                 #( #de_iter )*
 
                 Ok(Self { #( #field_iter , )* })
             }
 
-            fn serialize<W: ::std::io::Write>(&self, writer: &mut W) -> ::std::io::Result<()> {
+            fn serialize<W: ::std::io::Write>(&self, writer: &mut W) -> ::std::result::Result<(), ::aloene::Error> {
                 ::aloene::io::write_u8(writer, ::aloene::bytes::Container::STRUCT)?;
 
                 #( #se_iter )*
@@ -92,11 +92,11 @@ pub fn de_field(field: &syn::Field) -> proc_macro2::TokenStream {
         }
     } else {
         quote::quote! {
-            ::aloene::assert_byte!(reader, ::aloene::bytes::Value::STRING);
+            ::aloene::io::assert_byte(reader, ::aloene::bytes::Value::STRING)?;
 
             let _field = ::aloene::io::read_string(reader)?;
 
-            ::aloene::assert_byte!(reader, ::aloene::bytes::Container::VALUE);
+            ::aloene::io::assert_byte(reader, ::aloene::bytes::Container::VALUE)?;
             let #field_name = ::aloene::Aloene::deserialize(reader)?;
         }
     }
