@@ -12,7 +12,6 @@ workspace = "../.."
 aloene = { path = "../../aloene" }
 
 anyhow = "1.0"
-either = "1.6"
 fastrand = "1.4"
 fs2 = "0.4"
 getrandom = "0.2"
