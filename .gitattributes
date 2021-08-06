@@ -1,2 +1,2 @@
-meteors-format-ao3/src/tests/*.epub linguist-vendored
-meteors-format-ao3/src/tests/*.html linguist-vendored
+meteors/format/ao3/src/tests/*.epub linguist-vendored
+meteors/format/ao3/src/tests/*.html linguist-vendored
