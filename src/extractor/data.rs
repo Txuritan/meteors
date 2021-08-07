@@ -5,14 +5,14 @@ use {
 
 pub struct Data<T>
 where
-    T: Send + Sync,
+    T: ?Sized,
 {
     pub(crate) data: Arc<T>,
 }
 
 impl<T> Deref for Data<T>
 where
-    T: Send + Sync,
+    T: ?Sized,
 {
     type Target = T;
 
@@ -23,7 +23,7 @@ where
 
 impl<T> Extractor for Data<T>
 where
-    T: Send + Sync + 'static,
+    T: ?Sized + 'static,
 {
     type Error = Error;
 
