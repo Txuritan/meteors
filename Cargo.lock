@@ -139,7 +139,7 @@ dependencies = [
 [[package]]
 name = "enrgy"
 version = "0.2.2"
-source = "git+https://github.com/Txuritan/enrgy#6702016d2afbc1d49d101635070b66de57d44137"
+source = "git+https://github.com/Txuritan/enrgy#bb98d922fa574d4dbe07290b5a88a6738ca4ab91"
 dependencies = [
  "ctrlc",
  "form_urlencoded",

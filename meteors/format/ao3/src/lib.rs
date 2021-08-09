@@ -45,9 +45,7 @@ pub struct ParsedChapter {
     pub end_notes: Option<Range<usize>>,
 }
 
-pub fn parse_epub(
-    path: &Path,
-) -> Result<(ParsedInfo, ParsedMeta, ParsedChapters)> {
+pub fn parse_epub(path: &Path) -> Result<(ParsedInfo, ParsedMeta, ParsedChapters)> {
     todo!()
 }
 

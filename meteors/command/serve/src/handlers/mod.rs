@@ -1,5 +1,6 @@
 mod download;
 mod index;
+mod opds;
 mod search;
 mod story;
 

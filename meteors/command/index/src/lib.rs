@@ -150,16 +150,16 @@ fn handle_entry(db: &mut Database, known_ids: &mut Vec<String>, entry: DirEntry)
                         fs::remove_dir_all(&temp_file_path)?;
 
                         parsed?
-                    },
+                    }
                     FileKind::Html => {
                         let text = fs::read_to_string(&path)?;
 
                         format_ao3::parse_html(&text)?
-                    },
+                    }
                 },
                 Site::Unknown => {
                     return Ok(());
-                },
+                }
             };
 
             add_to_index(db, name, hash, id, site, parsed);
