@@ -15,9 +15,7 @@ impl<Request, Response, Error> BoxedService<Request, Response, Error> {
     where
         T: Service<Request, Response = Response, Error = Error> + Send + Sync + 'static,
     {
-        Self {
-            inner: box inner,
-        }
+        Self { inner: box inner }
     }
 }
 

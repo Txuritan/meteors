@@ -1,6 +1,10 @@
 use {
     crate::{error::InternalError, extractor::Extractor, Error, HttpRequest},
-    std::ops::{Deref, DerefMut},
+    std::{
+        fmt::Debug,
+        ops::{Deref, DerefMut},
+        str::FromStr,
+    },
 };
 
 pub struct Param<const KEY: &'static str> {
@@ -61,5 +65,60 @@ impl<const KEY: &'static str> Extractor for OptionalParam<KEY> {
         Ok(Self {
             value: req.params.get(KEY).cloned(),
         })
+    }
+}
+
+pub struct ParseParam<const KEY: &'static str, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: Debug,
+{
+    value: T,
+}
+
+impl<const KEY: &'static str, T> const Deref for ParseParam<KEY, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: Debug,
+{
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl<const KEY: &'static str, T> const DerefMut for ParseParam<KEY, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: Debug,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
+    }
+}
+
+impl<const KEY: &'static str, T> Extractor for ParseParam<KEY, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: Debug,
+{
+    type Error = Error;
+
+    fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
+        if let Some(value) = req.params.get(KEY).map(|s| T::from_str(s)) {
+            match value {
+                Ok(value) => Ok(Self { value }),
+                Err(err) => Err(InternalError::BadRequest(format!(
+                    "HTTP request URL parameter with key `{}` could not be parsed: {:?}",
+                    KEY, err
+                ))),
+            }
+        } else {
+            Err(InternalError::BadRequest(format!(
+                "HTTP request URL parameters did not contain a value with the key `{}`",
+                KEY
+            )))
+        }
     }
 }

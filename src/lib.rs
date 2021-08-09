@@ -1,12 +1,14 @@
 #![allow(incomplete_features)]
-
-#![warn(
-    nonstandard_style,
-    rust_2018_idioms,
-    future_incompatible
+#![warn(nonstandard_style, rust_2018_idioms, future_incompatible)]
+#![feature(
+    box_syntax,
+    const_btree_new,
+    const_fn_trait_bound,
+    const_generics,
+    const_trait_impl,
+    const_mut_refs,
+    option_result_unwrap_unchecked
 )]
-
-#![feature(box_syntax, const_btree_new, const_fn_trait_bound, const_generics, const_trait_impl, const_mut_refs, option_result_unwrap_unchecked)]
 
 mod extractor;
 

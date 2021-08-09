@@ -26,9 +26,7 @@ where
     T: ResponseError + 'static,
 {
     fn from(err: T) -> Self {
-        Self {
-            inner: box err,
-        }
+        Self { inner: box err }
     }
 }
 

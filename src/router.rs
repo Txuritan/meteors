@@ -215,7 +215,7 @@ impl<T> Node<T> {
 
                     Some(self)
                 }
-            },
+            }
             NodeKind::CatchAll => {
                 params.push(p);
 
