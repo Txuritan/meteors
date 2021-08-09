@@ -37,8 +37,8 @@ pub use crate::{
 pub mod web {
     pub use crate::{
         extractor::{
-            Body, Data, Header, OptionalHeader, OptionalParam, OptionalQuery, Param, Query,
-            RawQuery,
+            Body, Data, Header, OptionalHeader, OptionalParam, OptionalQuery, Param, ParseHeader,
+            ParseParam, ParseQuery, Query, RawQuery,
         },
         route::{connect, delete, get, head, options, patch, post, put, to, trace},
     };

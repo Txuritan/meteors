@@ -7,9 +7,9 @@ pub mod query;
 pub use self::{
     body::Body,
     data::Data,
-    header::{Header, OptionalHeader},
-    param::{OptionalParam, Param},
-    query::{OptionalQuery, Query, RawQuery},
+    header::{Header, OptionalHeader, ParseHeader},
+    param::{OptionalParam, Param, ParseParam},
+    query::{OptionalQuery, ParseQuery, Query, RawQuery},
 };
 
 use crate::{Error, HttpRequest};

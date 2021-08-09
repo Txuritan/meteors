@@ -1,7 +1,29 @@
 use {
     crate::{error::InternalError, extractor::Extractor, Error, HttpRequest},
-    std::ops::{Deref, DerefMut},
+    std::{
+        fmt::Debug,
+        ops::{Deref, DerefMut},
+        str::FromStr,
+    },
 };
+
+fn get_value<'req>(req: &'req HttpRequest, key: &'static str) -> Option<&'req String> {
+    req.header_data
+        .headers
+        .iter()
+        .find(|(k, _)| k.eq_ignore_ascii_case(key))
+        .map(|(_, value)| value)
+}
+
+fn get_value_err<'req>(req: &'req HttpRequest, key: &'static str) -> Result<&'req String, Error> {
+    match get_value(req, key) {
+        Some(v) => Ok(v),
+        None => Err(InternalError::BadRequest(format!(
+            "HTTP request did not contain the header `{}`",
+            key
+        ))),
+    }
+}
 
 pub struct Header<const KEY: &'static str> {
     value: String,
@@ -25,19 +47,11 @@ impl<const KEY: &'static str> Extractor for Header<KEY> {
     type Error = Error;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
-        if let Some(value) = req
-            .header_data
-            .headers
-            .iter()
-            .find(|(key, _)| key.eq_ignore_ascii_case(KEY))
-            .map(|(_, value)| value.to_string())
-        {
-            Ok(Self { value })
-        } else {
-            Err(InternalError::BadRequest(format!(
-                "HTTP request did not contain the header `{}`",
-                KEY
-            )))
+        match get_value_err(&*req, KEY) {
+            Ok(value) => Ok(Self {
+                value: value.clone(),
+            }),
+            Err(err) => Err(err),
         }
     }
 }
@@ -65,12 +79,58 @@ impl<const KEY: &'static str> Extractor for OptionalHeader<KEY> {
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         Ok(Self {
-            value: req
-                .header_data
-                .headers
-                .iter()
-                .find(|(key, _)| key.eq_ignore_ascii_case(KEY))
-                .map(|(_, value)| value.to_string()),
+            value: get_value(&*req, KEY).cloned(),
         })
+    }
+}
+
+pub struct ParseHeader<const KEY: &'static str, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: Debug,
+{
+    value: T,
+}
+
+impl<const KEY: &'static str, T> const Deref for ParseHeader<KEY, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: Debug,
+{
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+impl<const KEY: &'static str, T> const DerefMut for ParseHeader<KEY, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: Debug,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
+    }
+}
+
+impl<const KEY: &'static str, T> Extractor for ParseHeader<KEY, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: Debug,
+{
+    type Error = Error;
+
+    fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
+        match get_value_err(&*req, KEY) {
+            Ok(value) => match T::from_str(value) {
+                Ok(value) => Ok(Self { value }),
+                Err(err) => Err(InternalError::BadRequest(format!(
+                    "HTTP request header with key `{}` could not be parsed: {:?}",
+                    KEY, err
+                ))),
+            },
+            Err(err) => Err(err),
+        }
     }
 }
