@@ -1,6 +1,6 @@
 use {
     crate::{
-        app::BuiltApp, http, server::pool::ThreadPool, service::Service, App, Error, HttpRequest,
+        app::BuiltApp, http::{self, headers::{CONTENT_LENGTH, ACCEPT_ENCODING}}, server::pool::ThreadPool, service::Service, App, Error, HttpRequest,
     },
     std::{
         collections::BTreeMap,
@@ -231,7 +231,7 @@ impl HttpServer<SocketAddr> {
 
         let header_data = HttpRequest::parse_header(header_str.as_ref())?;
 
-        let (header_data, body) = if let Some(header) = header_data.headers.get("Content-Length") {
+        let (header_data, body) = if let Some(header) = header_data.headers.get(&CONTENT_LENGTH) {
             let amount_of_bytes = header.trim().parse::<u64>()?;
 
             let mut body = Vec::with_capacity(amount_of_bytes as usize);
@@ -261,7 +261,7 @@ impl HttpServer<SocketAddr> {
             })
             .unwrap_or_else(|| (app.default_service.clone(), BTreeMap::new()));
 
-        let compress = if let Some(header) = header_data.headers.get("Accept-Encoding") {
+        let compress = if let Some(header) = header_data.headers.get(&ACCEPT_ENCODING) {
             header.contains("deflate")
         } else {
             false

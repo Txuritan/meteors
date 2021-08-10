@@ -1,5 +1,5 @@
 use {
-    crate::http::{Body, StatusCode, Version},
+    crate::http::{Body, StatusCode, Version, headers::{HeaderName, CONTENT_ENCODING}},
     std::{
         collections::BTreeMap,
         io::{self, Write as _},
@@ -10,7 +10,7 @@ use {
 pub struct HttpResponse {
     version: Version,
     status: StatusCode,
-    headers: BTreeMap<&'static str, String>,
+    headers: BTreeMap<HeaderName, String>,
     body: Body,
 }
 
@@ -65,13 +65,13 @@ impl HttpResponse {
         }
 
         fn write_bytes(
-            headers: &BTreeMap<&str, String>,
+            headers: &BTreeMap<HeaderName, String>,
             bytes: &[u8],
             compress: bool,
             stream: &mut TcpStream,
         ) -> io::Result<()> {
             let pre_compressed = {
-                match headers.get("Content-Encoding") {
+                match headers.get(&CONTENT_ENCODING) {
                     Some(header) => matches!(header.as_str(), "deflate" | "gzip"),
                     None => false,
                 }
@@ -126,7 +126,7 @@ impl HttpResponseBuilder {
         self
     }
 
-    pub fn header<V>(mut self, key: &'static str, value: V) -> Self
+    pub fn header<V>(mut self, key: HeaderName, value: V) -> Self
     where
         V: ToString,
     {

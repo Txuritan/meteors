@@ -1,4 +1,5 @@
 mod body;
+pub mod headers;
 mod method;
 pub(crate) mod request;
 pub(crate) mod response;

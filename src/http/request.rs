@@ -1,9 +1,9 @@
 use {
     crate::{
         extensions::Extensions,
-        http::{self, Method, Version},
+        http::{self, Method, Version, headers::HeaderName},
     },
-    std::{collections::BTreeMap, str::FromStr as _, sync::Arc},
+    std::{collections::BTreeMap, borrow::Cow, str::FromStr as _, sync::Arc},
 };
 
 pub(crate) struct HeaderData {
@@ -13,7 +13,7 @@ pub(crate) struct HeaderData {
     pub(crate) query_params: BTreeMap<String, String>,
     #[allow(dead_code)] // just store it as we needed to parse it anyway
     pub(crate) version: Version,
-    pub(crate) headers: BTreeMap<String, String>,
+    pub(crate) headers: BTreeMap<HeaderName, String>,
 }
 
 pub struct HttpRequest {
@@ -86,7 +86,7 @@ impl HttpRequest {
         };
 
         let headers = {
-            let mut headers = BTreeMap::new();
+            let mut headers: BTreeMap<HeaderName, String> = BTreeMap::new();
 
             for header in &mut lines {
                 if header.is_empty() {
@@ -96,7 +96,7 @@ impl HttpRequest {
                 if let Some(idx) = header.find(':') {
                     let (key, value) = header.split_at(idx);
 
-                    headers.insert(key.trim().to_string(), value.trim().to_string());
+                    headers.insert(HeaderName(Cow::Owned(key.trim().to_string())), value.trim().to_string());
                 }
             }
 

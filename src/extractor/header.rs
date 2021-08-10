@@ -11,7 +11,7 @@ fn get_value<'req>(req: &'req HttpRequest, key: &'static str) -> Option<&'req St
     req.header_data
         .headers
         .iter()
-        .find(|(k, _)| k.eq_ignore_ascii_case(key))
+        .find(|(k, _)| k.0.eq_ignore_ascii_case(key))
         .map(|(_, value)| value)
 }
 

@@ -1,5 +1,5 @@
 use {
-    crate::{http::StatusCode, HttpResponse},
+    crate::{http::{StatusCode, headers::CONTENT_TYPE}, HttpResponse},
     std::{error, fmt},
 };
 
@@ -37,7 +37,7 @@ pub trait ResponseError: fmt::Debug + fmt::Display {
 
     fn error_response(&self) -> HttpResponse {
         HttpResponse::new(self.status_code())
-            .header("Content-Type", "text/plain; charset=utf-8")
+            .header(CONTENT_TYPE, "text/plain; charset=utf-8")
             .body({
                 use std::io::Write as _;
 
