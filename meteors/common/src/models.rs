@@ -41,7 +41,7 @@ impl<T> Aloene for Existing<T> {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Aloene)]
 pub enum FileKind {
     Epub,
     Html,
@@ -122,10 +122,6 @@ pub struct CoreStory<Meta>
 where
     Meta: Aloene,
 {
-    pub file_name: String,
-    pub file_hash: u64,
-    pub created: String,
-    pub updated: String,
     pub info: StoryInfo,
     pub meta: Meta,
     pub site: Site,
@@ -135,8 +131,13 @@ where
 /// Nested message and enum types in `Story`.
 #[derive(Debug, Clone, PartialEq, Aloene)]
 pub struct StoryInfo {
+    pub file_name: String,
+    pub file_hash: u64,
+    pub kind: FileKind,
     pub title: String,
     pub summary: String,
+    pub created: String,
+    pub updated: String,
 }
 
 pub type StoryMeta = StoryMetaCore<String>;

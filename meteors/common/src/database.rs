@@ -125,7 +125,7 @@ impl Database {
                 .index()
                 .stories
                 .iter()
-                .find(|(_, story)| story.file_name == name)
+                .find(|(_, story)| story.info.file_name == name)
                 .map(|(id, _)| id.clone());
 
             if let Some(id) = id {

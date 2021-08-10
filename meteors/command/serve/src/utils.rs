@@ -129,15 +129,16 @@ pub fn get_story_full(db: &Database, id: &str) -> Result<ResolvedStory> {
     let meta = &story_ref.meta;
 
     let story = ResolvedStory {
-        file_name: story_ref.file_name.clone(),
-        file_hash: story_ref.file_hash,
-        created: story_ref.created.clone(),
-        updated: story_ref.updated.clone(),
         chapters: story_ref.chapters.clone(),
         site: story_ref.site,
         info: StoryInfo {
+            file_name: story_ref.info.file_name.clone(),
+            file_hash: story_ref.info.file_hash,
+            kind: story_ref.info.kind,
             title: info.title.clone(),
             summary: info.summary.clone(),
+            created: story_ref.info.created.clone(),
+            updated: story_ref.info.updated.clone(),
         },
         meta: ResolvedStoryMeta {
             rating: meta.rating,

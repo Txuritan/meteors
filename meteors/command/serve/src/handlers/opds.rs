@@ -1,3 +1,5 @@
+use common::models::FileKind;
+
 use {
     crate::{templates::pages::opds::OpdsFeed, utils},
     common::{database::Database, models::Existing, prelude::*},
@@ -33,15 +35,16 @@ pub fn catalog(
             .inner
             .index
             .stories
-            .keys()
-            .map(|id| utils::get_story_full(&db, id).map(|story| Existing::new(id.clone(), story)))
+            .iter()
+            .filter(|(_, s)| s.info.kind == FileKind::Epub)
+            .map(|(id, _)| utils::get_story_full(&db, id).map(|story| Existing::new(id.clone(), story)))
             .collect::<Result<Vec<_>>>()?;
 
-        stories.sort_by(|a, b| a.updated.cmp(&b.updated));
+        stories.sort_by(|a, b| a.info.updated.cmp(&b.info.updated));
 
         let updated = stories
             .first()
-            .map(|story| story.updated.clone())
+            .map(|story| story.info.updated.clone())
             .unwrap_or_else(|| humantime::format_rfc3339(std::time::SystemTime::now()).to_string());
 
         Ok(HttpResponse::ok()

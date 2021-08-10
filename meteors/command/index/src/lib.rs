@@ -52,7 +52,7 @@ pub fn run(_args: common::Args) -> Result<()> {
             Some(story) => {
                 debug!(
                     "  removing missing story: {}",
-                    story.file_name.bright_green(),
+                    story.info.file_name.bright_green(),
                 );
             }
             None => {
@@ -163,7 +163,7 @@ fn handle_entry(db: &mut Database, known_ids: &mut Vec<String>, entry: DirEntry)
                 }
             };
 
-            add_to_index(db, name, hash, updating, id, site, parsed);
+            add_to_index(db, name, hash, updating, id, kind, site, parsed);
         }
     }
 
@@ -191,12 +191,12 @@ where
 
     let index = db.index();
 
-    let possible = index.stories.iter().find(|(_, v)| v.file_name == name);
+    let possible = index.stories.iter().find(|(_, v)| v.info.file_name == name);
 
     if let Some((id, story)) = possible {
         known_ids.push(id.clone());
 
-        if story.file_hash == hash {
+        if story.info.file_hash == hash {
             // file hash is the same
             // it doesn't need to be updated
             Ok(None)
@@ -220,19 +220,21 @@ where
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn add_to_index(
     db: &mut Database,
     name: &str,
     hash: u64,
     updating: bool,
     id: String,
+    kind: FileKind,
     site: Site,
     parsed: (ParsedInfo, ParsedMeta, ParsedChapters),
 ) {
     let (info, meta, chapters) = parsed;
 
     let created = if updating {
-        if let Some(created) = db.index().stories.get(&id).map(|story| &story.created) {
+        if let Some(created) = db.index().stories.get(&id).map(|story| &story.info.created) {
             created.clone()
         } else {
             humantime::format_rfc3339(SystemTime::now()).to_string()
@@ -244,10 +246,6 @@ fn add_to_index(
     let index = db.index_mut();
 
     let story = Story {
-        file_name: name.to_string(),
-        file_hash: hash,
-        created,
-        updated: humantime::format_rfc3339(SystemTime::now()).to_string(),
         site,
         chapters: chapters
             .chapters
@@ -261,8 +259,13 @@ fn add_to_index(
             })
             .collect(),
         info: StoryInfo {
+            file_name: name.to_string(),
+            file_hash: hash,
             title: info.title.to_string(),
+            kind,
             summary: info.summary.to_string(),
+            created,
+            updated: humantime::format_rfc3339(SystemTime::now()).to_string(),
         },
         meta: StoryMeta {
             rating: meta.rating,

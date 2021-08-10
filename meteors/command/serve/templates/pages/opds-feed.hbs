@@ -18,7 +18,7 @@
     {{ #for story in self.stories.iter() }}
     <entry>
         <id>tag:example.com,2021-08-10:{{ story.id }}</id>
-        <updated>{{ story.updated }}</updated>
+        <updated>{{ story.info.updated }}</updated>
         <title>{{ story.info.title }}</title>
         {{ #for author in story.meta.authors.iter() }}
         <author>
@@ -27,6 +27,7 @@
         </author>
         {{ /for }}
         <summary>{{ story.info.summary }}</summary>
+        <link rel="http://opds-spec.org/acquisition" href="/opds-content/{{ story.id }}" type="application/epub+zip"/>
     </entry>
     {{ /for }}
 </feed>
