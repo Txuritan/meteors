@@ -124,6 +124,8 @@ where
 {
     pub file_name: String,
     pub file_hash: u64,
+    pub created: String,
+    pub updated: String,
     pub info: StoryInfo,
     pub meta: Meta,
     pub site: Site,

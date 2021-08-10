@@ -1,4 +1,5 @@
 mod download;
+mod entity;
 mod index;
 mod opds;
 mod search;
@@ -6,7 +7,9 @@ mod story;
 
 pub use crate::handlers::{
     download::{download_get, download_post},
+    entity::{author, character, general, origin, pairing, warning},
     index::{favicon, index},
+    opds::catalog,
     search::{search, search_v2},
     story::story,
 };

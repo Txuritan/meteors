@@ -35,9 +35,8 @@ pub fn search(
         let mut stories = ids
             .iter()
             .map(|id| {
-                utils::get_story_full(&*db, id).and_then(|(id, story)| {
-                    partials::StoryPartial::new(id, story, Some(query.clone()))
-                })
+                utils::get_story_full(&*db, id)
+                    .and_then(|story| partials::StoryPartial::new(id, story, Some(query.clone())))
             })
             .collect::<Result<Vec<_>>>()?;
 
@@ -73,9 +72,8 @@ pub fn search_v2(db: web::Data<Database>, query: web::RawQuery) -> HttpResponse 
         let mut stories = stories
             .into_iter()
             .map(|(id, _)| {
-                utils::get_story_full(&*db, id).and_then(|(id, story)| {
-                    partials::StoryPartial::new(id, story, Some(query.clone()))
-                })
+                utils::get_story_full(&*db, id)
+                    .and_then(|story| partials::StoryPartial::new(id, story, Some(query.clone())))
             })
             .collect::<Result<Vec<_>>>()?;
 

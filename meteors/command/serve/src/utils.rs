@@ -26,7 +26,7 @@ where
 pub mod http {
     use {
         common::prelude::*,
-        std::{fs, path::Path, process::Command},
+        std::{fs, path::Path},
     };
 
     pub fn get<P>(temp_path: P, url: &str) -> Result<Vec<u8>>
@@ -77,14 +77,14 @@ static STORY_CACHE: Lazy<RwLock<BTreeMap<String, ResolvedStory>>> =
     Lazy::new(|| RwLock::new(BTreeMap::new()));
 
 #[allow(clippy::ptr_arg)]
-pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, ResolvedStory)> {
+pub fn get_story_full(db: &Database, id: &str) -> Result<ResolvedStory> {
     if let Some(story) = STORY_CACHE
         .read()
         .map_err(|err| anyhow!("unable to get lock on cache: {}", err))?
         .get(id)
         .cloned()
     {
-        return Ok((id, story));
+        return Ok(story);
     }
 
     enum Kind {
@@ -131,6 +131,8 @@ pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, 
     let story = ResolvedStory {
         file_name: story_ref.file_name.clone(),
         file_hash: story_ref.file_hash,
+        created: story_ref.created.clone(),
+        updated: story_ref.updated.clone(),
         chapters: story_ref.chapters.clone(),
         site: story_ref.site,
         info: StoryInfo {
@@ -152,9 +154,9 @@ pub fn get_story_full<'i>(db: &Database, id: &'i String) -> Result<(&'i String, 
     STORY_CACHE
         .write()
         .map_err(|err| anyhow!("unable to get lock on cache: {}", err))?
-        .insert(id.clone(), story.clone());
+        .insert(id.to_string(), story.clone());
 
-    Ok((id, story))
+    Ok(story)
 }
 
 pub struct Readable<N>

@@ -12,6 +12,7 @@ use {
         fs::{self, DirEntry},
         hash::Hasher as _,
         path::Path,
+        time::SystemTime,
     },
 };
 
@@ -91,7 +92,7 @@ fn handle_entry(db: &mut Database, known_ids: &mut Vec<String>, entry: DirEntry)
         let details = handle_file(db, known_ids, &path, name)
             .with_context(|| format!("While reading file {}", name))?;
 
-        if let Some((id, hash)) = details {
+        if let Some((id, hash, updating)) = details {
             struct Detector {
                 content: &'static str,
                 html: &'static str,
@@ -162,7 +163,7 @@ fn handle_entry(db: &mut Database, known_ids: &mut Vec<String>, entry: DirEntry)
                 }
             };
 
-            add_to_index(db, name, hash, id, site, parsed);
+            add_to_index(db, name, hash, updating, id, site, parsed);
         }
     }
 
@@ -174,7 +175,7 @@ fn handle_file<P>(
     known_ids: &mut Vec<String>,
     path: P,
     name: &str,
-) -> Result<Option<(String, u64)>>
+) -> Result<Option<(String, u64, bool)>>
 where
     P: AsRef<Path>,
 {
@@ -206,7 +207,7 @@ where
             // either way the index entry needed to be updated
             debug!("  found updated story: {}", name.bright_green(),);
 
-            Ok(Some((id.clone(), hash)))
+            Ok(Some((id.clone(), hash, true)))
         }
     } else {
         debug!("  found new story: {}", name.bright_green(),);
@@ -215,7 +216,7 @@ where
 
         known_ids.push(id.clone());
 
-        Ok(Some((id, hash)))
+        Ok(Some((id, hash, false)))
     }
 }
 
@@ -223,17 +224,30 @@ fn add_to_index(
     db: &mut Database,
     name: &str,
     hash: u64,
+    updating: bool,
     id: String,
     site: Site,
     parsed: (ParsedInfo, ParsedMeta, ParsedChapters),
 ) {
     let (info, meta, chapters) = parsed;
 
+    let created = if updating {
+        if let Some(created) = db.index().stories.get(&id).map(|story| &story.created) {
+            created.clone()
+        } else {
+            humantime::format_rfc3339(SystemTime::now()).to_string()
+        }
+    } else {
+        humantime::format_rfc3339(SystemTime::now()).to_string()
+    };
+
     let index = db.index_mut();
 
     let story = Story {
         file_name: name.to_string(),
         file_hash: hash,
+        created,
+        updated: humantime::format_rfc3339(SystemTime::now()).to_string(),
         site,
         chapters: chapters
             .chapters

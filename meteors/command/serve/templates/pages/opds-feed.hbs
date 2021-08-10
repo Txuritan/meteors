@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/terms/" xmlns:fh="http://purl.org/syndication/history/1.0" xmlns:opds="http://opds-spec.org/2010/catalog">
+    <fh:complete />
+    <id>tag:example.com,2021-08-10:000000</id>
+
+    <link rel="self" href="/opds/root.xml" type="application/atom+xml;profile=opds-catalog;kind=acquisition"/>
+    <link rel="start" href="/opds/root.xml" type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
+    <link rel="up" href="/opds/root.xml" type="application/atom+xml;profile=opds-catalog;kind=navigation"/>
+
+    <title>Varela Catalog</title>
+    <updated>{{ self.updated }}</updated>
+
+    <author>
+        <name>Txuritan</name>
+        <url>https://github.com/Txuritan</url>
+    </author>
+
+    {{ #for story in self.stories.iter() }}
+    <entry>
+        <id>tag:example.com,2021-08-10:{{ story.id }}</id>
+        <updated>{{ story.updated }}</updated>
+        <title>{{ story.info.title }}</title>
+        {{ #for author in story.meta.authors.iter() }}
+        <author>
+            <name>{{ author.text }}</name>
+            <uri>/author/{{ author.id }}</uri>
+        </author>
+        {{ /for }}
+        <summary>{{ story.info.summary }}</summary>
+    </entry>
+    {{ /for }}
+</feed>

@@ -15,7 +15,7 @@ pub fn story(
     utils::wrap(|| {
         let index: usize = index.parse().map_err(anyhow::Error::from)?;
 
-        let (_, story) = utils::get_story_full(&*db, &id)?;
+        let story = utils::get_story_full(&*db, &id)?;
         let chapter = db.get_chapter_body(&id, index)?;
 
         let body = Layout::new(

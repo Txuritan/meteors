@@ -400,10 +400,10 @@ where
             }
         }
     } else {
-        let ids = ids.map(|(id, _)| id).collect::<Vec<_>>();
+        let mut ids = ids.map(|(id, _)| id);
 
         for id in database.index().stories.iter().map(|(id, _)| id) {
-            if !ids.contains(&id) {
+            if !ids.any(|i| i == id) {
                 stories.push(id.clone());
             }
         }
