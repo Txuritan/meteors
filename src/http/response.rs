@@ -60,12 +60,25 @@ impl HttpResponse {
             self.status.phrase()
         )?;
 
-        for (key, value) in self.headers {
+        for (key, value) in &self.headers {
             write!(stream, "{}: {}\r\n", key, value)?;
         }
 
-        fn write_bytes(bytes: &[u8], compress: bool, stream: &mut TcpStream) -> io::Result<()> {
-            if compress {
+        fn write_bytes(
+            headers: &BTreeMap<&str, String>,
+            bytes: &[u8],
+            compress: bool,
+            stream: &mut TcpStream,
+        ) -> io::Result<()> {
+            let pre_compressed = {
+                match headers.get("Content-Encoding") {
+                    Some(header) => matches!(header.as_str(), "deflate" | "gzip"),
+                    None => false,
+                }
+            };
+
+            if compress && !pre_compressed {
+
                 write!(stream, "Content-Encoding: deflate\r\n")?;
 
                 let compressed = miniz_oxide::deflate::compress_to_vec(bytes, 8);
@@ -91,10 +104,10 @@ impl HttpResponse {
                 write!(stream, "Content-Length: 0\r\n")?;
             }
             Body::Bytes(bytes) => {
-                write_bytes(bytes, compress, stream)?;
+                write_bytes(&self.headers, bytes, compress, stream)?;
             }
             Body::Vector(bytes) => {
-                write_bytes(bytes.as_slice(), compress, stream)?;
+                write_bytes(&self.headers, bytes.as_slice(), compress, stream)?;
             }
         }
 
