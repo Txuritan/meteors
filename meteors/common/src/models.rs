@@ -1,17 +1,60 @@
 use {
     aloene::Aloene,
-    std::{collections::BTreeMap, ops::Range},
+    std::{borrow::Cow, collections::HashMap, ops::Range},
 };
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Id(Cow<'static, str>);
+
+impl Id {
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+}
+
+impl From<String> for Id {
+    fn from(id: String) -> Self {
+        Id(Cow::Owned(id))
+    }
+}
+
+impl std::str::FromStr for Id {
+    type Err = <String as std::str::FromStr>::Err;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        <String as std::str::FromStr>::from_str(s).map(Id::from)
+    }
+}
+
+impl std::fmt::Display for Id {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+impl Aloene for Id {
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> Result<Self, aloene::Error> {
+        <String as Aloene>::deserialize(reader).map(Id::from)
+    }
+
+    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> Result<(), aloene::Error> {
+        <String as Aloene>::serialize(&(self.0.as_ref().to_string()), writer)
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Existing<T> {
-    pub id: String,
+    pub id: Id,
 
     inner: T,
 }
 
 impl<T> Existing<T> {
-    pub fn new(id: String, inner: T) -> Self {
+    pub fn new(id: Id, inner: T) -> Self {
         Self { id, inner }
     }
 }
@@ -104,14 +147,14 @@ impl Theme {
 
 #[derive(Debug, Clone, PartialEq, Aloene)]
 pub struct Index {
-    pub stories: BTreeMap<String, Story>,
-    pub categories: BTreeMap<String, Entity>,
-    pub authors: BTreeMap<String, Entity>,
-    pub origins: BTreeMap<String, Entity>,
-    pub warnings: BTreeMap<String, Entity>,
-    pub pairings: BTreeMap<String, Entity>,
-    pub characters: BTreeMap<String, Entity>,
-    pub generals: BTreeMap<String, Entity>,
+    pub stories: HashMap<Id, Story>,
+    pub categories: HashMap<Id, Entity>,
+    pub authors: HashMap<Id, Entity>,
+    pub origins: HashMap<Id, Entity>,
+    pub warnings: HashMap<Id, Entity>,
+    pub pairings: HashMap<Id, Entity>,
+    pub characters: HashMap<Id, Entity>,
+    pub generals: HashMap<Id, Entity>,
 }
 
 pub type Story = CoreStory<StoryMeta>;
@@ -140,7 +183,7 @@ pub struct StoryInfo {
     pub updated: String,
 }
 
-pub type StoryMeta = StoryMetaCore<String>;
+pub type StoryMeta = StoryMetaCore<Id>;
 pub type ResolvedStoryMeta = StoryMetaCore<Existing<Entity>>;
 
 #[derive(Debug, Clone, PartialEq, Aloene)]
@@ -217,4 +260,13 @@ pub struct Chapter {
     pub summary: Option<String>,
     pub start_notes: Option<Range<usize>>,
     pub end_notes: Option<Range<usize>>,
+}
+
+pub enum EntityKind {
+    Author,
+    Warning,
+    Origin,
+    Pairing,
+    Character,
+    General,
 }

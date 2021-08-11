@@ -1,6 +1,6 @@
 use {
     crate::{
-        models::{Entity, Index, Meteors, Settings, Theme, Version},
+        models::{Entity, EntityKind, Id, Index, Meteors, Settings, Theme, Version},
         prelude::*,
         utils::FileIter,
     },
@@ -8,7 +8,7 @@ use {
     fs2::FileExt as _,
     memmap2::Mmap,
     std::{
-        collections::BTreeMap,
+        collections::HashMap,
         env,
         ffi::OsStr,
         fs::{self, File},
@@ -19,13 +19,13 @@ use {
 
 #[derive(Debug)]
 pub struct Database {
-    pub inner: Meteors,
+    inner: Meteors,
 
     pub data_path: PathBuf,
     pub index_path: PathBuf,
     pub temp_path: PathBuf,
 
-    lock_maps: BTreeMap<String, MappedFile>,
+    lock_maps: HashMap<Id, MappedFile>,
 }
 
 impl Database {
@@ -57,7 +57,7 @@ impl Database {
                 index_path,
                 temp_path,
 
-                lock_maps: BTreeMap::new(),
+                lock_maps: HashMap::new(),
             }
         } else {
             debug!("not found, creating");
@@ -66,14 +66,14 @@ impl Database {
                 inner: Meteors {
                     version: Version::V1,
                     index: Index {
-                        stories: BTreeMap::new(),
-                        categories: BTreeMap::new(),
-                        authors: BTreeMap::new(),
-                        origins: BTreeMap::new(),
-                        warnings: BTreeMap::new(),
-                        pairings: BTreeMap::new(),
-                        characters: BTreeMap::new(),
-                        generals: BTreeMap::new(),
+                        stories: HashMap::new(),
+                        categories: HashMap::new(),
+                        authors: HashMap::new(),
+                        origins: HashMap::new(),
+                        warnings: HashMap::new(),
+                        pairings: HashMap::new(),
+                        characters: HashMap::new(),
+                        generals: HashMap::new(),
                     },
                     settings: Settings {
                         theme: Theme::Light,
@@ -86,7 +86,7 @@ impl Database {
                 index_path,
                 temp_path,
 
-                lock_maps: BTreeMap::new(),
+                lock_maps: HashMap::new(),
             }
         };
 
@@ -109,8 +109,76 @@ impl Database {
         &mut self.inner.settings
     }
 
+    pub fn get_entity_from_id(&self, id: &Id) -> Option<EntityKind> {
+        let index = self.index();
+
+        let trees = [
+            (&index.authors, EntityKind::Author),
+            (&index.characters, EntityKind::Character),
+            (&index.generals, EntityKind::General),
+            (&index.origins, EntityKind::Origin),
+            (&index.pairings, EntityKind::Pairing),
+            (&index.warnings, EntityKind::Warning),
+        ];
+
+        for (tree, kind) in trees {
+            if tree.contains_key(id) {
+                return Some(kind);
+            }
+        }
+
+        None
+    }
+
+    pub fn get_default<K>(map: &mut HashMap<Id, Entity>, value: String, key: K) -> Id
+    where
+        K: FnOnce(&HashMap<Id, Entity>) -> Id,
+    {
+        if let Some((key, _)) = map.iter().find(|(_, v)| v.text == value) {
+            key.clone()
+        } else {
+            let key = key(&*map);
+
+            map.insert(key.clone(), Entity { text: value });
+
+            key
+        }
+    }
+
+    pub fn get_chapter_body(&self, id: &Id, number: usize) -> Result<String> {
+        let story = self
+            .index()
+            .stories
+            .get(id)
+            .ok_or_else(|| anyhow!("unable to find story in index"))?;
+
+        if let Some(mapped) = self.lock_maps.get(id) {
+            let contents = mapped.map.as_ref();
+
+            let chapter = story.chapters.get(number - 1).ok_or_else(|| {
+                anyhow!(
+                    "chapter `{}` not found, chapters: {}",
+                    number,
+                    story.chapters.len()
+                )
+            })?;
+
+            let sliced = contents.get(chapter.content.clone()).ok_or_else(|| {
+                anyhow!(
+                    "chapter `{}` not found in chapter index for `{}`",
+                    number,
+                    id,
+                )
+            })?;
+
+            Ok(String::from_utf8(sliced.to_vec())?)
+        } else {
+            bail!("unable to find story in locked mapped index")
+        }
+    }
+
     pub fn lock_data(&mut self) -> Result<()> {
-        let mut lock_maps = BTreeMap::new();
+        let mut lock_maps = HashMap::new();
 
         for entry in FileIter::new(fs::read_dir(&self.data_path)?) {
             let entry = entry?;
@@ -155,7 +223,7 @@ impl Database {
     }
 
     pub fn unlock_data(&mut self) -> Result<()> {
-        let mut lock_maps = BTreeMap::new();
+        let mut lock_maps = HashMap::new();
 
         mem::swap(&mut self.lock_maps, &mut lock_maps);
 
@@ -171,53 +239,6 @@ impl Database {
         }
 
         Ok(())
-    }
-
-    pub fn get_default<K>(map: &mut BTreeMap<String, Entity>, value: String, key: K) -> String
-    where
-        K: FnOnce(&BTreeMap<String, Entity>) -> String,
-    {
-        if let Some((key, _)) = map.iter().find(|(_, v)| v.text == value) {
-            key.clone()
-        } else {
-            let key = key(&*map);
-
-            map.insert(key.clone(), Entity { text: value });
-
-            key
-        }
-    }
-
-    pub fn get_chapter_body(&self, id: &str, number: usize) -> Result<String> {
-        let story = self
-            .index()
-            .stories
-            .get(id)
-            .ok_or_else(|| anyhow!("unable to find story in index"))?;
-
-        if let Some(mapped) = self.lock_maps.get(id) {
-            let contents = mapped.map.as_ref();
-
-            let chapter = story.chapters.get(number - 1).ok_or_else(|| {
-                anyhow!(
-                    "chapter `{}` not found, chapters: {}",
-                    number,
-                    story.chapters.len()
-                )
-            })?;
-
-            let sliced = contents.get(chapter.content.clone()).ok_or_else(|| {
-                anyhow!(
-                    "chapter `{}` not found in chapter index for `{}`",
-                    number,
-                    id,
-                )
-            })?;
-
-            Ok(String::from_utf8(sliced.to_vec())?)
-        } else {
-            bail!("unable to find story in locked mapped index")
-        }
     }
 
     pub fn save(&self) -> Result<()> {

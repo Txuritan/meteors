@@ -89,12 +89,7 @@ pub fn run(mut args: common::Args) -> Result<()> {
             .service(web::get("/search2").to(handlers::search_v2))
             .service(web::get("/style.css").to(handlers::style))
             .service(web::get("/favicon.ico").to(handlers::favicon))
-            .service(web::get("/author/:id").to(handlers::author))
-            .service(web::get("/character/:id").to(handlers::character))
-            .service(web::get("/general/:id").to(handlers::general))
-            .service(web::get("/origin/:id").to(handlers::origin))
-            .service(web::get("/pairing/:id").to(handlers::pairing))
-            .service(web::get("/warning/:id").to(handlers::warning))
+            .service(web::get("/tag/:id").to(handlers::entity))
             .service(web::get("/opds/root.:ext").to(handlers::catalog))
             .default_service(web::to(|| -> enrgy::HttpResponse { crate::res!(404) }))
             .wrap(LoggerMiddleware),

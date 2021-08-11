@@ -1,18 +1,18 @@
 use {
     common::{
         database::Database,
-        models::{Entity, Index, Rating, Story},
+        models::{Entity, Id, Index, Rating, Story},
     },
     std::{
         borrow::{Borrow as _, Cow},
-        collections::{BTreeMap, HashMap},
+        collections::HashMap,
         hash::Hash,
     },
 };
 
 pub fn search_v2<'s>(
     query: &[(Cow<'s, str>, Cow<'s, str>)],
-    stories: &mut Vec<(&'s String, &'s Story)>,
+    stories: &mut Vec<(&'s Id, &'s Story)>,
 ) -> Stats<'s> {
     // modified version of [`Iterator::partition`] to remove [`Default`] bounds
     #[inline]
@@ -44,17 +44,22 @@ pub fn search_v2<'s>(
         (left, right)
     }
 
+    fn fn_map<'q, 'i>((key, value): &'i (Cow<'q, str>, Cow<'q, str>)) -> (Cow<'q, str>, Id) {
+        (key.clone(), Id::from(value.to_string()))
+    }
+
     #[inline]
-    fn fn_filter<'i>((key, _value): &'i &(Cow<'_, str>, Cow<'_, str>)) -> bool {
+    fn fn_filter((key, _value): &(Cow<'_, str>, Id)) -> bool {
         let include = Group::match_include(key.borrow());
         let exclude = Group::match_exclude(key.borrow());
 
         include | exclude
     }
 
-    let (include, exclude) = partition(query.iter().filter(fn_filter), |(key, _value)| {
-        Group::match_include(key.borrow())
-    });
+    let (include, exclude) = partition(
+        query.iter().map(fn_map).filter(fn_filter),
+        |(key, _value)| Group::match_include(key.borrow()),
+    );
 
     let include = Group::from(include);
     let exclude = Group::from(exclude);
@@ -67,12 +72,12 @@ pub fn search_v2<'s>(
 
 pub struct Stats<'m> {
     ratings: Vec<(Rating, usize)>,
-    warnings: Vec<(&'m String, usize)>,
-    categories: Vec<(&'m String, usize)>,
-    origins: Vec<(&'m String, usize)>,
-    pairings: Vec<(&'m String, usize)>,
-    characters: Vec<(&'m String, usize)>,
-    generals: Vec<(&'m String, usize)>,
+    warnings: Vec<(&'m Id, usize)>,
+    categories: Vec<(&'m Id, usize)>,
+    origins: Vec<(&'m Id, usize)>,
+    pairings: Vec<(&'m Id, usize)>,
+    characters: Vec<(&'m Id, usize)>,
+    generals: Vec<(&'m Id, usize)>,
 }
 
 pub struct StatKind {}
@@ -88,15 +93,15 @@ pub struct FilledStats<'m> {
 }
 
 impl<'m> Stats<'m> {
-    fn new(stories: &[(&'m String, &'m Story)]) -> Stats<'m> {
+    fn new(stories: &[(&'m Id, &'m Story)]) -> Stats<'m> {
         let mut ratings = HashMap::<Rating, usize>::new();
 
-        let mut warnings = HashMap::<&String, usize>::new();
-        let mut categories = HashMap::<&String, usize>::new();
-        let mut origins = HashMap::<&String, usize>::new();
-        let mut pairings = HashMap::<&String, usize>::new();
-        let mut characters = HashMap::<&String, usize>::new();
-        let mut generals = HashMap::<&String, usize>::new();
+        let mut warnings = HashMap::<&Id, usize>::new();
+        let mut categories = HashMap::<&Id, usize>::new();
+        let mut origins = HashMap::<&Id, usize>::new();
+        let mut pairings = HashMap::<&Id, usize>::new();
+        let mut characters = HashMap::<&Id, usize>::new();
+        let mut generals = HashMap::<&Id, usize>::new();
 
         fn inc<K>(map: &mut HashMap<K, usize>, entry: K)
         where
@@ -154,8 +159,8 @@ impl<'m> Stats<'m> {
 
     pub fn fill(self, index: &'m Index) -> Option<FilledStats<'m>> {
         fn fill<'m>(
-            list: Vec<(&'m String, usize)>,
-            tree: &'m BTreeMap<String, Entity>,
+            list: Vec<(&'m Id, usize)>,
+            tree: &'m HashMap<Id, Entity>,
         ) -> Option<Vec<(&'m Entity, usize)>> {
             list.into_iter()
                 .map(|(id, count)| tree.get(id).map(|entity| (entity, count)))
@@ -182,17 +187,17 @@ pub enum EntityKind {
 }
 
 #[derive(Default)]
-struct Group<'i> {
-    rating: Option<Vec<Cow<'i, str>>>,
-    warnings: Option<Vec<Cow<'i, str>>>,
-    categories: Option<Vec<Cow<'i, str>>>,
-    origins: Option<Vec<Cow<'i, str>>>,
-    characters: Option<Vec<Cow<'i, str>>>,
-    pairings: Option<Vec<Cow<'i, str>>>,
-    generals: Option<Vec<Cow<'i, str>>>,
+struct Group {
+    rating: Option<Vec<Id>>,
+    warnings: Option<Vec<Id>>,
+    categories: Option<Vec<Id>>,
+    origins: Option<Vec<Id>>,
+    characters: Option<Vec<Id>>,
+    pairings: Option<Vec<Id>>,
+    generals: Option<Vec<Id>>,
 }
 
-impl<'i> Group<'i> {
+impl<'i> Group {
     #[inline]
     fn match_include(text: &str) -> bool {
         matches!(text, "ir" | "iw" | "ict" | "io" | "ich" | "ip" | "ig")
@@ -203,7 +208,7 @@ impl<'i> Group<'i> {
         matches!(text, "er" | "ew" | "ect" | "eo" | "ech" | "ep" | "eg")
     }
 
-    fn filter<'s>(self, stories: &mut Vec<(&'s String, &'s Story)>, include: bool) {
+    fn filter<'s>(self, stories: &mut Vec<(&'s Id, &'s Story)>, include: bool) {
         let lists = vec![
             self.origins.map(|list| (EntityKind::Origin, list)),
             self.characters.map(|list| (EntityKind::Character, list)),
@@ -217,10 +222,10 @@ impl<'i> Group<'i> {
     }
 
     fn filter_retain<'s>(
-        stories: &mut Vec<(&'s String, &'s Story)>,
+        stories: &mut Vec<(&'s Id, &'s Story)>,
         kind: EntityKind,
         include: bool,
-        entities: Vec<Cow<'i, str>>,
+        entities: Vec<Id>,
     ) {
         match kind {
             EntityKind::Origin => {
@@ -255,8 +260,8 @@ impl<'i> Group<'i> {
     }
 }
 
-impl<'i> From<Vec<&(Cow<'i, str>, Cow<'i, str>)>> for Group<'i> {
-    fn from(list: Vec<&(Cow<'i, str>, Cow<'i, str>)>) -> Self {
+impl<'i> From<Vec<(Cow<'i, str>, Id)>> for Group {
+    fn from(list: Vec<(Cow<'i, str>, Id)>) -> Self {
         let mut group: Group = Group::default();
 
         for (key, value) in list {
@@ -272,7 +277,7 @@ impl<'i> From<Vec<&(Cow<'i, str>, Cow<'i, str>)>> for Group<'i> {
             };
 
             if let Some(list) = list {
-                list.get_or_insert_with(Vec::new).push(value.clone());
+                list.get_or_insert_with(Vec::new).push(value);
             }
         }
 
@@ -326,7 +331,7 @@ impl Bound {
     }
 }
 
-pub fn search(database: &Database, text: &str) -> Vec<String> {
+pub fn search(database: &Database, text: &str) -> Vec<Id> {
     let bounds = parse(text);
 
     let mut stories = Vec::new();
@@ -385,9 +390,9 @@ pub fn search(database: &Database, text: &str) -> Vec<String> {
     stories
 }
 
-fn first_push<'d, I>(include: bool, database: &Database, stories: &mut Vec<String>, ids: I)
+fn first_push<'d, I>(include: bool, database: &Database, stories: &mut Vec<Id>, ids: I)
 where
-    I: Iterator<Item = (&'d String, &'d Story)>,
+    I: Iterator<Item = (&'d Id, &'d Story)>,
 {
     if include {
         for id in ids.map(|(id, _)| id) {
@@ -406,7 +411,7 @@ where
     }
 }
 
-fn any_by_text(full: &BTreeMap<String, Entity>, refs: &[String], text: &str) -> bool {
+fn any_by_text(full: &HashMap<Id, Entity>, refs: &[Id], text: &str) -> bool {
     refs.iter().map(|id| full.get(id)).any(|a| match a {
         Some(entity) => entity.text.to_lowercase() == text.to_lowercase(),
         None => false,

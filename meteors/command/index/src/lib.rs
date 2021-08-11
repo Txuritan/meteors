@@ -1,13 +1,13 @@
 use {
     common::{
         database::Database,
-        models::{Chapter, Entity, FileKind, Site, Story, StoryInfo, StoryMeta},
+        models::{Chapter, Entity, FileKind, Id, Site, Story, StoryInfo, StoryMeta},
         prelude::*,
         utils::{self, FileIter},
     },
     format_ao3::{ParsedChapters, ParsedInfo, ParsedMeta},
     std::{
-        collections::BTreeMap,
+        collections::HashMap,
         ffi::OsStr,
         fs::{self, DirEntry},
         hash::Hasher as _,
@@ -73,7 +73,7 @@ pub fn run(_args: common::Args) -> Result<()> {
     Ok(())
 }
 
-fn handle_entry(db: &mut Database, known_ids: &mut Vec<String>, entry: DirEntry) -> Result<()> {
+fn handle_entry(db: &mut Database, known_ids: &mut Vec<Id>, entry: DirEntry) -> Result<()> {
     let path = entry.path();
     let ext = path.extension().and_then(OsStr::to_str);
 
@@ -172,10 +172,10 @@ fn handle_entry(db: &mut Database, known_ids: &mut Vec<String>, entry: DirEntry)
 
 fn handle_file<P>(
     db: &mut Database,
-    known_ids: &mut Vec<String>,
+    known_ids: &mut Vec<Id>,
     path: P,
     name: &str,
-) -> Result<Option<(String, u64, bool)>>
+) -> Result<Option<(Id, u64, bool)>>
 where
     P: AsRef<Path>,
 {
@@ -226,7 +226,7 @@ fn add_to_index(
     name: &str,
     hash: u64,
     updating: bool,
-    id: String,
+    id: Id,
     kind: FileKind,
     site: Site,
     parsed: (ParsedInfo, ParsedMeta, ParsedChapters),
@@ -282,13 +282,13 @@ fn add_to_index(
     index.stories.insert(id, story);
 }
 
-fn values_to_keys(vec: Vec<String>, map: &mut BTreeMap<String, Entity>) -> Vec<String> {
+fn values_to_keys(vec: Vec<String>, map: &mut HashMap<Id, Entity>) -> Vec<Id> {
     vec.into_iter()
         .map(|name| Database::get_default(map, name, new_id))
         .collect()
 }
 
-fn new_id<V>(map: &BTreeMap<String, V>) -> String {
+fn new_id<V>(map: &HashMap<Id, V>) -> Id {
     loop {
         let id = utils::new_id();
 

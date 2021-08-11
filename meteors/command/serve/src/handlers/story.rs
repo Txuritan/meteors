@@ -3,13 +3,13 @@ use {
         templates::{pages, partials, Layout, Width},
         utils,
     },
-    common::{database::Database, prelude::*},
+    common::{database::Database, models::Id, prelude::*},
     enrgy::{web, HttpResponse},
 };
 
 pub fn story(
     db: web::Data<Database>,
-    id: web::Param<"id">,
+    id: web::ParseParam<"id", Id>,
     index: web::Param<"chapter">,
 ) -> HttpResponse {
     utils::wrap(|| {

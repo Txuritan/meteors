@@ -7,7 +7,7 @@ mod story;
 
 pub use crate::handlers::{
     download::{download_get, download_post},
-    entity::{author, character, general, origin, pairing, warning},
+    entity::entity,
     index::{favicon, index},
     opds::catalog,
     search::{search, search_v2},

@@ -3,58 +3,35 @@ use {
         templates::{pages, partials, Layout, Width},
         utils,
     },
-    common::{database::Database, prelude::*},
+    common::{
+        database::Database,
+        models::{EntityKind, Id},
+        prelude::*,
+    },
     enrgy::{web, HttpResponse},
 };
 
-enum EntityKind {
-    Author,
-    Warning,
-    Origin,
-    Pairing,
-    Character,
-    General,
-}
-
-macro impl_entity_handlers($( $name:ident => $kind:expr , )*) {
-    $(
-        pub fn $name(db: web::Data<Database>, id: web::Param<"id">) -> HttpResponse {
-            inner(db, $kind, id)
-        }
-    )*
-}
-
-impl_entity_handlers! {
-    author => EntityKind::Author,
-    warning => EntityKind::Warning,
-    origin => EntityKind::Origin,
-    pairing => EntityKind::Pairing,
-    character => EntityKind::Character,
-    general => EntityKind::General,
-}
-
-fn inner(db: web::Data<Database>, kind: EntityKind, id: web::Param<"id">) -> HttpResponse {
+pub fn entity(db: web::Data<Database>, id: web::ParseParam<"id", Id>) -> HttpResponse {
     utils::wrap(|| {
-        let entity = {
-            let entities = match kind {
-                EntityKind::Author => &db.inner.index.authors,
-                EntityKind::Warning => &db.inner.index.warnings,
-                EntityKind::Origin => &db.inner.index.origins,
-                EntityKind::Pairing => &db.inner.index.pairings,
-                EntityKind::Character => &db.inner.index.characters,
-                EntityKind::General => &db.inner.index.generals,
+        if let Some(kind) = db.get_entity_from_id(&*id) {
+            let entity = {
+                let entities = match kind {
+                    EntityKind::Author => &db.index().authors,
+                    EntityKind::Warning => &db.index().warnings,
+                    EntityKind::Origin => &db.index().origins,
+                    EntityKind::Pairing => &db.index().pairings,
+                    EntityKind::Character => &db.index().characters,
+                    EntityKind::General => &db.index().generals,
+                };
+
+                unsafe { entities.get(&*id).unwrap_unchecked() }
             };
 
-            entities.get(&*id)
-        };
-
-        if let Some(entity) = entity {
             let mut stories = db
-                .inner
-                .index
+                .index()
                 .stories
                 .iter()
-                .filter(|(id, story)| {
+                .filter(|(_, story)| {
                     let entities = match kind {
                         EntityKind::Author => &story.meta.authors,
                         EntityKind::Warning => &story.meta.warnings,
@@ -64,7 +41,7 @@ fn inner(db: web::Data<Database>, kind: EntityKind, id: web::Param<"id">) -> Htt
                         EntityKind::General => &story.meta.generals,
                     };
 
-                    entities.contains(id)
+                    entities.contains(&*id)
                 })
                 .map(|(id, _)| {
                     utils::get_story_full(&db, id)
@@ -84,6 +61,8 @@ fn inner(db: web::Data<Database>, kind: EntityKind, id: web::Param<"id">) -> Htt
 
             Ok(crate::res!(200; body))
         } else {
+            debug!("entity with id `{}` does not exist", (&*id).bright_purple());
+
             Ok(crate::res!(404))
         }
     })

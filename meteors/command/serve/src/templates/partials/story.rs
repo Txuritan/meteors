@@ -4,7 +4,7 @@ use {
         TagKind,
     },
     common::{
-        models::{Entity, Existing, Rating, ResolvedStory, ResolvedStoryMeta, StoryInfo},
+        models::{Entity, Existing, Id, Rating, ResolvedStory, ResolvedStoryMeta, StoryInfo},
         prelude::*,
     },
     std::borrow::Cow,
@@ -13,7 +13,7 @@ use {
 #[derive(opal::Template)]
 #[template(path = "partials/story.hbs")]
 pub struct StoryPartial<'s> {
-    pub id: &'s str,
+    pub id: &'s Id,
 
     pub len: usize,
     pub info: StoryInfo,
@@ -29,11 +29,7 @@ pub struct StoryPartial<'s> {
 }
 
 impl<'s> StoryPartial<'s> {
-    pub fn new(
-        id: &'s str,
-        story: ResolvedStory,
-        query: Option<Cow<'static, str>>,
-    ) -> Result<Self> {
+    pub fn new(id: &'s Id, story: ResolvedStory, query: Option<Cow<'static, str>>) -> Result<Self> {
         let ResolvedStoryMeta {
             rating,
             authors,

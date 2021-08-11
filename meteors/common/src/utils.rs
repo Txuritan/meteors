@@ -1,5 +1,5 @@
 use {
-    crate::prelude::*,
+    crate::{models::Id, prelude::*},
     std::{
         fs::{self, DirEntry},
         process::Command,
@@ -64,7 +64,7 @@ const LEN: usize = 54;
 const MASK: usize = LEN.next_power_of_two() - 1;
 const STEP: usize = 8 * SIZE / 5;
 
-pub fn new_id() -> String {
+pub fn new_id() -> Id {
     static ALPHABET: [char; LEN] = [
         '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j',
         'k', 'm', 'n', 'p', 'q', 'r', 's', 't', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F',
@@ -95,7 +95,7 @@ pub fn new_id() -> String {
                 id.push(ALPHABET[byte]);
 
                 if id.len() == SIZE {
-                    return id;
+                    return Id::from(id);
                 }
             }
         }

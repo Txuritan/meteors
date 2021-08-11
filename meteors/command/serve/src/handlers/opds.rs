@@ -32,12 +32,13 @@ pub fn catalog(
 ) -> HttpResponse {
     utils::wrap(|| {
         let mut stories = db
-            .inner
-            .index
+            .index()
             .stories
             .iter()
             .filter(|(_, s)| s.info.kind == FileKind::Epub)
-            .map(|(id, _)| utils::get_story_full(&db, id).map(|story| Existing::new(id.clone(), story)))
+            .map(|(id, _)| {
+                utils::get_story_full(&db, id).map(|story| Existing::new(id.clone(), story))
+            })
             .collect::<Result<Vec<_>>>()?;
 
         stories.sort_by(|a, b| a.info.updated.cmp(&b.info.updated));

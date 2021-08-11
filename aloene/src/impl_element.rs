@@ -1,20 +1,21 @@
 use {
     crate::{bytes::*, io, Aloene, Error, Result},
     std::{
-        collections::BTreeMap,
+        collections::HashMap,
+        hash::Hash,
         io::{Read, Write},
         ops::Range,
     },
 };
 
 // TODO: maybe write a container before v is serialized
-impl<K: Ord + Aloene, V: Aloene> Aloene for BTreeMap<K, V> {
+impl<K: Hash + Ord + Aloene, V: Aloene> Aloene for HashMap<K, V> {
     fn deserialize<R: Read>(reader: &mut R) -> Result<Self> {
         io::assert_byte(reader, Container::MAP)?;
 
         let len = io::read_length(reader)?;
 
-        let mut map = BTreeMap::new();
+        let mut map = HashMap::new();
 
         for _ in 0..len {
             let key = K::deserialize(reader)?;

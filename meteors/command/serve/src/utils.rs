@@ -1,12 +1,14 @@
 use {
     common::{
         database::Database,
-        models::{Entity, Existing, Index, ResolvedStory, ResolvedStoryMeta, StoryInfo, StoryMeta},
+        models::{
+            Entity, Existing, Id, Index, ResolvedStory, ResolvedStoryMeta, StoryInfo, StoryMeta,
+        },
         prelude::*,
     },
     enrgy::HttpResponse,
     once_cell::sync::Lazy,
-    std::{collections::BTreeMap, sync::RwLock},
+    std::{collections::HashMap, sync::RwLock},
 };
 
 pub fn wrap<F>(fun: F) -> HttpResponse
@@ -73,11 +75,11 @@ pub mod http {
     }
 }
 
-static STORY_CACHE: Lazy<RwLock<BTreeMap<String, ResolvedStory>>> =
-    Lazy::new(|| RwLock::new(BTreeMap::new()));
+static STORY_CACHE: Lazy<RwLock<HashMap<Id, ResolvedStory>>> =
+    Lazy::new(|| RwLock::new(HashMap::new()));
 
 #[allow(clippy::ptr_arg)]
-pub fn get_story_full(db: &Database, id: &str) -> Result<ResolvedStory> {
+pub fn get_story_full(db: &Database, id: &Id) -> Result<ResolvedStory> {
     if let Some(story) = STORY_CACHE
         .read()
         .map_err(|err| anyhow!("unable to get lock on cache: {}", err))?
@@ -155,7 +157,7 @@ pub fn get_story_full(db: &Database, id: &str) -> Result<ResolvedStory> {
     STORY_CACHE
         .write()
         .map_err(|err| anyhow!("unable to get lock on cache: {}", err))?
-        .insert(id.to_string(), story.clone());
+        .insert(id.clone(), story.clone());
 
     Ok(story)
 }
