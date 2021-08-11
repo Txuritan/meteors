@@ -195,11 +195,7 @@ struct Group<'i> {
 impl<'i> Group<'i> {
     #[inline]
     fn match_include(text: &str) -> bool {
-        match text {
-            "ir" | "iw" | "ict" | "io" | "ich" | "ip" | "ig" => true,
-            _ => false,
-        }
-        // matches!(text, "ir" | "iw" | "ict" | "io" | "ich" | "ip" | "ig")
+        matches!(text, "ir" | "iw" | "ict" | "io" | "ich" | "ip" | "ig")
     }
 
     #[inline]
