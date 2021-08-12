@@ -1,5 +1,5 @@
 use {
-    crate::templates::{partials::nav, Width},
+    crate::templates::{pages, partials::nav, Width},
     common::models::Theme,
     opal::Template,
     std::borrow::Cow,
@@ -42,5 +42,26 @@ where
             nav: nav::NAV,
             body,
         }
+    }
+}
+
+impl Layout<pages::Error> {
+    fn error(title: String, body: pages::Error) -> Self {
+        Self {
+            width: Width::Slim,
+            theme: Theme::Dark,
+            title,
+            nav: nav::NAV,
+            query: None,
+            body,
+        }
+    }
+
+    pub fn internal_server_error() -> Self {
+        Self::error("503".to_string(), pages::Error::internal_server_error())
+    }
+
+    pub fn not_found() -> Self {
+        Self::error("404".to_string(), pages::Error::not_found())
     }
 }
