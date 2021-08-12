@@ -14,7 +14,7 @@ Recreating [Archive of Our Own](https://archiveofourown.org/)'s UI with a modern
 ## Supported Sites
 
   - Archive of Our Own
-    - EPub
+    - EPub (WIP)
     - HTML
 
 ## Version History
