@@ -4,7 +4,7 @@ use {
         utils,
     },
     common::{database::Database, prelude::*},
-    enrgy::{web, HttpResponse, http::headers::CONTENT_TYPE},
+    enrgy::{http::headers::CONTENT_TYPE, web, HttpResponse},
 };
 
 pub fn index(db: web::Data<Database>) -> HttpResponse {

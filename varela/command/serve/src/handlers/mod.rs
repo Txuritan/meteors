@@ -16,7 +16,13 @@ pub use crate::handlers::{
 
 use {
     crate::utils,
-    enrgy::{http::{self, headers::{CACHE_CONTROL, ETAG, CONTENT_TYPE}}, web, HttpResponse},
+    enrgy::{
+        http::{
+            self,
+            headers::{CACHE_CONTROL, CONTENT_TYPE, ETAG},
+        },
+        web, HttpResponse,
+    },
 };
 
 pub fn style(header: web::OptionalHeader<"If-None-Match">) -> HttpResponse {
