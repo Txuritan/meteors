@@ -4,7 +4,7 @@ use {
         utils,
     },
     common::{database::Database, prelude::*},
-    enrgy::{web, HttpResponse},
+    enrgy::{web, HttpResponse, http::headers::CONTENT_TYPE},
 };
 
 pub fn index(db: web::Data<Database>) -> HttpResponse {
@@ -35,7 +35,7 @@ pub fn index(db: web::Data<Database>) -> HttpResponse {
 
 pub fn favicon() -> HttpResponse {
     HttpResponse::ok()
-        .header("Content-Type", "image/x-icon")
+        .header(CONTENT_TYPE, "image/x-icon")
         .body(Vec::from(
             &include_bytes!("../../../../assets/noel.ico")[..],
         ))

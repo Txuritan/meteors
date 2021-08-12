@@ -3,7 +3,7 @@ use common::models::FileKind;
 use {
     crate::{templates::pages::opds::OpdsFeed, utils},
     common::{database::Database, models::Existing, prelude::*},
-    enrgy::{web, HttpResponse},
+    enrgy::{web, HttpResponse, http::headers::CONTENT_TYPE},
     std::str::FromStr,
 };
 
@@ -49,7 +49,7 @@ pub fn catalog(
             .unwrap_or_else(|| humantime::format_rfc3339(std::time::SystemTime::now()).to_string());
 
         Ok(HttpResponse::ok()
-            .header("Content-Type", "application/atom+xml")
+            .header(CONTENT_TYPE, "application/atom+xml")
             .body(::opal::Template::render_into_string(OpdsFeed::new(
                 updated, stories,
             ))?))

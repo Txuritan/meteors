@@ -16,7 +16,7 @@ pub use crate::handlers::{
 
 use {
     crate::utils,
-    enrgy::{http, web, HttpResponse},
+    enrgy::{http::{self, headers::{CACHE_CONTROL, ETAG, CONTENT_TYPE}}, web, HttpResponse},
 };
 
 pub fn style(header: web::OptionalHeader<"If-None-Match">) -> HttpResponse {
@@ -25,12 +25,12 @@ pub fn style(header: web::OptionalHeader<"If-None-Match">) -> HttpResponse {
         // RELEASE: change anytime theres a release and the style gets updated
         static CSS_TAG: &str = "f621e1d55cbee8397c906c7d72d0fb9a4520a06be6218abeccff1ffcf75f00b3";
 
-        let mut res = HttpResponse::ok().header("Content-Type", "text/css; charset=utf-8");
+        let mut res = HttpResponse::ok().header(CONTENT_TYPE, "text/css; charset=utf-8");
 
         if !cfg!(debug_assertions) {
             res = res
-                .header("Cache-Control", "public; max-age=31536000")
-                .header("ETag", CSS_TAG);
+                .header(CACHE_CONTROL, "public; max-age=31536000")
+                .header(ETAG, CSS_TAG);
         }
 
         if let Some(header) = header.as_deref() {

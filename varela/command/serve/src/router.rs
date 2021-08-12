@@ -4,17 +4,17 @@ pub static PAGE_503: &str = r#"<!DOCTYPE html><html><head><title>503 | local arc
 pub macro res {
     (200; $body:expr) => {
         ::enrgy::HttpResponse::ok()
-            .header("Content-Type", "text/html; charset=utf-8")
+            .header(::enrgy::http::headers::CONTENT_TYPE, "text/html; charset=utf-8")
             .body(::opal::Template::render_into_string($body)?)
     },
     (404) => {
         ::enrgy::HttpResponse::not_found()
-            .header("Content-Type", "text/html; charset=utf-8")
+            .header(::enrgy::http::headers::CONTENT_TYPE, "text/html; charset=utf-8")
             .body($crate::router::PAGE_404)
     },
     (503) => {
         ::enrgy::HttpResponse::internal_server_error()
-            .header("Content-Type", "text/html; charset=utf-8")
+            .header(::enrgy::http::headers::CONTENT_TYPE, "text/html; charset=utf-8")
             .body($crate::router::PAGE_503)
     },
 }
