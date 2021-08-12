@@ -83,7 +83,8 @@ fn handle_entry(db: &mut Database, known_ids: &mut Vec<Id>, entry: DirEntry) -> 
         .ok_or_else(|| anyhow!("File `{}` does not have a file name", path.display()))?;
 
     let file_kind = match ext {
-        Some("epub") => Some(FileKind::Epub),
+        // Some("epub") => Some(FileKind::Epub),
+        Some("epub") => return Ok(()),
         Some("html") => Some(FileKind::Html),
         _ => None,
     };

@@ -1,7 +1,10 @@
-use common::{
-    database::Database,
-    models::{Node, Theme},
-    prelude::*,
+use {
+    common::{
+        database::Database,
+        models::{Node, Theme},
+        prelude::*,
+    },
+    std::path::PathBuf,
 };
 
 pub fn run(mut args: common::Args) -> Result<()> {
@@ -60,11 +63,17 @@ fn run_get(mut args: common::Args) -> Result<()> {
         .ok_or_else(|| anyhow::anyhow!("`config get` is missing `key` value"))?;
 
     match key.as_str() {
-        key @ "theme" => {
-            info!(target: "config", "Value of {}: {}", key.bright_blue(), settings.theme.as_class().bright_yellow());
+        "theme" => {
+            info!(target: "config", "Value of {}: {}", "theme".bright_blue(), settings.theme.as_class().bright_yellow());
         }
-        key @ "sync-key" | key @ "sync_key" => {
-            info!(target: "config", "Value of {}: {}", key.bright_blue(), settings.sync_key.bright_yellow());
+        "sync-key" | "sync_key" => {
+            info!(target: "config", "Value of {}: {}", "sync-key" .bright_blue(), settings.sync_key.bright_yellow());
+        }
+        "data_path" | "data-path" => {
+            info!(target: "config", "Value of {}: {}", "data-path".bright_blue(), settings.data_path.bright_yellow());
+        }
+        "temp_path" | "temp-path" => {
+            info!(target: "config", "Value of {}: {}", "temp-path".bright_blue(), settings.temp_path.bright_yellow());
         }
         key if key.starts_with("nodes.") => {
             let index = key.trim_start_matches("nodes.").parse::<usize>()?;
@@ -89,7 +98,6 @@ fn run_get(mut args: common::Args) -> Result<()> {
 #[inline(never)]
 fn run_set(mut args: common::Args) -> Result<()> {
     let mut database = Database::open()?;
-    let settings = database.settings_mut();
 
     if args.peek().map(|a| a == "--help").unwrap_or_default() {
         println!("Usage:");
@@ -125,13 +133,33 @@ fn run_set(mut args: common::Args) -> Result<()> {
             };
 
             if let Some(theme) = theme {
-                settings.theme = theme;
+                database.settings_mut().theme = theme;
 
-                info!(target: "config", "{} set to {}", key.bright_blue(), settings.theme.as_class().bright_yellow());
+                info!(target: "config", "{} set to {}", key.bright_blue(), database.settings().theme.as_class().bright_yellow());
             }
         }
-        key @ "sync-key" | key @ "sync_key" => {
-            error!(target: "config", "Setting of {} is not allowed", key.bright_blue());
+        "sync-key" | "sync_key" => {
+            error!(target: "config", "Setting of {} is not allowed", "sync-key".bright_blue());
+        }
+        "data-path" | "data_path" => {
+            let path = PathBuf::from(&value);
+
+            if path.exists() {
+                database.data_path = path;
+                database.settings_mut().data_path = value;
+            } else {
+                error!(target: "config", "Setting of {} is not committed, supplied path does not exist", "data-path".bright_blue());
+            }
+        }
+        "temp-path" | "temp_path" => {
+            let path = PathBuf::from(&value);
+
+            if path.exists() {
+                database.temp_path = path;
+                database.settings_mut().temp_path = value;
+            } else {
+                error!(target: "config", "Setting of {} is not committed, supplied path does not exist", "temp-path".bright_blue());
+            }
         }
         key if key.starts_with("nodes.") => {
             error!(target: "config", "Setting of {} is not allowed, use the {} or {} command", "nodes".bright_blue(), "push".green(), "pop".green());

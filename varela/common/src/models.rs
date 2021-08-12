@@ -113,6 +113,10 @@ pub struct Settings {
     pub theme: Theme,
     /// this instances sync key
     pub sync_key: String,
+    /// the path to the folder that holds all the story files
+    pub data_path: String,
+    /// the path to a `temp` folder, used for downloads and epub reading
+    pub temp_path: String,
     /// other instances that this instance will try to sync with
     pub nodes: Vec<Node>,
 }

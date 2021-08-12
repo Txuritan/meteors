@@ -1,6 +1,6 @@
 use {
     crate::{
-        models::{Entity, EntityKind, Id, Index, Config, Settings, Theme, Version},
+        models::{Config, Entity, EntityKind, Id, Index, Settings, Theme, Version},
         prelude::*,
         utils::FileIter,
     },
@@ -32,12 +32,7 @@ impl Database {
     pub fn open() -> Result<Self> {
         let cur = env::current_dir()?.canonicalize()?;
 
-        let data_path = cur.join("data");
         let index_path = cur.join("varela.aloe.dfl");
-        let temp_path = cur.join("temp");
-
-        fs::create_dir_all(&data_path)?;
-        fs::create_dir_all(&temp_path)?;
 
         let database = if index_path.exists() {
             debug!("found existing");
@@ -48,7 +43,10 @@ impl Database {
                 .map_err(|err| anyhow::anyhow!("unable to decompress index: {:?}", err))?;
 
             let inner =
-            Config::deserialize(&mut &bytes[..]).context("unable to deserialize index")?;
+                Config::deserialize(&mut &bytes[..]).context("unable to deserialize index")?;
+
+            let data_path = PathBuf::from(&inner.settings.data_path);
+            let temp_path = PathBuf::from(&inner.settings.temp_path);
 
             Self {
                 inner,
@@ -61,6 +59,9 @@ impl Database {
             }
         } else {
             debug!("not found, creating");
+
+            let data_path = cur.join("data");
+            let temp_path = cur.join("temp");
 
             Self {
                 inner: Config {
@@ -78,6 +79,14 @@ impl Database {
                     settings: Settings {
                         theme: Theme::Light,
                         sync_key: String::new(),
+                        data_path: data_path
+                            .to_str()
+                            .ok_or_else(|| anyhow!("data path with not valid utf-8"))?
+                            .to_string(),
+                        temp_path: temp_path
+                            .to_str()
+                            .ok_or_else(|| anyhow!("temp path with not valid utf-8"))?
+                            .to_string(),
                         nodes: vec![],
                     },
                 },
@@ -89,6 +98,9 @@ impl Database {
                 lock_maps: HashMap::new(),
             }
         };
+
+        fs::create_dir_all(&database.data_path)?;
+        fs::create_dir_all(&database.temp_path)?;
 
         Ok(database)
     }
