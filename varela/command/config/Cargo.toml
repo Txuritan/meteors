@@ -1,5 +1,5 @@
 [package]
-name = "meteors-command-config"
+name = "varela-command-config"
 version = "0.1.0"
 authors = [ "Txuritan <txuritan@protonmail.com>" ]
 edition = "2018"
@@ -9,4 +9,4 @@ license = "MIT"
 workspace = "../../.."
 
 [dependencies]
-common = { path = "../../common", package = "meteors-common" }
+common = { path = "../../common", package = "varela-common" }

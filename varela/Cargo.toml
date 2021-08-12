@@ -1,0 +1,19 @@
+[package]
+name = "varela"
+version = "0.1.0"
+authors = [ "Txuritan <txuritan@protonmail.com>" ]
+edition = "2018"
+
+license = "MIT"
+
+workspace = ".."
+
+[dependencies]
+common = { path = "./common", package = "varela-common" }
+
+command-config = { path = "./command/config", package = "varela-command-config" }
+command-index = { path = "./command/index", package = "varela-command-index" }
+command-serve = { path = "./command/serve", package = "varela-command-serve" }
+
+[build-dependencies]
+embed-resource = "1.6"

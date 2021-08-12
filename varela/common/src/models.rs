@@ -96,7 +96,7 @@ pub struct Entity {
 }
 
 #[derive(Debug, Clone, PartialEq, Aloene)]
-pub struct Meteors {
+pub struct Config {
     pub version: Version,
     pub settings: Settings,
     pub index: Index,

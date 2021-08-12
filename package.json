@@ -1,5 +1,5 @@
 {
-  "name": "meteors",
+  "name": "varela",
   "version": "0.1.0",
   "description": "A (somewhat) simple [Archive of Our Own](https://archiveofourown.org/) HTML download viewer.",
   "main": "index.js",

@@ -1,5 +1,5 @@
 [package]
-name = "meteors-command-index"
+name = "varela-command-index"
 version = "0.1.0"
 authors = [ "Txuritan <txuritan@protonmail.com>" ]
 edition = "2018"
@@ -9,9 +9,9 @@ license = "MIT"
 workspace = "../../.."
 
 [dependencies]
-common = { path = "../../common", package = "meteors-common" }
+common = { path = "../../common", package = "varela-common" }
 
-format-ao3 = { path = "../../format/ao3", package = "meteors-format-ao3" }
+format-ao3 = { path = "../../format/ao3", package = "varela-format-ao3" }
 
 crc32fast = "1.2"
 humantime = "2.1"

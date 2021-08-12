@@ -1,5 +1,5 @@
 [package]
-name = "meteors-common"
+name = "varela-common"
 version = "0.1.0"
 authors = [ "Txuritan <txuritan@protonmail.com>" ]
 edition = "2018"

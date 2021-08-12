@@ -3,17 +3,17 @@ members = [
     "aloene",
     "aloene/macros",
     "html-parser",
-    "meteors",
-    "meteors/command/config",
-    "meteors/command/index",
-    "meteors/command/serve",
-    "meteors/common",
-    "meteors/format/ao3",
     "mini-html-parser",
     "opal",
     "opal/macros",
     "query",
     "query/macros",
+    "varela",
+    "varela/command/config",
+    "varela/command/index",
+    "varela/command/serve",
+    "varela/common",
+    "varela/format/ao3",
 ]
 
 [profile.release]

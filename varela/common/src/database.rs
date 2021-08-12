@@ -1,6 +1,6 @@
 use {
     crate::{
-        models::{Entity, EntityKind, Id, Index, Meteors, Settings, Theme, Version},
+        models::{Entity, EntityKind, Id, Index, Config, Settings, Theme, Version},
         prelude::*,
         utils::FileIter,
     },
@@ -19,7 +19,7 @@ use {
 
 #[derive(Debug)]
 pub struct Database {
-    inner: Meteors,
+    inner: Config,
 
     pub data_path: PathBuf,
     pub index_path: PathBuf,
@@ -33,7 +33,7 @@ impl Database {
         let cur = env::current_dir()?.canonicalize()?;
 
         let data_path = cur.join("data");
-        let index_path = cur.join("meteors.aloe.dfl");
+        let index_path = cur.join("varela.aloe.dfl");
         let temp_path = cur.join("temp");
 
         fs::create_dir_all(&data_path)?;
@@ -48,7 +48,7 @@ impl Database {
                 .map_err(|err| anyhow::anyhow!("unable to decompress index: {:?}", err))?;
 
             let inner =
-                Meteors::deserialize(&mut &bytes[..]).context("unable to deserialize index")?;
+            Config::deserialize(&mut &bytes[..]).context("unable to deserialize index")?;
 
             Self {
                 inner,
@@ -63,7 +63,7 @@ impl Database {
             debug!("not found, creating");
 
             Self {
-                inner: Meteors {
+                inner: Config {
                     version: Version::V1,
                     index: Index {
                         stories: HashMap::new(),
@@ -246,7 +246,7 @@ impl Database {
 
         let mut buf = Vec::new();
 
-        Meteors::serialize(&self.inner, &mut buf).context("unable to serialize index")?;
+        Config::serialize(&self.inner, &mut buf).context("unable to serialize index")?;
 
         let compressed = miniz_oxide::deflate::compress_to_vec(&buf, 10);
 

@@ -10,7 +10,7 @@ use {
 };
 
 pub fn init() -> Result<()> {
-    let bypass = env::var("METEORS_LOG_ALL").is_ok();
+    let bypass = env::var("VARELA_LOG_ALL").is_ok();
     let level = if bypass {
         LevelFilter::Trace
     } else {
@@ -56,7 +56,7 @@ impl Logger {
         write!(
             &mut out,
             "{: <21} ",
-            record.target().trim_start_matches("meteors_").cyan()
+            record.target().trim_start_matches("varela_").cyan()
         )?;
 
         writeln!(&mut out, "{}", record.args())?;

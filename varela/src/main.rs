@@ -14,8 +14,8 @@ fn main() -> Result<()> {
     match args.next().as_deref() {
         Some("--help") => {
             println!("Usage:");
-            println!("  meteors");
-            println!("  meteors <COMMAND> [<ARGS>]");
+            println!("  varela");
+            println!("  varela <COMMAND> [<ARGS>]");
             println!();
             println!("Options:");
             println!("  --help");

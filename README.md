@@ -1,15 +1,31 @@
-# Meteors
+# Varela
 
-A (somewhat) simple [Archive of Our Own](https://archiveofourown.org/) HTML download viewer.
+A (somewhat) simple [Archive of Our Own](https://archiveofourown.org/) download viewer.
 
-## Usage
+## Description
 
-Meteors is quite simple, with only two major command flags: `compress` and `trackers`.
+Recreating [Archive of Our Own](https://archiveofourown.org/)'s UI with a modern twist, Varela emulates the browsing and searching experience while being lightweight and fast to load, allowing you to take [Archive of Our Own](https://archiveofourown.org/) out on the road where internet is rare.
 
-When `compress` is active, data files will be compressed using [gzip](https://en.wikipedia.org/wiki/Gzip), which allows for up to a 3 times file size reduction.
-<br>
-Note, as of right now tracker scripts cannot be removed from a compressed file, be sure to run with `trackers` enabled before running this.
+## Features
 
-The `trackers` flag may need to be activated just to read a download, this is due to XHTML not being valid XML when scripts are used, enabling this will attempt to remove these scripts.
-<br>
-**WARNING** This could destroy the downloads, be sure to do backups. [For this reason](https://stackoverflow.com/a/1732454/4833195).
+  - An OPDS API endpoint for mobile readers (WIP)
+  - Semi-automatic downloader (Requires direct download link)
+
+## Supported Sites
+
+  - Archive of Our Own
+    - EPub
+    - HTML
+
+## Version History
+
+  - 1.0.0: Yet to be released
+
+## Acknowledgments
+
+  - [crabquery](https://github.com/Gonzih/crabquery)
+  - [html-parser](https://github.com/mathiversen/html-parser)
+
+## License
+
+This project is licensed under the [MIT](https://choosealicense.com/licenses/mit/) License - see the `LICENSE.md` file for details.

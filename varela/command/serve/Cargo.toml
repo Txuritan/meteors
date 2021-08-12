@@ -1,5 +1,5 @@
 [package]
-name = "meteors-command-serve"
+name = "varela-command-serve"
 version = "0.1.0"
 authors = [ "Txuritan <txuritan@protonmail.com>" ]
 edition = "2018"
@@ -9,7 +9,7 @@ license = "MIT"
 workspace = "../../.."
 
 [dependencies]
-common = { path = "../../common", package = "meteors-common" }
+common = { path = "../../common", package = "varela-common" }
 opal = { path = "../../../opal" }
 
 chrono = { version = "0.4", default-features = false, features = [ "std" ] }

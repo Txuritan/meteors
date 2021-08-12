@@ -8,7 +8,7 @@ pub fn run(mut args: common::Args) -> Result<()> {
     match args.next().as_deref() {
         Some("--help") => {
             println!("Usage:");
-            println!("  meteors config <COMMAND> [<ARGS>]");
+            println!("  varela config <COMMAND> [<ARGS>]");
             println!();
             println!("Options:");
             println!("  --help");
@@ -44,7 +44,7 @@ fn run_get(mut args: common::Args) -> Result<()> {
 
     if args.peek().map(|a| a == "--help").unwrap_or_default() {
         println!("Usage:");
-        println!("  meteors config get <KEY>");
+        println!("  varela config get <KEY>");
         println!();
         println!("Options:");
         println!("  --help");
@@ -93,7 +93,7 @@ fn run_set(mut args: common::Args) -> Result<()> {
 
     if args.peek().map(|a| a == "--help").unwrap_or_default() {
         println!("Usage:");
-        println!("  meteors config set <KEY> <VALUE>");
+        println!("  varela config set <KEY> <VALUE>");
         println!();
         println!("Options:");
         println!("  --help");
@@ -153,7 +153,7 @@ fn run_push(mut args: common::Args) -> Result<()> {
 
     if args.peek().map(|a| a == "--help").unwrap_or_default() {
         println!("Usage:");
-        println!("  meteors config push <KEY> <VALUE>");
+        println!("  varela config push <KEY> <VALUE>");
         println!();
         println!("Options:");
         println!("  --help");
@@ -215,7 +215,7 @@ fn run_pop(mut args: common::Args) -> Result<()> {
 
     if args.peek().map(|a| a == "--help").unwrap_or_default() {
         println!("Usage:");
-        println!("  meteors config pop <KEY>");
+        println!("  varela config pop <KEY>");
         println!();
         println!("Options:");
         println!("  --help");

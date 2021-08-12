@@ -35,7 +35,7 @@ pub fn run(mut args: common::Args) -> Result<()> {
 
     if args.peek().map(|a| a == "--help").unwrap_or_default() {
         println!("Usage:");
-        println!("  meteors serve <ARGS>");
+        println!("  varela serve <ARGS>");
         println!();
         println!("Options:");
         println!("  --help");

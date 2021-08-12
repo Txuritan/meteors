@@ -275,73 +275,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "meteors"
-version = "0.1.0"
-dependencies = [
- "embed-resource",
- "meteors-command-config",
- "meteors-command-index",
- "meteors-command-serve",
- "meteors-common",
-]
-
-[[package]]
-name = "meteors-command-config"
-version = "0.1.0"
-dependencies = [
- "meteors-common",
-]
-
-[[package]]
-name = "meteors-command-index"
-version = "0.1.0"
-dependencies = [
- "crc32fast",
- "humantime",
- "meteors-common",
- "meteors-format-ao3",
- "zip",
-]
-
-[[package]]
-name = "meteors-command-serve"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "enrgy",
- "form_urlencoded",
- "humantime",
- "meteors-common",
- "once_cell",
- "opal",
- "percent-encoding",
- "qstring",
-]
-
-[[package]]
-name = "meteors-common"
-version = "0.1.0"
-dependencies = [
- "aloene",
- "anyhow",
- "fastrand",
- "fs2",
- "getrandom",
- "log",
- "memmap2",
- "miniz_oxide",
- "owo-colors",
-]
-
-[[package]]
-name = "meteors-format-ao3"
-version = "0.1.0"
-dependencies = [
- "meteors-common",
- "query",
-]
-
-[[package]]
 name = "mini-html-parser"
 version = "0.1.0"
 
@@ -574,6 +507,73 @@ name = "unicode-xid"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ccb82d61f80a663efe1f787a51b16b5a51e3314d6ac365b08639f52387b33f3"
+
+[[package]]
+name = "varela"
+version = "0.1.0"
+dependencies = [
+ "embed-resource",
+ "varela-command-config",
+ "varela-command-index",
+ "varela-command-serve",
+ "varela-common",
+]
+
+[[package]]
+name = "varela-command-config"
+version = "0.1.0"
+dependencies = [
+ "varela-common",
+]
+
+[[package]]
+name = "varela-command-index"
+version = "0.1.0"
+dependencies = [
+ "crc32fast",
+ "humantime",
+ "varela-common",
+ "varela-format-ao3",
+ "zip",
+]
+
+[[package]]
+name = "varela-command-serve"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "enrgy",
+ "form_urlencoded",
+ "humantime",
+ "once_cell",
+ "opal",
+ "percent-encoding",
+ "qstring",
+ "varela-common",
+]
+
+[[package]]
+name = "varela-common"
+version = "0.1.0"
+dependencies = [
+ "aloene",
+ "anyhow",
+ "fastrand",
+ "fs2",
+ "getrandom",
+ "log",
+ "memmap2",
+ "miniz_oxide",
+ "owo-colors",
+]
+
+[[package]]
+name = "varela-format-ao3"
+version = "0.1.0"
+dependencies = [
+ "query",
+ "varela-common",
+]
 
 [[package]]
 name = "vswhom"
