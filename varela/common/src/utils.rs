@@ -50,7 +50,7 @@ impl Iterator for FileIter {
             if meta.is_file() {
                 Some(Ok(entry))
             } else {
-                None
+                self.next()
             }
         } else {
             None

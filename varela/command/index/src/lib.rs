@@ -34,7 +34,7 @@ pub fn run(_args: common::Args) -> Result<()> {
 
     let mut known_ids = Vec::new();
 
-    debug!("checking data",);
+    debug!("checking `{}` for files", database.data_path.display().bright_purple());
 
     for entry in FileIter::new(fs::read_dir(&database.data_path)?) {
         handle_entry(&mut database, &mut known_ids, entry?)?;
