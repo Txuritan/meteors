@@ -293,7 +293,8 @@ macro help {
     }},
     (retain; $db:ident, $stories:ident, $include:ident, $text:ident, $mem:ident) => {{
         $stories.retain(|id| {
-            let story = $db.index().stories.get(id).unwrap();
+            let story = $db.index().stories.get(id);
+            let story = unsafe { story.unwrap_unchecked() };
 
             !(&$include ^ any_by_text(&$db.index().$mem, &story.meta.$mem, &$text))
         });

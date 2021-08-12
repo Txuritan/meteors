@@ -222,12 +222,15 @@ impl<'input> Dom<'input> {
         }
 
         let span = match (start, end) {
-            (Some(start), Some(end)) => Span::new(
-                input,
-                start.start() - 1,
-                end.end() + if !end.as_str().ends_with('>') { 1 } else { 0 },
-            )
-            .unwrap(),
+            (Some(start), Some(end)) => {
+                let span = Span::new(
+                    input,
+                    start.start() - 1,
+                    end.end() + if !end.as_str().ends_with('>') { 1 } else { 0 },
+                );
+
+                unsafe { span.unwrap_unchecked() }
+            }
             (Some(start), None) => start,
             _ => todo!(),
         };

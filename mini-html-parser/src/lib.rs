@@ -1,4 +1,5 @@
 #![deny(rust_2018_idioms)]
+#![feature(option_result_unwrap_unchecked)]
 
 use std::{collections::HashMap, iter::Peekable, str::CharIndices};
 
@@ -115,7 +116,7 @@ impl<'input> Parser<'input> {
                 None => break,
             }
 
-            let (i, _) = self.next().unwrap();
+            let (i, _) = unsafe { self.next().unwrap_unchecked() };
 
             index = i;
         }
