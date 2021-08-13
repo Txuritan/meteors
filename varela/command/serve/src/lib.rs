@@ -89,6 +89,8 @@ pub fn run(mut args: common::Args) -> Result<()> {
             .service(web::get("/search2").to(handlers::search_v2))
             .service(web::get("/style.css").to(handlers::style))
             .service(web::get("/favicon.ico").to(handlers::favicon))
+            .service(web::get("/author/:id").to(handlers::entity))
+            .service(web::get("/origin/:id").to(handlers::entity))
             .service(web::get("/tag/:id").to(handlers::entity))
             .service(web::get("/opds/root.:ext").to(handlers::catalog))
             .default_service(web::to(|| -> enrgy::HttpResponse { crate::res!(404) }))

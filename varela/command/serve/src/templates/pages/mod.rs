@@ -17,10 +17,16 @@ pub struct Error {
 
 impl Error {
     pub const fn internal_server_error() -> Self {
-        Self { error: "503", message: "There was an error, check the log." }
+        Self {
+            error: "503",
+            message: "There was an error, check the log.",
+        }
     }
 
     pub const fn not_found() -> Self {
-        Self { error: "404", message: "This page could not be found." }
+        Self {
+            error: "404",
+            message: "This page could not be found.",
+        }
     }
 }

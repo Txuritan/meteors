@@ -1,7 +1,6 @@
-pub mod models;
-
 pub mod database;
 pub mod logger;
+pub mod models;
 pub mod utils;
 
 pub type Args = std::iter::Peekable<std::iter::Skip<std::env::Args>>;
