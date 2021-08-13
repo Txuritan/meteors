@@ -11,7 +11,7 @@ impl Extensions {
     #[inline]
     pub const fn new() -> Self {
         Self {
-            inner: BTreeMap::new(),
+            inner: crate::new_btreemap(),
         }
     }
 
