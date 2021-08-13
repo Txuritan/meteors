@@ -7,6 +7,7 @@
     const_generics,
     const_trait_impl,
     const_mut_refs,
+    decl_macro,
     option_result_unwrap_unchecked
 )]
 

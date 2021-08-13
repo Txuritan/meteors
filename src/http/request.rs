@@ -10,7 +10,8 @@ use {
     std::{borrow::Cow, collections::BTreeMap, io::Read, str::FromStr as _, sync::Arc},
 };
 
-pub(crate) struct HeaderData {
+#[derive(Debug, PartialEq)]
+pub struct HeaderData {
     pub(crate) method: Method,
     pub(crate) url: String,
     pub(crate) query: String,
@@ -196,7 +197,7 @@ impl HttpRequest {
 
                     headers.insert(
                         HeaderName(Cow::Owned(key.trim().to_string())),
-                        value.trim().to_string(),
+                        value.trim_start_matches(": ").trim().to_string(),
                     );
                 }
             }
@@ -233,4 +234,69 @@ impl HttpRequest {
     pub const fn method(&self) -> Method {
         self.header_data.method
     }
+}
+
+#[cfg(test)]
+mod test_parse {
+    use {
+        super::*,
+        crate::http::headers::{ACCEPT, HOST, USER_AGENT},
+    };
+
+    // most are ripped from https://github.com/nodejs/http-parser/blob/main/test.c
+
+    macro http_assert($name:ident, $exp:expr, $got:expr,) {
+        #[test]
+        fn $name() {
+            assert_eq!($exp, $got);
+        }
+    }
+
+    macro request(
+        [ $method:expr, $url:expr, $query:expr, $version:expr ]
+        $( { $header:expr => $value:expr } )*
+        [ $( $body:expr )* ]
+    ) {
+        (
+            HeaderData {
+                method: $method,
+                url: $url.to_string(),
+                query: $query.to_string(),
+                query_params: BTreeMap::new(),
+                version: $version,
+                headers: {
+                    let mut temp = BTreeMap::new();
+
+                    $( temp.insert($header, $value.to_string()); )*
+
+                    temp
+                },
+            },
+            concat!($( $body ),*).as_bytes().to_vec(),
+        )
+    }
+
+    macro raw($( $raw:expr )*) {
+        HttpRequest::parse_reader(&mut std::io::Cursor::new(
+            concat!($( $raw ),*).as_bytes(),
+        )).unwrap()
+    }
+
+    http_assert!(
+        test_curl_get,
+        request!(
+            [ Method::Get, "/test", "", Version::Http11 ]
+            { USER_AGENT => "curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1" }
+            { HOST => "0.0.0.0=5000" }
+            { ACCEPT => "*/*" }
+            []
+        ),
+        raw!(
+            "GET /test HTTP/1.1\r\n"
+            "User-Agent: curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1\r\n"
+            "Host: 0.0.0.0=5000\r\n"
+            "Accept: */*\r\n"
+            "\r\n"
+        ),
+    );
 }

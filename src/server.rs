@@ -102,19 +102,7 @@ impl HttpServer<SocketAddr> {
 
         let listener = TcpListener::bind(self.addr)?;
 
-        let (pool, sender) = ThreadPool::new(4, Arc::clone(&self.close), |data| {
-            if let Err(err) = Self::thread_handle(data) {
-                log::error!("unable to handle thread");
-
-                match err {
-                    ThreadError::Enrgy(err) => log::error!("route handler error: {:?}", err),
-                    ThreadError::Http(err) => log::error!("invalid http: {:?}", err),
-                    ThreadError::Io(err) => log::error!("{}", err),
-                    ThreadError::ParseInt(err) => log::error!("{}", err),
-                    ThreadError::Utf8(err) => log::error!("{}", err),
-                }
-            }
-        });
+        let (pool, sender) = ThreadPool::new(4, Arc::clone(&self.close), Self::thread_pool_handler);
 
         thread::spawn({
             let app = Arc::clone(&self.app);
@@ -143,20 +131,20 @@ enum ThreadError {
 }
 
 impl const From<Error> for ThreadError {
-    fn from(err: Error) -> Self {
-        ThreadError::Enrgy(err)
+    fn from(v: Error) -> Self {
+        Self::Enrgy(v)
     }
 }
 
 impl const From<http::HttpError> for ThreadError {
-    fn from(err: http::HttpError) -> Self {
-        ThreadError::Http(err)
+    fn from(v: http::HttpError) -> Self {
+        Self::Http(v)
     }
 }
 
 impl const From<io::Error> for ThreadError {
-    fn from(err: io::Error) -> Self {
-        ThreadError::Io(err)
+    fn from(v: io::Error) -> Self {
+        Self::Io(v)
     }
 }
 
@@ -167,16 +155,53 @@ impl const From<std::num::ParseIntError> for ThreadError {
 }
 
 impl const From<std::string::FromUtf8Error> for ThreadError {
-    fn from(err: std::string::FromUtf8Error) -> Self {
-        ThreadError::Utf8(err)
+    fn from(v: std::string::FromUtf8Error) -> Self {
+        Self::Utf8(v)
     }
 }
 
 impl HttpServer<SocketAddr> {
-    fn thread_handle(
-        (app, mut stream, _addr): (Arc<BuiltApp>, TcpStream, SocketAddr),
-    ) -> Result<(), ThreadError> {
-        let (header_data, body) = HttpRequest::parse_reader(&mut stream)?;
+    fn thread_pool_handler((app, mut stream, _addr): (Arc<BuiltApp>, TcpStream, SocketAddr)) {
+        fn run(app: Arc<BuiltApp>, stream: &mut TcpStream) {
+            if let Err(err) = HttpServer::thread_handle(app, stream) {
+                log::error!("unable to handle thread");
+
+                match err {
+                    ThreadError::Enrgy(err) => log::error!("route handler error: {:?}", err),
+                    ThreadError::Http(err) => log::error!("invalid http: {:?}", err),
+                    ThreadError::Io(err) => log::error!("{}", err),
+                    ThreadError::ParseInt(err) => log::error!("{}", err),
+                    ThreadError::Utf8(err) => log::error!("{}", err),
+                }
+            }
+        }
+
+        if let Err(err) = stream.set_read_timeout(None) {
+            log::error!(
+                "internal tcp stream error, unable to make `read` blocking: {}",
+                err
+            );
+        }
+
+        run(app.clone(), &mut stream);
+
+        let mut byte = [0u8; 1];
+
+        loop {
+            match stream.peek(&mut byte) {
+                Ok(_bytes) => {
+                    run(app.clone(), &mut stream);
+                }
+                Err(err) if err.kind() == io::ErrorKind::ConnectionAborted => break,
+                Err(err) => {
+                    log::error!("{}", err)
+                }
+            }
+        }
+    }
+
+    fn thread_handle(app: Arc<BuiltApp>, stream: &mut TcpStream) -> Result<(), ThreadError> {
+        let (header_data, body) = HttpRequest::parse_reader(stream)?;
 
         let (service, parameters) = app
             .tree
@@ -212,7 +237,7 @@ impl HttpServer<SocketAddr> {
             middleware.after(&request, &response);
         }
 
-        response.into_stream(compress, &mut stream)?;
+        response.into_stream(compress, stream)?;
 
         Ok(())
     }
