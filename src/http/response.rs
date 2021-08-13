@@ -1,5 +1,8 @@
 use {
-    crate::http::{Body, StatusCode, Version, headers::{HeaderName, CONTENT_ENCODING}},
+    crate::http::{
+        headers::{HeaderName, CONTENT_ENCODING},
+        Body, StatusCode, Version,
+    },
     std::{
         collections::BTreeMap,
         io::{self, Write as _},
@@ -78,7 +81,6 @@ impl HttpResponse {
             };
 
             if compress && !pre_compressed {
-
                 write!(stream, "Content-Encoding: deflate\r\n")?;
 
                 let compressed = miniz_oxide::deflate::compress_to_vec(bytes, 8);

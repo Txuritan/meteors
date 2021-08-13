@@ -1,11 +1,15 @@
 use {
     crate::{
-        app::BuiltApp, http::{self, headers::{CONTENT_LENGTH, ACCEPT_ENCODING}}, server::pool::ThreadPool, service::Service, App, Error, HttpRequest,
+        app::BuiltApp,
+        http::{self, headers::ACCEPT_ENCODING},
+        server::pool::ThreadPool,
+        service::Service,
+        App, Error, HttpRequest,
     },
     std::{
         collections::BTreeMap,
         fmt,
-        io::{self, Read as _},
+        io::{self},
         net::{SocketAddr, TcpListener, TcpStream},
         sync::{
             atomic::{AtomicBool, Ordering},
@@ -132,7 +136,7 @@ impl HttpServer<SocketAddr> {
 
 enum ThreadError {
     Enrgy(Error),
-    Http(http::Error),
+    Http(http::HttpError),
     Io(io::Error),
     ParseInt(std::num::ParseIntError),
     Utf8(std::string::FromUtf8Error),
@@ -144,8 +148,8 @@ impl const From<Error> for ThreadError {
     }
 }
 
-impl const From<http::Error> for ThreadError {
-    fn from(err: http::Error) -> Self {
+impl const From<http::HttpError> for ThreadError {
+    fn from(err: http::HttpError) -> Self {
         ThreadError::Http(err)
     }
 }
@@ -172,79 +176,7 @@ impl HttpServer<SocketAddr> {
     fn thread_handle(
         (app, mut stream, _addr): (Arc<BuiltApp>, TcpStream, SocketAddr),
     ) -> Result<(), ThreadError> {
-        struct State {
-            data: Vec<u8>,
-            total_read: usize,
-            amount_read: usize,
-            read_buffer: [u8; BUFFER_SIZE],
-        }
-
-        fn double_newline(bytes: &[u8]) -> bool {
-            bytes == &b"\r\n\r\n"[..]
-        }
-
-        const BUFFER_SIZE: usize = 512;
-        const MAX_BYTES: usize = 1028 * 8;
-
-        let mut state = State {
-            data: Vec::with_capacity(512),
-            total_read: 0,
-            amount_read: BUFFER_SIZE,
-            read_buffer: [0; BUFFER_SIZE],
-        };
-
-        loop {
-            if state.amount_read == 0 {
-                break;
-            }
-
-            state.amount_read = stream.read(&mut state.read_buffer)?;
-
-            if state.amount_read == 0 {
-                break;
-            }
-
-            (state.total_read) += state.amount_read;
-
-            state
-                .data
-                .extend_from_slice(&state.read_buffer[..state.amount_read]);
-
-            (state.read_buffer) = [0; BUFFER_SIZE];
-
-            if state.data.windows(4).any(double_newline) {
-                break;
-            }
-
-            if state.total_read >= MAX_BYTES {
-                break;
-            }
-        }
-
-        let header_bytes = if let Some(i) = state.data.windows(4).position(double_newline) {
-            &state.data[..(i + 2)]
-        } else {
-            &state.data[..]
-        };
-
-        let header_str = String::from_utf8_lossy(header_bytes);
-
-        let header_data = HttpRequest::parse_header(header_str.as_ref())?;
-
-        let (header_data, body) = if let Some(header) = header_data.headers.get(&CONTENT_LENGTH) {
-            let amount_of_bytes = header.trim().parse::<u64>()?;
-
-            let mut body = Vec::with_capacity(amount_of_bytes as usize);
-
-            stream
-                .by_ref()
-                .take(amount_of_bytes)
-                .read_to_end(&mut body)?;
-
-            (header_data, Vec::from(&body[..]))
-        } else {
-            (header_data, vec![])
-        };
+        let (header_data, body) = HttpRequest::parse_reader(&mut stream)?;
 
         let (service, parameters) = app
             .tree

@@ -1,4 +1,4 @@
-use std::{borrow::Cow, fmt, cmp};
+use std::{borrow::Cow, cmp, fmt};
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct HeaderName(pub(crate) Cow<'static, str>);

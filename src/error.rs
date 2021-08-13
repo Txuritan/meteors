@@ -1,5 +1,8 @@
 use {
-    crate::{http::{StatusCode, headers::CONTENT_TYPE}, HttpResponse},
+    crate::{
+        http::{headers::CONTENT_TYPE, StatusCode},
+        HttpResponse,
+    },
     std::{error, fmt},
 };
 

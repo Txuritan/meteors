@@ -23,7 +23,7 @@ pub struct Node<T> {
     params: Option<Vec<String>>,
 }
 
-impl<T> Default for Node<T> {
+impl<T> const Default for Node<T> {
     #[inline]
     fn default() -> Self {
         Self::new(NodeKind::Static(String::new()))
@@ -33,7 +33,7 @@ impl<T> Default for Node<T> {
 impl<T> Node<T> {
     /// Creates a new node with a special kind.
     #[inline]
-    pub fn new(kind: NodeKind) -> Self {
+    pub const fn new(kind: NodeKind) -> Self {
         Self {
             kind,
             data: None,
@@ -55,6 +55,7 @@ impl<T> Node<T> {
             None => {
                 indices.push(c);
                 nodes.push(Node::new(kind));
+
                 nodes.last_mut().unwrap()
             }
         }
@@ -87,6 +88,7 @@ impl<T> Node<T> {
                 // Split node
                 if l < s.len() {
                     *s = s[l..].to_owned();
+
                     let mut node = Node {
                         data: None,
                         params: None,
@@ -94,7 +96,9 @@ impl<T> Node<T> {
                         indices: s.chars().next().map(|c| c.to_string()),
                         kind: NodeKind::Static(String::from(&p[0..l])),
                     };
+
                     ::std::mem::swap(self, &mut node);
+
                     (unsafe { self.nodes.as_mut().unwrap_unchecked() }).push(node);
                 }
 
@@ -281,6 +285,7 @@ impl<T> PathTree<T> {
                     suffix = &suffix[1..];
 
                     let c = unsafe { prefix.chars().next().unwrap_unchecked() };
+
                     if c == ':' {
                         match suffix.chars().position(has_star_or_slash) {
                             Some(i) => {
@@ -299,6 +304,7 @@ impl<T> PathTree<T> {
                     }
 
                     most += 1;
+
                     params.get_or_insert_with(Vec::new).push(suffix.to_owned());
                     node = node.add_node_dynamic(c, kind);
                 }
