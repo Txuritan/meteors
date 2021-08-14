@@ -52,7 +52,7 @@ pub(crate) const fn new_btreemap<K: ?const Ord, V>() -> BTreeMap<K, V> {
     use std::mem::{forget, transmute};
     use std::cmp::Ordering;
     #[derive(PartialEq, Eq, PartialOrd)]
-    #[transparent]
+    #[repr(transparent)]
     struct ConstOrdWrapper<T>(T);
 
     impl<T: ?const Ord> const Ord for ConstOrdWrapper<T> {
