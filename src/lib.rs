@@ -6,6 +6,7 @@
     const_fn_trait_bound,
     const_generics,
     const_trait_impl,
+    const_trait_bound_opt_out,
     const_mut_refs,
     decl_macro,
     option_result_unwrap_unchecked
@@ -27,6 +28,8 @@ pub mod middleware;
 
 pub mod error;
 
+use std::collections::BTreeMap;
+
 pub use crate::{app::App, responder::Responder, server::HttpServer};
 
 #[doc(inline)]
@@ -43,6 +46,37 @@ pub mod web {
         },
         route::{connect, delete, get, head, options, patch, post, put, to, trace},
     };
+}
+
+// FIXME Remove this in the future
+pub(crate) const fn new_btreemap<K: ?const Ord, V>() -> BTreeMap<K, V> {
+    use std::mem::{forget, transmute};
+    use std::cmp::Ordering;
+    #[derive(PartialEq, Eq, PartialOrd)]
+    #[repr(transparent)]
+    struct ConstOrdWrapper<T>(T);
+
+    impl<T: ?const Ord> const Ord for ConstOrdWrapper<T> {
+        fn cmp(&self, _: &Self) -> Ordering {
+            Ordering::Equal
+        }
+        fn max(self, s: Self) -> Self { 
+            forget(s);
+            self 
+        }
+        fn min(self, s: Self) -> Self { 
+            forget(s);
+            self 
+        }
+        fn clamp(self, a: Self, b: Self) -> Self { 
+            forget(a);
+            forget(b);
+            self 
+        } 
+    }
+    unsafe {
+        transmute::<BTreeMap<ConstOrdWrapper<K>, V>, _>(BTreeMap::new())
+    }
 }
 
 // A module for testing different route handlers.

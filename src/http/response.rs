@@ -24,7 +24,7 @@ impl HttpResponse {
             inner: Self {
                 version: Version::Http10,
                 status,
-                headers: BTreeMap::new(),
+                headers: crate::new_btreemap(),
                 body: Body::Empty,
             },
         }
