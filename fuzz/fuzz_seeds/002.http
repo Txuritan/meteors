@@ -1,0 +1,7 @@
+PATCH /api/posts/123456 HTTP/1.1
+User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36
+Content-Length: 49
+Content-Type: text/xml
+Accept-Encoding: brolti, gzip, deflate
+
+<?xml version='1.0' encoding='utf-8'?><api></api>
