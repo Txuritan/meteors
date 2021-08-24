@@ -7,10 +7,7 @@ edition = "2018"
 
 [dependencies]
 afl = "0.10"
-
-[dependencies.enrgy]
-path = ".."
-features = ["fuzzing"]
+enrgy = { path = ".." }
 
 # Prevent this from interfering with workspaces
 [workspace]

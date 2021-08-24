@@ -10,7 +10,7 @@ pub(crate) use self::body::Body;
 
 pub use self::{method::Method, status::StatusCode, version::Version};
 
-#[cfg(feature = "fuzzing")]
+#[cfg(fuzzing)]
 pub use self::request::HttpRequest;
 
 #[derive(Debug)]

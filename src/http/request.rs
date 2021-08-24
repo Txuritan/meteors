@@ -48,15 +48,23 @@ impl HttpRequest {
         }
     }
 
-    #[cfg(feature = "fuzzing")]
-    pub fn fuzz_parse_reader<R>(reader: &mut R) -> Result<(HeaderData, Vec<u8>), http::HttpError>
+    #[cfg(fuzzing)]
+    pub fn parse_reader<R>(reader: &mut R) -> Result<(HeaderData, Vec<u8>), http::HttpError>
     where
         R: Read,
     {
-        Self::parse_reader(reader)
+        Self::parse_reader_inner(reader)
     }
 
+    #[cfg(not(fuzzing))]
     pub(crate) fn parse_reader<R>(reader: &mut R) -> Result<(HeaderData, Vec<u8>), http::HttpError>
+    where
+        R: Read,
+    {
+        Self::parse_reader_inner(reader)
+    }
+
+    fn parse_reader_inner<R>(reader: &mut R) -> Result<(HeaderData, Vec<u8>), http::HttpError>
     where
         R: Read,
     {
@@ -137,12 +145,17 @@ impl HttpRequest {
         Ok((header_data, body))
     }
 
-    #[cfg(feature = "fuzzing")]
+    #[cfg(fuzzing)]
     pub fn fuzz_parse_header(headers: &str) -> Result<HeaderData, http::HttpError> {
-        Self::parse_header(headers)
+        Self::parse_header_inner(headers)
     }
 
+    #[cfg(not(fuzzing))]
     pub(crate) fn parse_header(headers: &str) -> Result<HeaderData, http::HttpError> {
+        Self::parse_header_inner(headers)
+    }
+
+    pub fn parse_header_inner(headers: &str) -> Result<HeaderData, http::HttpError> {
         let mut lines = headers.lines();
 
         let meta = lines.next().ok_or(http::HttpError::ParseMissingMeta)?;
