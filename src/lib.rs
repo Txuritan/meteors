@@ -50,33 +50,42 @@ pub mod web {
 
 // FIXME Remove this in the future
 pub(crate) const fn new_btreemap<K: ?const Ord, V>() -> BTreeMap<K, V> {
-    use std::mem::{forget, transmute};
-    use std::cmp::Ordering;
-    #[derive(PartialEq, Eq, PartialOrd)]
+    use std::{
+        cmp::Ordering,
+        mem::{forget, transmute},
+    };
+
     #[repr(transparent)]
+    #[derive(PartialEq, Eq, PartialOrd)]
     struct ConstOrdWrapper<T>(T);
 
+    #[allow(clippy::derive_ord_xor_partial_ord)]
     impl<T: ?const Ord> const Ord for ConstOrdWrapper<T> {
         fn cmp(&self, _: &Self) -> Ordering {
             Ordering::Equal
         }
-        fn max(self, s: Self) -> Self { 
+
+        fn max(self, s: Self) -> Self {
             forget(s);
-            self 
+
+            self
         }
-        fn min(self, s: Self) -> Self { 
+
+        fn min(self, s: Self) -> Self {
             forget(s);
-            self 
+
+            self
         }
-        fn clamp(self, a: Self, b: Self) -> Self { 
+
+        fn clamp(self, a: Self, b: Self) -> Self {
             forget(a);
             forget(b);
-            self 
-        } 
+
+            self
+        }
     }
-    unsafe {
-        transmute::<BTreeMap<ConstOrdWrapper<K>, V>, _>(BTreeMap::new())
-    }
+
+    unsafe { transmute::<BTreeMap<ConstOrdWrapper<K>, V>, _>(BTreeMap::new()) }
 }
 
 // A module for testing different route handlers.
