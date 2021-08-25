@@ -130,7 +130,7 @@ impl HttpRequest {
         let (header_data, body) = if let Some(header) = header_data.headers.get(&CONTENT_LENGTH) {
             let amount_of_bytes = header.trim().parse::<u64>()?;
 
-            let mut body = Vec::with_capacity(amount_of_bytes as usize);
+            let mut body = Vec::with_capacity((MAX_BYTES - state.total_read).min(amount_of_bytes as usize));
 
             reader
                 .by_ref()
@@ -155,7 +155,7 @@ impl HttpRequest {
         Self::parse_header_inner(headers)
     }
 
-    pub fn parse_header_inner(headers: &str) -> Result<HeaderData, http::HttpError> {
+    fn parse_header_inner(headers: &str) -> Result<HeaderData, http::HttpError> {
         let mut lines = headers.lines();
 
         let meta = lines.next().ok_or(http::HttpError::ParseMissingMeta)?;

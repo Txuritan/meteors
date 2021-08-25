@@ -1,2 +1,3 @@
+/fuzz/fuzz_output
 /target
 Cargo.lock
