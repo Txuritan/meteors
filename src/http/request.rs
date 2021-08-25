@@ -128,16 +128,22 @@ impl HttpRequest {
         let header_data = HttpRequest::parse_header(header_str.as_ref())?;
 
         let (header_data, body) = if let Some(header) = header_data.headers.get(&CONTENT_LENGTH) {
-            let amount_of_bytes = header.trim().parse::<u64>()?;
+            let amount_of_bytes = header.trim().parse::<usize>()?;
 
-            let mut body = Vec::with_capacity((MAX_BYTES - state.total_read).min(amount_of_bytes as usize));
+            let left_to_read = MAX_BYTES.saturating_sub(state.total_read);
 
-            reader
-                .by_ref()
-                .take(amount_of_bytes)
-                .read_to_end(&mut body)?;
+            if amount_of_bytes >= left_to_read {
+                (header_data, vec![])
+            } else {
+                let mut body = Vec::with_capacity(left_to_read.min(amount_of_bytes));
 
-            (header_data, Vec::from(&body[..]))
+                reader
+                    .by_ref()
+                    .take(amount_of_bytes as u64)
+                    .read_to_end(&mut body)?;
+
+                (header_data, Vec::from(&body[..]))
+            }
         } else {
             (header_data, vec![])
         };
