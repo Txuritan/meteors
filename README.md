@@ -1,6 +1,6 @@
 # enrgy
 
-A (nightly) insecure lightweight synchronous Actix-like HTTP server.
+A (nightly) lightweight synchronous Actix-like HTTP server.
 
 *WARNING*: Do not allow access to this server from the open internet, it has little to no security measures.
 
@@ -38,4 +38,4 @@ A: I was trying to come up with a name and miss-spelled energy.
 
 Q: Why does this exist?
 
-A: I needed  a `actix-web` like server library, I also wanted to mess around with unstable features.
+A: I needed a lightweight `actix-web` like server library, I also wanted to mess around with unstable features.
