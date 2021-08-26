@@ -7,7 +7,7 @@ use {
             Method, Version,
         },
     },
-    std::{borrow::Cow, collections::BTreeMap, io::Read, str::FromStr as _, sync::Arc},
+    std::{borrow::Cow, collections::HashMap, io::Read, str::FromStr as _, sync::Arc},
 };
 
 #[derive(Debug, PartialEq)]
@@ -15,17 +15,18 @@ pub struct HeaderData {
     pub(crate) method: Method,
     pub(crate) url: String,
     pub(crate) query: String,
-    pub(crate) query_params: BTreeMap<String, String>,
+    pub(crate) query_params: HashMap<String, String>,
     #[allow(dead_code)] // just store it as we needed to parse it anyway
     pub(crate) version: Version,
-    pub(crate) headers: BTreeMap<HeaderName, String>,
+    // TODO: replace with ArrayMap
+    pub(crate) headers: HashMap<HeaderName, String>,
 }
 
 pub struct HttpRequest {
     pub(crate) header_data: HeaderData,
     pub(crate) body: Vec<u8>,
 
-    pub(crate) params: BTreeMap<String, String>,
+    pub(crate) params: HashMap<String, String>,
 
     pub(crate) data: Arc<Extensions>,
 
@@ -36,7 +37,7 @@ impl HttpRequest {
     pub(crate) fn from_parts(
         header_data: HeaderData,
         body: Vec<u8>,
-        params: BTreeMap<String, String>,
+        params: HashMap<String, String>,
         data: Arc<Extensions>,
     ) -> Self {
         Self {
@@ -185,7 +186,7 @@ impl HttpRequest {
 
             let query_params = form_urlencoded::parse(query.trim_start_matches('?').as_bytes())
                 .map(|(key, value)| (key.to_string(), value.to_string()))
-                .collect::<BTreeMap<_, _>>();
+                .collect::<HashMap<_, _>>();
 
             let version = Version::from_str(
                 meta_parts
@@ -204,7 +205,7 @@ impl HttpRequest {
         };
 
         let headers = {
-            let mut headers: BTreeMap<HeaderName, String> = BTreeMap::new();
+            let mut headers: HashMap<HeaderName, String> = HashMap::new();
 
             for header in &mut lines {
                 if header.is_empty() {
@@ -281,10 +282,10 @@ mod test_parse {
                 method: $method,
                 url: $url.to_string(),
                 query: $query.to_string(),
-                query_params: BTreeMap::new(),
+                query_params: HashMap::new(),
                 version: $version,
                 headers: {
-                    let mut temp = BTreeMap::new();
+                    let mut temp = HashMap::new();
 
                     $( temp.insert($header, $value.to_string()); )*
 

@@ -7,23 +7,24 @@ use {
         route::{self, Route},
         router::PathTree,
         service::BoxedService,
+        utils::ArrayMap,
         web, Error, HttpRequest, HttpResponse,
     },
-    std::{collections::BTreeMap, sync::Arc},
+    std::sync::Arc,
 };
 
 type InnerRoute = BoxedService<HttpRequest, HttpResponse, Error>;
 
 #[derive(Clone)]
 pub struct BuiltApp {
-    pub(crate) tree: Arc<BTreeMap<Method, PathTree<Arc<InnerRoute>>>>,
+    pub(crate) tree: Arc<ArrayMap<Method, PathTree<Arc<InnerRoute>>, 9>>,
     pub(crate) data: Arc<Extensions>,
     pub(crate) middleware: Arc<Vec<Box<dyn Middleware + Send + Sync + 'static>>>,
     pub(crate) default_service: Arc<InnerRoute>,
 }
 
 pub struct App {
-    tree: BTreeMap<Method, PathTree<Arc<InnerRoute>>>,
+    tree: ArrayMap<Method, PathTree<Arc<InnerRoute>>, 9>,
     data: Extensions,
     middleware: Vec<Box<dyn Middleware + Send + Sync + 'static>>,
     default_service: Arc<InnerRoute>,
@@ -53,7 +54,13 @@ impl App {
     }
 
     pub fn service(mut self, route: Route<'_>) -> Self {
-        let node = self.tree.entry(route.method).or_insert_with(PathTree::new);
+        let node = if let Some(node) = self.tree.get_mut(route.method) {
+            node
+        } else {
+            self.tree.insert(route.method, PathTree::new());
+
+            unsafe { self.tree.get_mut(route.method).unwrap_unchecked() }
+        };
 
         node.insert(route.path, Arc::new(route.service));
 
@@ -79,7 +86,7 @@ impl App {
 impl Default for App {
     fn default() -> Self {
         Self {
-            tree: BTreeMap::new(),
+            tree: ArrayMap::new(),
             data: Extensions::new(),
             middleware: Vec::new(),
             default_service: Arc::new(BoxedService::new(HandlerService::new(route::not_found))),

@@ -47,7 +47,7 @@ impl<K, V, const SIZE: usize> ArrayMap<K, V, SIZE> {
 
     pub fn insert(&mut self, key: K, value: V) -> Option<V>
     where
-        K: Eq,
+        K: PartialEq,
     {
         if let Some(entry) = self.get_mut(&key) {
             let mut temp = value;
@@ -79,7 +79,7 @@ impl<K, V, const SIZE: usize> ArrayMap<K, V, SIZE> {
     pub fn get<Q>(&self, key: Q) -> Option<&V>
     where
         Q: Borrow<K>,
-        K: Eq,
+        K: PartialEq,
     {
         for item in &self.map[0..self.len] {
             let (k, v) = unsafe { item.assume_init_ref() };
@@ -96,7 +96,7 @@ impl<K, V, const SIZE: usize> ArrayMap<K, V, SIZE> {
     pub fn get_mut<Q>(&mut self, key: Q) -> Option<&mut V>
     where
         Q: Borrow<K>,
-        K: Eq,
+        K: PartialEq,
     {
         for item in &mut self.map[0..self.len] {
             let (k, v) = unsafe { item.assume_init_mut() };
@@ -112,7 +112,7 @@ impl<K, V, const SIZE: usize> ArrayMap<K, V, SIZE> {
     pub fn contains<Q>(&self, key: Q) -> bool
     where
         Q: Borrow<K>,
-        K: Eq,
+        K: PartialEq,
     {
         self.get(key).is_some()
     }

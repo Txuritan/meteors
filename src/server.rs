@@ -7,7 +7,7 @@ use {
         App, Error, HttpRequest,
     },
     std::{
-        collections::BTreeMap,
+        collections::HashMap,
         fmt,
         io::{self},
         net::{SocketAddr, TcpListener, TcpStream},
@@ -213,10 +213,10 @@ impl HttpServer<SocketAddr> {
                     parameters
                         .into_iter()
                         .map(|(key, value)| (key.to_string(), value.to_string()))
-                        .collect::<BTreeMap<_, _>>(),
+                        .collect::<HashMap<_, _>>(),
                 )
             })
-            .unwrap_or_else(|| (app.default_service.clone(), BTreeMap::new()));
+            .unwrap_or_else(|| (app.default_service.clone(), HashMap::new()));
 
         let compress = if let Some(header) = header_data.headers.get(&ACCEPT_ENCODING) {
             header.contains("deflate")
