@@ -20,7 +20,6 @@ mod extensions;
 mod handler;
 mod responder;
 mod route;
-mod router;
 mod server;
 mod service;
 
