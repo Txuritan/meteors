@@ -5,14 +5,15 @@
     const_btree_new,
     const_fn_trait_bound,
     const_generics,
-    const_trait_impl,
-    const_trait_bound_opt_out,
+    const_maybe_uninit_assume_init,
     const_mut_refs,
+    const_trait_impl,
     decl_macro,
     option_result_unwrap_unchecked
 )]
 
 mod extractor;
+mod utils;
 
 mod app;
 mod extensions;
@@ -27,8 +28,6 @@ pub mod http;
 pub mod middleware;
 
 pub mod error;
-
-use std::collections::BTreeMap;
 
 pub use crate::{app::App, responder::Responder, server::HttpServer};
 
@@ -46,46 +45,6 @@ pub mod web {
         },
         route::{connect, delete, get, head, options, patch, post, put, to, trace},
     };
-}
-
-// FIXME Remove this in the future
-pub(crate) const fn new_btreemap<K: ?const Ord, V>() -> BTreeMap<K, V> {
-    use std::{
-        cmp::Ordering,
-        mem::{forget, transmute},
-    };
-
-    #[repr(transparent)]
-    #[derive(PartialEq, Eq, PartialOrd)]
-    struct ConstOrdWrapper<T>(T);
-
-    #[allow(clippy::derive_ord_xor_partial_ord)]
-    impl<T: ?const Ord> const Ord for ConstOrdWrapper<T> {
-        fn cmp(&self, _: &Self) -> Ordering {
-            Ordering::Equal
-        }
-
-        fn max(self, s: Self) -> Self {
-            forget(s);
-
-            self
-        }
-
-        fn min(self, s: Self) -> Self {
-            forget(s);
-
-            self
-        }
-
-        fn clamp(self, a: Self, b: Self) -> Self {
-            forget(a);
-            forget(b);
-
-            self
-        }
-    }
-
-    unsafe { transmute::<BTreeMap<ConstOrdWrapper<K>, V>, _>(BTreeMap::new()) }
 }
 
 // A module for testing different route handlers.

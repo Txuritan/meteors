@@ -1,10 +1,12 @@
 use {
-    crate::http::{
-        headers::{HeaderName, CONTENT_ENCODING},
-        Body, StatusCode, Version,
+    crate::{
+        http::{
+            headers::{HeaderName, CONTENT_ENCODING},
+            Body, StatusCode, Version,
+        },
+        utils::ArrayMap,
     },
     std::{
-        collections::BTreeMap,
         io::{self, Write as _},
         net::TcpStream,
     },
@@ -13,7 +15,7 @@ use {
 pub struct HttpResponse {
     version: Version,
     status: StatusCode,
-    headers: BTreeMap<HeaderName, String>,
+    headers: ArrayMap<HeaderName, String, 64>,
     body: Body,
 }
 
@@ -24,7 +26,7 @@ impl HttpResponse {
             inner: Self {
                 version: Version::Http10,
                 status,
-                headers: crate::new_btreemap(),
+                headers: ArrayMap::new(),
                 body: Body::Empty,
             },
         }
@@ -68,7 +70,7 @@ impl HttpResponse {
         }
 
         fn write_bytes(
-            headers: &BTreeMap<HeaderName, String>,
+            headers: &ArrayMap<HeaderName, String, 64>,
             bytes: &[u8],
             compress: bool,
             stream: &mut TcpStream,

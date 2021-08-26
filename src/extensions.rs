@@ -1,17 +1,17 @@
-use std::{
-    any::{Any, TypeId},
-    collections::BTreeMap,
+use {
+    crate::utils::ArrayMap,
+    std::any::{Any, TypeId},
 };
 
 pub struct Extensions {
-    inner: BTreeMap<TypeId, Box<dyn Any + Send + Sync>>,
+    inner: ArrayMap<TypeId, Box<dyn Any + Send + Sync>, 32>,
 }
 
 impl Extensions {
     #[inline]
     pub const fn new() -> Self {
         Self {
-            inner: crate::new_btreemap(),
+            inner: ArrayMap::new(),
         }
     }
 
