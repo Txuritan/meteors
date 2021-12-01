@@ -4,9 +4,10 @@ use enrgy::{
     dev::Extensions,
     http::{
         headers::{
-            ACCEPT, ACCEPT_CHARSET, ACCEPT_ENCODING, ACCEPT_LANGUAGE, CONNECTION, HOST, KEEP_ALIVE,
-            USER_AGENT,
+            HttpHeaderName, ACCEPT, ACCEPT_CHARSET, ACCEPT_ENCODING, ACCEPT_LANGUAGE, CONNECTION,
+            HOST, KEEP_ALIVE, USER_AGENT,
         },
+        uri::HttpResource,
         *,
     },
 };
@@ -54,11 +55,27 @@ macro request {
             $( $rest )*
         )
     },
+    (@inner,
+        ($m:ident, $u:ident, $v:ident, $h:ident),
+        [ $( $building:tt )* ],
+        $header:expr => $value:expr;
+        $( $rest:tt )*
+    ) => {
+        request!(
+            @inner,
+            ($m, $u, $v, $h),
+            [
+                $( $building )*
+                $h.insert($header, $value.to_string());
+            ],
+            $( $rest )*
+        )
+    },
 
     // entry point
     (
         ($m:ident, $u:ident, $v:ident, $h:ident),
-        $method:ident, $uri:expr, $version:ident;
+        $method:ident, $path:expr, $query:expr, $fragment:expr, $version:ident;
         $( $rest:tt )*
     ) => {
         request!(
@@ -66,7 +83,11 @@ macro request {
             ($m, $u, $v, $h),
             [
                 let $m = HttpMethod::$method;
-                let $u = $uri.to_string();
+                let $u = HttpResource {
+                    path: $path,
+                    query: $query,
+                    fragment: $fragment,
+                };
                 let $v = HttpVersion::$version;
                 let mut $h = HttpHeaders::new();
             ],
@@ -84,7 +105,7 @@ macro raw($( $raw:expr )*) {
 http_test!(
     test_curl_get,
     request!((m, u, v, h),
-        Get, "/test", Http11;
+        Get, "/test".to_string(), None, None, Http11;
         USER_AGENT => "curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1";
         HOST => "0.0.0.0=5000";
         ACCEPT => "*/*";
@@ -102,7 +123,7 @@ http_test!(
 http_test!(
     test_firefox_get,
     request!((m, u, v, h),
-        Get, "/favicon.ico", Http11;
+        Get, "/favicon.ico".to_string(), None, None, Http11;
         HOST => "0.0.0.0=5000";
         USER_AGENT => "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008061015 Firefox/3.0";
         ACCEPT => "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
@@ -123,6 +144,20 @@ http_test!(
         "Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7\r\n"
         "Keep-Alive: 300\r\n"
         "Connection: keep-alive\r\n"
+        "\r\n"
+    ),
+);
+
+http_test!(
+    test_dumbfuck,
+    request!((m, u, v, h),
+        Get, "/dumbfuck".to_string(), None, None, Http11;
+        HttpHeaderName::new("aaaaaaaaaaaaa") => "++++++++++";
+        { HttpBody::None },
+    ),
+    raw!(
+        "GET /dumbfuck HTTP/1.1\r\n"
+        "aaaaaaaaaaaaa: ++++++++++\r\n"
         "\r\n"
     ),
 );

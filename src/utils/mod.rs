@@ -65,7 +65,7 @@ pub(crate) struct Const;
 impl Const {
     #[inline]
     #[track_caller]
-    pub const unsafe fn index_get_unchecked<T>(slice: &[T], index: usize) -> &T {
+    pub const unsafe fn slice_index_get_unchecked<T>(slice: &[T], index: usize) -> &T {
         debug_assert!(index < slice.len());
 
         &*(slice.as_ptr().add(index))
@@ -73,7 +73,7 @@ impl Const {
 
     #[inline]
     #[track_caller]
-    pub const unsafe fn range_get_unchecked<T>(slice: &[T], range: Range<usize>) -> &[T] {
+    pub const unsafe fn slice_range_get_unchecked<T>(slice: &[T], range: Range<usize>) -> &[T] {
         debug_assert!(range.start <= range.end);
 
         let ptr = slice.as_ptr().add(range.start);
@@ -90,8 +90,30 @@ impl Const {
     ) -> &[T; LEN] {
         debug_assert!(slice.len() > offset + LEN);
 
-        let slice = Self::range_get_unchecked(slice, offset..offset + LEN);
+        let slice = Self::slice_range_get_unchecked(slice, offset..offset + LEN);
 
         &*(slice.as_ptr() as *const [_; LEN])
+    }
+
+    #[inline]
+    #[track_caller]
+    pub const fn str_split_at(src: &str, mid: usize) -> (&str, &str) {
+        unsafe {
+            (
+                Self::str_range_get_unchecked(src, 0..mid),
+                Self::str_range_get_unchecked(src, mid..src.len()),
+            )
+        }
+    }
+
+    #[inline]
+    #[track_caller]
+    pub const unsafe fn str_range_get_unchecked(src: &str, range: Range<usize>) -> &str {
+        debug_assert!(range.start <= range.end);
+
+        let ptr = src.as_ptr().add(range.start);
+        let len = range.end - range.start;
+
+        &*(ptr::slice_from_raw_parts(ptr, len) as *const str)
     }
 }

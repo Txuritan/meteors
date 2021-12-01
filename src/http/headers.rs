@@ -7,6 +7,12 @@ pub struct HttpHeader {}
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct HttpHeaderName(pub(crate) Cow<'static, str>);
 
+impl HttpHeaderName {
+    pub const fn new(key: &'static str) -> Self {
+        Self(Cow::Borrowed(key))
+    }
+}
+
 impl fmt::Display for HttpHeaderName {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)

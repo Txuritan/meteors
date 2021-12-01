@@ -1,6 +1,7 @@
 mod encoding;
 
 pub mod headers;
+pub mod uri;
 
 mod status;
 
@@ -16,6 +17,7 @@ use std::{
 
 use crate::{
     extensions::Extensions,
+    http::uri::HttpResource,
     utils::{ArrayMap, Ascii, Const},
 };
 
@@ -52,7 +54,6 @@ impl const From<std::num::ParseIntError> for HttpError {
 #[derive(Debug, PartialEq)]
 pub enum HttpBody {
     None,
-    Empty,
     Bytes(&'static [u8]),
     Vector(Vec<u8>),
 }
@@ -150,7 +151,7 @@ pub struct HttpRequest2 {
     /// The request's method
     pub method: HttpMethod,
     /// The request's URI
-    pub uri: String,
+    pub uri: HttpResource,
     /// The request's version
     pub version: HttpVersion,
 
@@ -183,7 +184,9 @@ impl HttpRequest2 {
         })
     }
 
-    pub fn read_meta<T>(reader: &mut T) -> Result<(HttpMethod, String, HttpVersion), HttpError>
+    pub fn read_meta<T>(
+        reader: &mut T,
+    ) -> Result<(HttpMethod, HttpResource, HttpVersion), HttpError>
     where
         T: BufRead,
     {
@@ -204,8 +207,9 @@ impl HttpRequest2 {
 
         offset += 1;
 
-        let uri =
+        let raw_uri =
             Ascii::read_until(&buffer, &mut offset, b' ').ok_or(HttpError::ParseMetaMissingUri)?;
+        let uri = HttpResource::new(&raw_uri);
 
         offset += 1;
 
@@ -247,8 +251,8 @@ impl HttpRequest2 {
                 // TODO(txuritan): use `slice::split_at_unchecked` when the api becomes public
                 let (head, tail) = unsafe {
                     (
-                        Const::range_get_unchecked(&buffer, 0..colon_index),
-                        Const::range_get_unchecked(&buffer, colon_index..(buffer).len()),
+                        Const::slice_range_get_unchecked(&buffer, 0..colon_index),
+                        Const::slice_range_get_unchecked(&buffer, colon_index..(buffer).len()),
                     )
                 };
 
@@ -290,7 +294,7 @@ impl HttpRequest2 {
                 let len = len.parse::<usize>()?;
 
                 if len == 0 {
-                    HttpBody::Empty
+                    HttpBody::None
                 } else {
                     match headers.get(&headers::TRANSFER_ENCODING) {
                         Some(value) if value.eq_ignore_ascii_case("chunked") => {
@@ -365,7 +369,7 @@ impl HttpResponse {
             version: HttpVersion::Http10,
             status,
             headers: ArrayMap::new(),
-            body: HttpBody::Empty,
+            body: HttpBody::None,
         }
     }
 
@@ -627,7 +631,7 @@ pub fn write_response(
     }
 
     match res.body {
-        HttpBody::None | HttpBody::Empty => {
+        HttpBody::None => {
             write!(stream, "Content-Length: 0\r\n")?;
         }
         HttpBody::Bytes(bytes) => {
