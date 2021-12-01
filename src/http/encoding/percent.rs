@@ -423,7 +423,7 @@ impl<'a> PercentDecode<'a> {
     }
 }
 
-fn decode_utf8_lossy(input: Cow<'_, [u8]>) -> Cow<'_, str> {
+pub(crate) fn decode_utf8_lossy(input: Cow<'_, [u8]>) -> Cow<'_, str> {
     // Note: This function is duplicated in `form_urlencoded/src/query_encoding.rs`.
     match input {
         Cow::Borrowed(bytes) => String::from_utf8_lossy(bytes),
