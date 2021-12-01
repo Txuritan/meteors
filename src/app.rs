@@ -1,31 +1,30 @@
-use {
-    crate::{
-        extensions::Extensions,
-        handler::HandlerService,
-        http::Method,
-        middleware::Middleware,
-        route::{self, Route},
-        service::BoxedService,
-        utils::{ArrayMap, PathTree},
-        web, Error, HttpRequest, HttpResponse,
-    },
-    std::sync::Arc,
+use std::sync::Arc;
+
+use crate::{
+    extensions::Extensions,
+    handler::HandlerService,
+    http::{HttpMethod, HttpRequest, HttpResponse},
+    middleware::{BoxedMiddleware, Middleware},
+    route::{self, Route},
+    service::BoxedService,
+    utils::{ArrayMap, PathTree},
+    web, Error,
 };
 
 type InnerRoute = BoxedService<HttpRequest, HttpResponse, Error>;
 
 #[derive(Clone)]
 pub struct BuiltApp {
-    pub(crate) tree: Arc<ArrayMap<Method, PathTree<Arc<InnerRoute>>, 9>>,
+    pub(crate) tree: Arc<ArrayMap<HttpMethod, PathTree<Arc<InnerRoute>>, 9>>,
     pub(crate) data: Arc<Extensions>,
-    pub(crate) middleware: Arc<Vec<Box<dyn Middleware + Send + Sync + 'static>>>,
+    pub(crate) middleware: Arc<Vec<BoxedMiddleware<HttpRequest, HttpResponse>>>,
     pub(crate) default_service: Arc<InnerRoute>,
 }
 
 pub struct App {
-    tree: ArrayMap<Method, PathTree<Arc<InnerRoute>>, 9>,
+    tree: ArrayMap<HttpMethod, PathTree<Arc<InnerRoute>>, 9>,
     data: Extensions,
-    middleware: Vec<Box<dyn Middleware + Send + Sync + 'static>>,
+    middleware: Vec<BoxedMiddleware<HttpRequest, HttpResponse>>,
     default_service: Arc<InnerRoute>,
 }
 
@@ -45,9 +44,9 @@ impl App {
 
     pub fn wrap<M>(mut self, middleware: M) -> Self
     where
-        M: Middleware + Send + Sync + 'static,
+        M: Middleware<HttpRequest, HttpResponse> + Send + Sync + 'static,
     {
-        self.middleware.push(box middleware);
+        self.middleware.push(BoxedMiddleware::new(middleware));
 
         self
     }

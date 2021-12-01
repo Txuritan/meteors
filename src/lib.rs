@@ -7,9 +7,14 @@
     const_generics,
     const_maybe_uninit_assume_init,
     const_mut_refs,
+    const_panic,
+    const_ptr_offset,
+    const_raw_ptr_deref,
+    const_slice_from_raw_parts,
     const_trait_impl,
     decl_macro,
-    option_result_unwrap_unchecked
+    option_result_unwrap_unchecked,
+    slice_ptr_get
 )]
 
 mod extractor;
@@ -24,17 +29,21 @@ mod server;
 mod service;
 
 pub mod http;
-pub mod middleware;
 
 pub mod error;
+pub mod middleware;
 
 pub use crate::{app::App, responder::Responder, server::HttpServer};
 
 #[doc(inline)]
-pub use crate::{
-    error::Error,
-    http::{request::HttpRequest, response::HttpResponse},
-};
+pub use crate::error::Error;
+
+pub mod dev {
+    pub use crate::{
+        extensions::Extensions,
+        service::{BoxedService, Service},
+    };
+}
 
 pub mod web {
     pub use crate::{

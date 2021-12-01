@@ -1,15 +1,19 @@
 use std::{borrow::Cow, cmp, fmt};
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct HeaderName(pub(crate) Cow<'static, str>);
+pub struct HttpHeaders {}
 
-impl fmt::Display for HeaderName {
+pub struct HttpHeader {}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct HttpHeaderName(pub(crate) Cow<'static, str>);
+
+impl fmt::Display for HttpHeaderName {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
 
-impl cmp::PartialEq<str> for HeaderName {
+impl cmp::PartialEq<str> for HttpHeaderName {
     fn eq(&self, other: &str) -> bool {
         self.0.to_lowercase() == other.to_lowercase()
     }
@@ -18,7 +22,7 @@ impl cmp::PartialEq<str> for HeaderName {
 macro_rules! impl_headers {
     ($( $name:ident => $phrase:expr , )*) => {
         $(
-            pub const $name: HeaderName = HeaderName(Cow::Borrowed($phrase));
+            pub const $name: HttpHeaderName = HttpHeaderName(Cow::Borrowed($phrase));
         )*
     }
 }
@@ -63,6 +67,7 @@ impl_headers! {
     IF_NONE_MATCH => "If-None-match",
     IF_RANGE => "If-Range",
     IF_UNMODIFIED_SINCE => "If-Unmodified-Since",
+    KEEP_ALIVE => "Keep-Alive",
     LAST_MODIFIED => "Last-Modified",
     LOCATION => "Location",
     MAX_FORWARDS => "Max-Forwards",

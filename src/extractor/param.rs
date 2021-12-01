@@ -1,11 +1,10 @@
-use {
-    crate::{error::InternalError, extractor::Extractor, Error, HttpRequest},
-    std::{
-        fmt::Debug,
-        ops::{Deref, DerefMut},
-        str::FromStr,
-    },
+use std::{
+    fmt::Debug,
+    ops::{Deref, DerefMut},
+    str::FromStr,
 };
+
+use crate::{error::InternalError, extractor::Extractor, http::HttpRequest, Error};
 
 fn get_value<'req>(req: &'req HttpRequest, key: &'static str) -> Option<&'req String> {
     req.params.get(key)

@@ -1,10 +1,6 @@
-use {
-    crate::{
-        http::{headers::CONTENT_TYPE, StatusCode},
-        HttpResponse,
-    },
-    std::{error, fmt},
-};
+use std::{error, fmt};
+
+use crate::http::{headers::CONTENT_TYPE, HttpResponse, StatusCode};
 
 pub struct Error {
     inner: Box<dyn ResponseError>,

@@ -19,7 +19,7 @@ impl<Request, Response, Error> BoxedService<Request, Response, Error> {
     }
 }
 
-impl<Request, Response, Error> Service<Request> for BoxedService<Request, Response, Error> {
+impl<Request, Response, Error> const Service<Request> for BoxedService<Request, Response, Error> {
     type Response = Response;
 
     type Error = Error;

@@ -1,7 +1,6 @@
-use {
-    crate::{error::InternalError, extractor::Extractor, Error, HttpRequest},
-    std::{ops::Deref, sync::Arc},
-};
+use std::{ops::Deref, sync::Arc};
+
+use crate::{error::InternalError, extractor::Extractor, http::HttpRequest, Error};
 
 pub struct Data<T>
 where

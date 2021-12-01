@@ -12,7 +12,7 @@ pub use self::{
     query::{OptionalQuery, ParseQuery, Query, RawQuery},
 };
 
-use crate::{Error, HttpRequest};
+use crate::{http::HttpRequest, Error};
 
 pub trait Extractor: Sized {
     type Error;

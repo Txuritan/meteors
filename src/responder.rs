@@ -1,4 +1,7 @@
-use crate::{Error, HttpRequest, HttpResponse};
+use crate::{
+    http::{HttpRequest, HttpResponse},
+    Error,
+};
 
 pub trait Responder {
     fn respond_to(self, req: &HttpRequest) -> Result<HttpResponse, Error>;

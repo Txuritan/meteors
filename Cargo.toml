@@ -11,9 +11,16 @@ license = "MIT"
 
 keywords = [ "synchronous", "http", "server", "nightly" ]
 
+[features]
+compression = [ ]
+
 [dependencies]
-ctrlc = "3.1"
-form_urlencoded = "1.0"
-log = "0.4"
-miniz_oxide = "0.4"
-percent-encoding = "2.1"
+libc = "0.2"
+log = "0.4" # TODO: remove dependency on this
+miniz_oxide = "0.5"
+
+[target.'cfg(unix)'.dependencies]
+nix = "0.23"
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3", features = [ "consoleapi", "handleapi", "synchapi", "winbase" ] }

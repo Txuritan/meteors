@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, mem::MaybeUninit};
+use std::{borrow::Borrow, cmp::PartialEq, fmt, mem::MaybeUninit};
 
 pub struct ArrayMap<K, V, const SIZE: usize> {
     map: [MaybeUninit<(K, V)>; SIZE],
@@ -76,15 +76,15 @@ impl<K, V, const SIZE: usize> ArrayMap<K, V, SIZE> {
     }
 
     #[must_use]
-    pub fn get<Q>(&self, key: Q) -> Option<&V>
+    pub fn get<Q: ?Sized>(&self, key: &Q) -> Option<&V>
     where
-        Q: Borrow<K>,
-        K: PartialEq,
+        Q: PartialEq,
+        K: Borrow<Q>,
     {
         for item in &self.map[0..self.len] {
             let (k, v) = unsafe { item.assume_init_ref() };
 
-            if k == key.borrow() {
+            if key.eq(k.borrow()) {
                 return Some(v);
             }
         }
@@ -109,12 +109,25 @@ impl<K, V, const SIZE: usize> ArrayMap<K, V, SIZE> {
         None
     }
 
-    pub fn contains<Q>(&self, key: Q) -> bool
+    pub fn contains<Q: ?Sized>(&self, key: &Q) -> bool
     where
-        Q: Borrow<K>,
-        K: PartialEq,
+        Q: PartialEq,
+        K: Borrow<Q>,
     {
         self.get(key).is_some()
+    }
+
+    pub fn iter(&self) -> Iter<'_, K, V, SIZE> {
+        Iter {
+            map: self,
+            index: 0,
+        }
+    }
+
+    fn as_slice(&self) -> &[(K, V)] {
+        let len = self.len();
+
+        unsafe { std::slice::from_raw_parts(self.map.as_ptr() as *const (K, V), len) }
     }
 }
 
@@ -134,6 +147,26 @@ impl<'m, K, V, const SIZE: usize> IntoIterator for &'m ArrayMap<K, V, SIZE> {
             map: self,
             index: 0,
         }
+    }
+}
+
+impl<K, V, const SIZE: usize> fmt::Debug for ArrayMap<K, V, SIZE>
+where
+    K: fmt::Debug,
+    V: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.as_slice().iter()).finish()
+    }
+}
+
+impl<K, V, const SIZE: usize> PartialEq for ArrayMap<K, V, SIZE>
+where
+    K: PartialEq,
+    V: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.len == other.len && PartialEq::eq(self.as_slice(), other.as_slice())
     }
 }
 

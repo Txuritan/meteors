@@ -1,7 +1,6 @@
-use {
-    crate::utils::ArrayMap,
-    std::any::{Any, TypeId},
-};
+use std::any::{Any, TypeId};
+
+use crate::utils::ArrayMap;
 
 pub struct Extensions {
     inner: ArrayMap<TypeId, Box<dyn Any + Send + Sync>, 32>,

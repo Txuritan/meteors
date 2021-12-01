@@ -1,28 +1,27 @@
-use {
-    crate::{
-        app::BuiltApp,
-        http::{self, headers::ACCEPT_ENCODING},
-        server::pool::ThreadPool,
-        service::Service,
-        App, Error, HttpRequest,
+use std::{
+    fmt, io,
+    net::{SocketAddr, TcpListener, TcpStream},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
     },
-    std::{
-        collections::HashMap,
-        fmt,
-        io::{self},
-        net::{SocketAddr, TcpListener, TcpStream},
-        sync::{
-            atomic::{AtomicBool, Ordering},
-            Arc,
-        },
-        thread::{self, JoinHandle},
-    },
+    thread::{self, JoinHandle},
+};
+
+use crate::{
+    app::BuiltApp,
+    extensions::Extensions,
+    http::{self, headers::ACCEPT_ENCODING, HttpRequest},
+    middleware::Middleware as _,
+    service::Service,
+    utils::{signal, thread_pool::ThreadPool, ArrayMap},
+    App, Error,
 };
 
 #[derive(Debug)]
 pub enum RunError {
     Io(std::io::Error),
-    Signal(ctrlc::Error),
+    Signal(signal::Error),
 }
 
 impl const From<std::io::Error> for RunError {
@@ -31,8 +30,8 @@ impl const From<std::io::Error> for RunError {
     }
 }
 
-impl const From<ctrlc::Error> for RunError {
-    fn from(err: ctrlc::Error) -> Self {
+impl const From<signal::Error> for RunError {
+    fn from(err: signal::Error) -> Self {
         Self::Signal(err)
     }
 }
@@ -92,7 +91,7 @@ impl HttpServer<Unbound> {
 
 impl HttpServer<SocketAddr> {
     pub fn run(self) -> Result<(), RunError> {
-        ctrlc::set_handler({
+        signal::set_handler({
             let close = Arc::clone(&self.close);
 
             move || {
@@ -201,22 +200,22 @@ impl HttpServer<SocketAddr> {
     }
 
     fn thread_handle(app: Arc<BuiltApp>, stream: &mut TcpStream) -> Result<(), ThreadError> {
-        let (header_data, body) = HttpRequest::parse_reader(stream)?;
+        let (header_data, body) = http::read_request(stream)?;
 
-        let (service, parameters) = app
+        let (service, params) = app
             .tree
             .get(&header_data.method)
             .and_then(|tree| tree.find(&header_data.url))
-            .map(|(service, parameters)| {
-                (
-                    Arc::clone(service),
-                    parameters
-                        .into_iter()
-                        .map(|(key, value)| (key.to_string(), value.to_string()))
-                        .collect::<HashMap<_, _>>(),
-                )
+            .map(|(service, params)| {
+                let mut map: ArrayMap<String, String, 32> = ArrayMap::new();
+
+                for (key, value) in params.into_iter() {
+                    map.insert(key.to_string(), value.to_string());
+                }
+
+                (Arc::clone(service), map)
             })
-            .unwrap_or_else(|| (app.default_service.clone(), HashMap::new()));
+            .unwrap_or_else(|| (app.default_service.clone(), ArrayMap::new()));
 
         let compress = if let Some(header) = header_data.headers.get(&ACCEPT_ENCODING) {
             header.contains("deflate")
@@ -224,144 +223,26 @@ impl HttpServer<SocketAddr> {
             false
         };
 
-        let mut request =
-            HttpRequest::from_parts(header_data, body, parameters, Arc::clone(&app.data));
+        let mut request = HttpRequest {
+            header_data,
+            body,
+            params,
+            data: Arc::clone(&app.data),
+            extensions: Extensions::new(),
+        };
 
         for middleware in &*app.middleware {
             middleware.before(&mut request);
         }
 
-        let response = service.call(&mut request)?;
+        let mut response = service.call(&mut request)?;
 
         for middleware in &*app.middleware {
-            middleware.after(&request, &response);
+            response = middleware.after(&request, response);
         }
 
-        response.into_stream(compress, stream)?;
+        http::write_response(response, compress, stream)?;
 
         Ok(())
-    }
-}
-
-mod pool {
-    use std::{
-        marker::PhantomData,
-        sync::{
-            atomic::{AtomicBool, Ordering},
-            mpsc::{self, Receiver, RecvTimeoutError, Sender},
-            Arc, Mutex,
-        },
-        thread::{self, JoinHandle},
-        time::Duration,
-    };
-
-    pub struct ThreadPool<Data>
-    where
-        Data: Send + Sync + 'static,
-    {
-        workers: Vec<Worker<Data>>,
-    }
-
-    impl<Data> ThreadPool<Data>
-    where
-        Data: Send + Sync + 'static,
-    {
-        pub fn new<F>(size: usize, close: Arc<AtomicBool>, handler: F) -> (Self, Sender<Data>)
-        where
-            F: Fn(Data) + Clone + Send + Sync + 'static,
-        {
-            let (sender, receiver) = mpsc::channel();
-
-            let receiver = Arc::new(Mutex::new(receiver));
-
-            let workers = (0..size)
-                .into_iter()
-                .map(|id| {
-                    Worker::new(
-                        id,
-                        Arc::clone(&close),
-                        Arc::clone(&receiver),
-                        handler.clone(),
-                    )
-                })
-                .collect();
-
-            (Self { workers }, sender)
-        }
-
-        pub fn join(self) {
-            for worker in self.workers {
-                worker.join()
-            }
-        }
-    }
-
-    struct Worker<Data>
-    where
-        Data: Send + Sync + 'static,
-    {
-        id: usize,
-        thread: JoinHandle<()>,
-        _data: PhantomData<Data>,
-    }
-
-    impl<Data> Worker<Data>
-    where
-        Data: Send + Sync + 'static,
-    {
-        fn new<F>(
-            id: usize,
-            close: Arc<AtomicBool>,
-            receiver: Arc<Mutex<Receiver<Data>>>,
-            handle: F,
-        ) -> Self
-        where
-            F: Fn(Data) + Clone + Send + Sync + 'static,
-        {
-            let thread = thread::spawn(move || Self::inner(id, close, receiver, handle));
-
-            Self {
-                id,
-                thread,
-                _data: PhantomData,
-            }
-        }
-
-        fn inner<F>(
-            id: usize,
-            close: Arc<AtomicBool>,
-            receiver: Arc<Mutex<Receiver<Data>>>,
-            handle: F,
-        ) where
-            F: Fn(Data) + Clone + Send + Sync + 'static,
-        {
-            loop {
-                let received = {
-                    let receiver = receiver.lock().unwrap();
-
-                    receiver.recv_timeout(Duration::from_millis(100))
-                };
-
-                match received {
-                    Ok(data) => {
-                        log::trace!("worker {} received a request", id);
-
-                        handle(data)
-                    }
-                    Err(RecvTimeoutError::Disconnected) => break,
-                    Err(RecvTimeoutError::Timeout) => {
-                        if close.load(Ordering::SeqCst) {
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        fn join(self) {
-            self.thread.join().unwrap();
-
-            log::trace!("shutdown worker {}", self.id);
-        }
     }
 }

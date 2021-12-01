@@ -1,6 +1,10 @@
-use {
-    crate::{extractor::Extractor, service::Service, Error, HttpRequest, HttpResponse, Responder},
-    std::marker::PhantomData,
+use std::marker::PhantomData;
+
+use crate::{
+    extractor::Extractor,
+    http::{HttpRequest, HttpResponse},
+    service::Service,
+    Error, Responder,
 };
 
 pub trait Handler<T, R>

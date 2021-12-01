@@ -114,41 +114,23 @@ impl<T> Node<T> {
     }
 
     /// Returns a reference to the node corresponding to the path.
-    pub fn find<'a>(&'a self, p: &'a str) -> Option<(&'a Self, Vec<&'a str>)> {
-        self.find_with_capacity(p, 10)
-    }
-
-    /// Returns a reference to the node corresponding to the path.
-    pub fn find_with_capacity<'a>(
-        &'a self,
-        p: &'a str,
-        capacity: usize,
-    ) -> Option<(&'a Self, Vec<&'a str>)> {
-        let mut params = Vec::with_capacity(capacity);
-
-        self.find_inner(p, &mut params).zip(Some(params))
-    }
-
-    /// Returns a reference to the node corresponding to the path.
-    #[allow(clippy::if_same_then_else)]
-    fn find_inner<'a>(&'a self, mut p: &'a str, params: &mut Vec<&'a str>) -> Option<&'a Self> {
+    #[inline]
+    fn find<'a>(&'a self, mut p: &'a str, params: &mut Vec<&'a str>) -> Option<&'a Self> {
         match self.kind {
             NodeKind::Static(ref s) => {
                 let l = loc_count(s, p);
 
-                if l == 0 {
-                    None
-                } else if l < s.len() {
+                if l == 0 || l < s.len() {
                     None
                 } else if l == s.len() && l == p.len() {
                     Some(
                         // Fixed: has only route `/*`
                         // Ended `/` `/*any`
                         if self.data.is_none() && self.indices.is_some() && s.ends_with('/') {
-                            &(unsafe { self.nodes.as_ref().unwrap_unchecked() })[position(
-                                unsafe { self.indices.as_ref().unwrap_unchecked() },
-                                '*',
-                            )?]
+                            &(unsafe { self.nodes.as_ref().unwrap_unchecked() })[{
+                                // this unwrap gets optimized away
+                                position(self.indices.as_ref().unwrap(), '*')?
+                            }]
                         } else {
                             self
                         },
@@ -163,7 +145,7 @@ impl<T> Node<T> {
                     if let Some(i) =
                         position(indices, unsafe { p.chars().next().unwrap_unchecked() })
                     {
-                        if let Some(n) = nodes[i].find_inner(p, params).as_mut() {
+                        if let Some(n) = nodes[i].find(p, params).as_mut() {
                             return Some(
                                 // Ended `/` `/*any`
                                 match &n.kind {
@@ -172,10 +154,10 @@ impl<T> Node<T> {
                                             && n.indices.is_some()
                                             && s.ends_with('/') =>
                                     {
-                                        &(unsafe { n.nodes.as_ref().unwrap_unchecked() })[position(
-                                            unsafe { n.indices.as_ref().unwrap_unchecked() },
-                                            '*',
-                                        )?]
+                                        &(unsafe { n.nodes.as_ref().unwrap_unchecked() })[{
+                                            // this unwrap gets optimized away
+                                            position(n.indices.as_ref().unwrap(), '*')?
+                                        }]
                                     }
                                     _ => n,
                                 },
@@ -185,14 +167,14 @@ impl<T> Node<T> {
 
                     // Named Parameter
                     if let Some(i) = position(indices, ':') {
-                        if let Some(n) = nodes[i].find_inner(p, params).as_mut() {
+                        if let Some(n) = nodes[i].find(p, params).as_mut() {
                             return Some(n);
                         }
                     }
 
                     // Catch-All Parameter
                     if let Some(i) = position(indices, '*') {
-                        if let Some(n) = nodes[i].find_inner(p, params).as_mut() {
+                        if let Some(n) = nodes[i].find(p, params).as_mut() {
                             return Some(n);
                         }
                     }
@@ -207,11 +189,9 @@ impl<T> Node<T> {
                     params.push(&p[..i]);
                     p = &p[i..];
 
-                    let (n, ref mut ps) = (unsafe { self.nodes.as_ref().unwrap_unchecked() })
+                    let n = (unsafe { self.nodes.as_ref().unwrap_unchecked() })
                         [position(indices, unsafe { p.chars().next().unwrap_unchecked() })?]
-                    .find(p)?;
-
-                    params.append(ps);
+                    .find(p, params)?;
 
                     Some(n)
                 } else {
@@ -327,22 +307,22 @@ impl<T> PathTree<T> {
 
     /// Returns a reference to the node data and params corresponding to the path.
     pub fn find<'a>(&'a self, path: &'a str) -> Option<(&'a T, Vec<(&'a str, &'a str)>)> {
-        self.root
-            .find_with_capacity(path, self.params)
-            .and_then(|(node, values)| {
-                node.data.as_ref().map(|data| {
-                    (
-                        data,
-                        node.params.as_ref().map_or_else(Vec::new, |params| {
-                            params
-                                .iter()
-                                .zip(values.iter())
-                                .map(|(a, b)| (a.as_str(), *b))
-                                .collect()
-                        }),
-                    )
-                })
+        let mut values = Vec::with_capacity(self.params);
+
+        self.root.find(path, &mut values).and_then(|node| {
+            node.data.as_ref().map(|data| {
+                (
+                    data,
+                    node.params.as_ref().map_or_else(Vec::new, |params| {
+                        params
+                            .iter()
+                            .zip(values.iter())
+                            .map(|(a, b)| (a.as_str(), *b))
+                            .collect()
+                    }),
+                )
             })
+        })
     }
 }
 
