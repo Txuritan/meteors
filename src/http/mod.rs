@@ -294,21 +294,24 @@ impl HttpRequest2 {
                 let len = len.parse::<usize>()?;
 
                 if len == 0 {
-                    HttpBody::None
+                    Ok(HttpBody::None)
                 } else {
-                    match headers.get(&headers::TRANSFER_ENCODING) {
-                        Some(value) if value.eq_ignore_ascii_case("chunked") => {
-                            todo!()
-                        }
-                        Some(value) => todo!("handle `Transfer-Encoding` value `{}`", value),
-                        None => HttpBody::None,
-                    }
+                    // TODO(txuritan): limit the amount of bytes that can be read
+                    let mut content = vec![0; len];
+
+                    reader.read_exact(&mut content[0..len])?;
+
+                    Ok(HttpBody::Vector(content))
                 }
             }
-            None => HttpBody::None,
-        };
-
-        todo!()
+            None => match headers.get(&headers::TRANSFER_ENCODING) {
+                Some(value) if value.eq_ignore_ascii_case("chunked") => {
+                    todo!()
+                }
+                Some(value) => todo!("handle `Transfer-Encoding` value `{}`", value),
+                None => Ok(HttpBody::None),
+            },
+        }
     }
 }
 

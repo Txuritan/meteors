@@ -4,7 +4,7 @@ pub struct HttpHeaders {}
 
 pub struct HttpHeader {}
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Eq, PartialOrd, Ord)]
 pub struct HttpHeaderName(pub(crate) Cow<'static, str>);
 
 impl HttpHeaderName {
@@ -22,6 +22,12 @@ impl fmt::Display for HttpHeaderName {
 impl cmp::PartialEq<str> for HttpHeaderName {
     fn eq(&self, other: &str) -> bool {
         self.0.to_lowercase() == other.to_lowercase()
+    }
+}
+
+impl cmp::PartialEq<HttpHeaderName> for HttpHeaderName {
+    fn eq(&self, other: &HttpHeaderName) -> bool {
+        self.0.to_lowercase() == other.0.to_lowercase()
     }
 }
 

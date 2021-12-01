@@ -5,7 +5,7 @@ use enrgy::{
     http::{
         headers::{
             HttpHeaderName, ACCEPT, ACCEPT_CHARSET, ACCEPT_ENCODING, ACCEPT_LANGUAGE, CONNECTION,
-            HOST, KEEP_ALIVE, USER_AGENT,
+            HOST, KEEP_ALIVE, USER_AGENT, CONTENT_LENGTH,
         },
         uri::HttpResource,
         *,
@@ -84,9 +84,9 @@ macro request {
             [
                 let $m = HttpMethod::$method;
                 let $u = HttpResource {
-                    path: $path,
-                    query: $query,
-                    fragment: $fragment,
+                    path: $path.to_string(),
+                    query: $query.map(|s: &str| s.to_string()),
+                    fragment: $fragment.map(|s: &str| s.to_string()),
                 };
                 let $v = HttpVersion::$version;
                 let mut $h = HttpHeaders::new();
@@ -105,7 +105,7 @@ macro raw($( $raw:expr )*) {
 http_test!(
     test_curl_get,
     request!((m, u, v, h),
-        Get, "/test".to_string(), None, None, Http11;
+        Get, "/test", None, None, Http11;
         USER_AGENT => "curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1";
         HOST => "0.0.0.0=5000";
         ACCEPT => "*/*";
@@ -123,7 +123,7 @@ http_test!(
 http_test!(
     test_firefox_get,
     request!((m, u, v, h),
-        Get, "/favicon.ico".to_string(), None, None, Http11;
+        Get, "/favicon.ico", None, None, Http11;
         HOST => "0.0.0.0=5000";
         USER_AGENT => "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008061015 Firefox/3.0";
         ACCEPT => "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8";
@@ -151,13 +151,42 @@ http_test!(
 http_test!(
     test_dumbfuck,
     request!((m, u, v, h),
-        Get, "/dumbfuck".to_string(), None, None, Http11;
+        Get, "/dumbfuck", None, None, Http11;
         HttpHeaderName::new("aaaaaaaaaaaaa") => "++++++++++";
         { HttpBody::None },
     ),
     raw!(
         "GET /dumbfuck HTTP/1.1\r\n"
         "aaaaaaaaaaaaa: ++++++++++\r\n"
+        "\r\n"
+    ),
+);
+
+http_test!(
+    test_get_funky_content_length_body_hello,
+    request!((m, u, v, h),
+        Get, "/get_funky_content_length_body_hello", None, None, Http11;
+        CONTENT_LENGTH => "5";
+        { HttpBody::Vector(b"HELLO".to_vec()) },
+    ),
+    raw!(
+        "GET /get_funky_content_length_body_hello HTTP/1.1\r\n"
+        "conTENT-Length: 5\r\n"
+        "\r\n"
+        "HELLO"
+    ),
+);
+
+http_test!(
+    test_utf8_path_request,
+    request!((m, u, v, h),
+        Get, "/δ¶/δt/pope", Some("q=1"), Some("narf"), Http11;
+        HOST => "github.com";
+        { HttpBody::None },
+    ),
+    raw!(
+        "GET /δ¶/δt/pope?q=1#narf HTTP/1.1\r\n"
+        "Host: github.com\r\n"
         "\r\n"
     ),
 );
