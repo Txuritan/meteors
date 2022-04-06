@@ -107,16 +107,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ctrlc"
-version = "3.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a19c6cedffdc8c03a3346d723eb20bd85a13362bb96dc2ac000842c6381ec7bf"
-dependencies = [
- "nix",
- "winapi",
-]
-
-[[package]]
 name = "digest"
 version = "0.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -141,13 +131,12 @@ dependencies = [
 [[package]]
 name = "enrgy"
 version = "0.2.2"
-source = "git+https://github.com/Txuritan/enrgy?rev=20d93d65e8feda23cb943afa3055ef6e720f99ed#20d93d65e8feda23cb943afa3055ef6e720f99ed"
 dependencies = [
- "ctrlc",
- "form_urlencoded",
+ "libc",
  "log",
- "miniz_oxide",
- "percent-encoding",
+ "miniz_oxide 0.5.1",
+ "nix",
+ "winapi",
 ]
 
 [[package]]
@@ -174,7 +163,7 @@ dependencies = [
  "cfg-if",
  "crc32fast",
  "libc",
- "miniz_oxide",
+ "miniz_oxide 0.4.4",
 ]
 
 [[package]]
@@ -301,6 +290,15 @@ checksum = "a92518e98c078586bc6c934028adcca4c92a53d6a958196de835170a01d84e4b"
 dependencies = [
  "adler",
  "autocfg",
+]
+
+[[package]]
+name = "miniz_oxide"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d2b29bd4bc3f33391105ebee3589c19197c4271e3e5a9ec9bfe8127eeff8f082"
+dependencies = [
+ "adler",
 ]
 
 [[package]]
@@ -609,7 +607,7 @@ dependencies = [
  "getrandom",
  "log",
  "memmap2",
- "miniz_oxide",
+ "miniz_oxide 0.4.4",
  "owo-colors",
 ]
 

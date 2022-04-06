@@ -9,6 +9,8 @@ repository = "https://github.com/Txuritan/enrgy"
 
 license = "MIT"
 
+workspace = "../.."
+
 keywords = [ "synchronous", "http", "server", "nightly" ]
 
 [features]
