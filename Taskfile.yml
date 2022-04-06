@@ -6,6 +6,11 @@ tasks:
       CARGO_NET_GIT_FETCH_WITH_CLI: true
     cmds:
       - cross +nightly build -Z build-std=panic_abort,std --release --target aarch64-linux-android
+  build-android-debug:
+    env:
+      CARGO_NET_GIT_FETCH_WITH_CLI: true
+    cmds:
+      - cross +nightly build --target aarch64-linux-android
 
   build-windows:
     env:

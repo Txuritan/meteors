@@ -1,0 +1,21 @@
+[package]
+name = "varela-command-serve"
+version = "0.1.0"
+authors = [ "Txuritan <txuritan@protonmail.com>" ]
+edition = "2021"
+
+license = "MIT"
+
+workspace = "../.."
+
+[dependencies]
+common = { path = "../varela-common", package = "varela-common" }
+opal = { path = "../opal" }
+
+chrono = { version = "0.4", default-features = false, features = [ "std" ] }
+enrgy = { git = "https://github.com/Txuritan/enrgy", rev = "20d93d65e8feda23cb943afa3055ef6e720f99ed" } # locked rev until i can get keep-alive working
+form_urlencoded = "1.0"
+humantime = "2.1"
+once_cell = "1.8"
+percent-encoding = "2.1"
+qstring = "0.7"

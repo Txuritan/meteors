@@ -1,0 +1,12 @@
+[package]
+name = "aloene"
+version = "0.1.0"
+authors = [ "Txuritan <txuritan@protonmail.com>" ]
+edition = "2021"
+
+license = "MIT"
+
+workspace = "../.."
+
+[dependencies]
+aloene-macros = { path = "../aloene-macros" }

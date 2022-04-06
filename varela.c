@@ -297,7 +297,7 @@ enum VarelaCommon_Color {
     VarelaCommon_Color_BrightCyan,
 };
 
-int VarelaCommon__colorf(enum VarelaCommon_Color color, const char * fmt) {
+int VarelaCommon_colorf(enum VarelaCommon_Color color, const char * fmt) {
     int foreground_color = -1;
     int return_value = -99;
 
@@ -511,5 +511,10 @@ struct VarelaCommon_Models_Config {
 // varela-command-serve
 // {{{
 // }}}
+
+int main(int argc, char * argv[]) {
+    VarelaCommon_colorf(VarelaCommon_Color_BrightBlue, "Hello, World!\n");
+    return 0;
+}
 
 // }}}

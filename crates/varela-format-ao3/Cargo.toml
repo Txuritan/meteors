@@ -1,0 +1,14 @@
+[package]
+name = "varela-format-ao3"
+version = "0.1.0"
+authors = [ "Txuritan <txuritan@protonmail.com>" ]
+edition = "2021"
+
+license = "MIT"
+
+workspace = "../.."
+
+[dependencies]
+common = { path = "../varela-common", package = "varela-common" }
+
+query = { path = "../query" }

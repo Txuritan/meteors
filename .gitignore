@@ -2,5 +2,7 @@
 /target
 
 /data
+/temp
 /varela.aloe.dfl
+*.epub
 *.exe
