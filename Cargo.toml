@@ -7,7 +7,6 @@ members = [
     "crates/opal",
     "crates/opal-macros",
     "crates/markup-parser",
-    "crates/mini-html-parser",
     "crates/query",
     "crates/query-macros",
     "crates/varela",
