@@ -17,5 +17,5 @@ fs2 = "0.4"
 getrandom = "0.2"
 log = { version = "0.4", features = [ "std" ] }
 memmap2 = "0.5"
-miniz_oxide = "0.4"
+miniz_oxide = "0.5.1"
 owo-colors = "3.0"
