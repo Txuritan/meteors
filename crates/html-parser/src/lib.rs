@@ -82,7 +82,6 @@
 //! ```
 
 #![allow(clippy::needless_doctest_main)]
-#![feature(option_result_unwrap_unchecked)]
 
 mod dom;
 mod error;

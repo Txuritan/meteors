@@ -239,8 +239,8 @@ impl Database {
 
         mem::swap(&mut self.lock_maps, &mut lock_maps);
 
-        for id in self.index().stories.keys().cloned() {
-            if let Some(mapped) = lock_maps.remove(&id) {
+        for id in self.index().stories.keys() {
+            if let Some(mapped) = lock_maps.remove(id) {
                 let MappedFile { name, file, map } = mapped;
 
                 drop(map);

@@ -525,7 +525,7 @@ pub fn parse_header(headers: &str) -> Result<HttpHeaderData, HttpError> {
             .ok_or(HttpError::ParseMetaMissingUri)?
             .trim();
 
-        let (url, query) = url.split_at(url.find('?').unwrap_or_else(|| url.len()));
+        let (url, query) = url.split_at(url.find('?').unwrap_or(url.len()));
 
         let mut query_params = HttpParams::new();
 

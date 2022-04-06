@@ -1,5 +1,4 @@
 #![deny(rust_2018_idioms)]
-#![feature(option_result_unwrap_unchecked)]
 
 use std::{collections::HashMap, iter::Peekable, str::CharIndices};
 
