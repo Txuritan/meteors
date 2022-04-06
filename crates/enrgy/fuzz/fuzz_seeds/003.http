@@ -1,0 +1,5 @@
+GET /search?page=2query=Hello+World HTTP/1.1
+Host: w3schools.com
+Accept-Encoding: gzip, deflate
+Connection: Keep-Alive
+User-Agent: curl/7.64.1

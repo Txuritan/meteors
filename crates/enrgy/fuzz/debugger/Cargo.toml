@@ -1,0 +1,11 @@
+[package]
+name = "enrgy-fuzz-debugger"
+version = "0.0.0"
+edition = "2018"
+publish = false
+
+[dependencies]
+enrgy = { path = "../.." }
+
+[workspace]
+members = ["."]
