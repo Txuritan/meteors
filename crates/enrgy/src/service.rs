@@ -19,11 +19,13 @@ impl<Request, Response, Error> BoxedService<Request, Response, Error> {
     }
 }
 
-impl<Request, Response, Error> const Service<Request> for BoxedService<Request, Response, Error> {
+// TODO: figure put what i need to do to get this to be const
+impl<Request, Response, Error> Service<Request> for BoxedService<Request, Response, Error> {
     type Response = Response;
 
     type Error = Error;
 
+    #[inline]
     fn call(&self, req: &mut Request) -> Result<Self::Response, Self::Error> {
         (self.inner).call(req)
     }

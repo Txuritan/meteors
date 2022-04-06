@@ -21,7 +21,7 @@ use {
             self,
             headers::{CACHE_CONTROL, CONTENT_TYPE, ETAG},
         },
-        web, HttpResponse,
+        web, http::HttpResponse,
     },
 };
 
@@ -41,7 +41,7 @@ pub fn style(header: web::OptionalHeader<"If-None-Match">) -> HttpResponse {
 
         if let Some(header) = header.as_deref() {
             if header == CSS_TAG {
-                return Ok(res.status(http::StatusCode(304)).finish());
+                return Ok(res.status(http::StatusCode(304)));
             }
         }
 

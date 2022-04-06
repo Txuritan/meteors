@@ -1,5 +1,5 @@
 #![allow(incomplete_features)]
-#![feature(const_generics, decl_macro, option_result_unwrap_unchecked)]
+#![feature(adt_const_params, decl_macro, generic_const_exprs)]
 
 mod handlers;
 mod templates;
@@ -94,7 +94,7 @@ pub fn run(mut args: common::Args) -> Result<()> {
             .service(web::get("/origin/:id").to(handlers::entity))
             .service(web::get("/tag/:id").to(handlers::entity))
             .service(web::get("/opds/root.:ext").to(handlers::catalog))
-            .default_service(web::to(|| -> enrgy::HttpResponse { crate::res!(404) }))
+            .default_service(web::to(|| -> enrgy::http::HttpResponse { crate::res!(404) }))
             .wrap(LoggerMiddleware),
     )
     .bind(addr);
@@ -114,45 +114,45 @@ pub fn run(mut args: common::Args) -> Result<()> {
 
 struct LoggerMiddleware;
 
-impl Middleware for LoggerMiddleware {
-    fn before(&self, req: &mut enrgy::HttpRequest) {
-        use enrgy::http::Method;
+impl Middleware<enrgy::http::HttpRequest, enrgy::http::HttpResponse> for LoggerMiddleware {
+    fn before(&self, req: &mut enrgy::http::HttpRequest) {
+        use enrgy::http::HttpMethod;
 
         let earlier = Instant::now();
 
-        req.ext_mut().insert(earlier);
+        req.extensions.insert(earlier);
 
-        fn to_colored_string(method: &Method) -> String {
+        fn to_colored_string(method: &HttpMethod) -> String {
             match method {
-                Method::Get => format!("{}", "GET".green()),
-                Method::Post => format!("{}", "POST".bright_blue()),
-                Method::Put => format!("{}", "PUT".bright_purple()),
-                Method::Patch => format!("{}", "PATCH".bright_yellow()),
-                Method::Delete => format!("{}", "DELETE".bright_red()),
-                Method::Head => "HEAD".to_owned(),
-                Method::Connect => "CONNECT".to_owned(),
-                Method::Options => "OPTION".to_owned(),
-                Method::Trace => "TRACE".to_owned(),
+                HttpMethod::Get => format!("{}", "GET".green()),
+                HttpMethod::Post => format!("{}", "POST".bright_blue()),
+                HttpMethod::Put => format!("{}", "PUT".bright_purple()),
+                HttpMethod::Patch => format!("{}", "PATCH".bright_yellow()),
+                HttpMethod::Delete => format!("{}", "DELETE".bright_red()),
+                HttpMethod::Head => "HEAD".to_owned(),
+                HttpMethod::Connect => "CONNECT".to_owned(),
+                HttpMethod::Options => "OPTION".to_owned(),
+                HttpMethod::Trace => "TRACE".to_owned(),
             }
         }
 
-        let url = req.url().to_string();
+        let url = req.header_data.url.clone();
 
-        let (url, _) = url.split_at(url.find('?').unwrap_or_else(|| url.len()));
+        let (url, _) = url.split_at(url.find('?').unwrap_or(url.len()));
 
         info!(
             target: "command_serve::router",
             "{}/{} {} {}",
             "HTTP".bright_yellow(),
-            req.version(),
-            to_colored_string(&req.method()),
+            req.header_data.version,
+            to_colored_string(&req.header_data.method),
             url.bright_purple(),
         );
     }
 
-    fn after(&self, req: &enrgy::HttpRequest, res: &enrgy::HttpResponse) {
+    fn after(&self, req: &enrgy::http::HttpRequest, res: enrgy::http::HttpResponse) -> enrgy::http::HttpResponse {
         let dur = req
-            .ext()
+            .extensions
             .get::<Instant>()
             .and_then(|earlier| {
                 chrono::Duration::from_std(Instant::now().duration_since(*earlier)).ok()
@@ -163,7 +163,7 @@ impl Middleware for LoggerMiddleware {
         info!(
             target: "command_serve::router",
             "{} {}ms",
-            match res.status().0 {
+            match res.status.0 {
                 200 => format!("{}", "200".green()),
                 404 => format!("{}", "404".bright_yellow()),
                 503 => format!("{}", "503".bright_red()),
@@ -171,5 +171,7 @@ impl Middleware for LoggerMiddleware {
             },
             dur,
         );
+
+        res
     }
 }

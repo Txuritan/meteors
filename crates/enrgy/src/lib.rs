@@ -1,19 +1,15 @@
 #![allow(incomplete_features)]
 #![warn(nonstandard_style, rust_2018_idioms, future_incompatible)]
 #![feature(
+    adt_const_params,
     box_syntax,
     const_btree_new,
-    const_fn_trait_bound,
-    const_generics,
     const_maybe_uninit_assume_init,
     const_mut_refs,
-    const_panic,
-    const_ptr_offset,
-    const_raw_ptr_deref,
     const_slice_from_raw_parts,
     const_trait_impl,
     decl_macro,
-    option_result_unwrap_unchecked,
+    generic_const_exprs,
     slice_ptr_get
 )]
 

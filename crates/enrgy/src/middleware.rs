@@ -18,11 +18,14 @@ impl<Req, Res> BoxedMiddleware<Req, Res> {
     }
 }
 
-impl<Req, Res> const Middleware<Req, Res> for BoxedMiddleware<Req, Res> {
+// TODO: figure put what i need to do to get this to be const
+impl<Req, Res> Middleware<Req, Res> for BoxedMiddleware<Req, Res> {
+    #[inline]
     fn before(&self, req: &mut Req) {
         self.inner.before(req)
     }
 
+    #[inline]
     fn after(&self, req: &Req, res: Res) -> Res {
         self.inner.after(req, res)
     }

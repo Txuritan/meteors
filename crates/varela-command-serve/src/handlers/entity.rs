@@ -8,7 +8,7 @@ use {
         models::{EntityKind, Id},
         prelude::*,
     },
-    enrgy::{web, HttpResponse},
+    enrgy::{web, http::HttpResponse},
 };
 
 pub fn entity(db: web::Data<Database>, id: web::ParseParam<"id", Id>) -> HttpResponse {

@@ -6,7 +6,7 @@ use {
         },
         prelude::*,
     },
-    enrgy::HttpResponse,
+    enrgy::http::HttpResponse,
     once_cell::sync::Lazy,
     std::{collections::HashMap, sync::RwLock},
 };
@@ -20,7 +20,7 @@ where
         Err(err) => {
             error!("handler error: {}", err);
 
-            HttpResponse::internal_server_error().finish()
+            HttpResponse::internal_server_error()
         }
     }
 }
