@@ -8,18 +8,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Txuritan/meteors.git"
+    "url": "git+https://github.com/Txuritan/varela.git"
   },
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Txuritan/meteors/issues"
+    "url": "https://github.com/Txuritan/varela/issues"
   },
-  "homepage": "https://github.com/Txuritan/meteors#readme",
+  "homepage": "https://github.com/Txuritan/varela#readme",
   "devDependencies": {
-    "@tailwindcss/forms": "^0.3.3",
+    "@tailwindcss/forms": "^0.5.0",
     "autoprefixer": "^10.3.1",
     "postcss": "^8.3.6",
-    "tailwindcss": "^2.2.7"
+    "tailwindcss": "^3.0.23"
   }
 }
