@@ -1,5 +1,6 @@
 use std::{
-    fmt, io,
+    fmt,
+    io::{self, BufReader},
     net::{SocketAddr, TcpListener, TcpStream},
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -10,7 +11,7 @@ use std::{
 
 use crate::{
     app::BuiltApp,
-    extensions::Extensions,
+    extractor::param::ParsedParams,
     http::{self, headers::ACCEPT_ENCODING, HttpRequest},
     middleware::Middleware as _,
     service::Service,
@@ -175,61 +176,65 @@ impl HttpServer<SocketAddr> {
             }
         }
 
-        if let Err(err) = stream.set_read_timeout(None) {
-            log::error!(
-                "internal tcp stream error, unable to make `read` blocking: {}",
-                err
-            );
-        }
+        // if let Err(err) = stream.set_read_timeout(None) {
+        //     log::error!(
+        //         "internal tcp stream error, unable to make `read` blocking: {}",
+        //         err
+        //     );
+        // }
 
         run(app.clone(), &mut stream);
 
-        let mut byte = [0u8; 1];
+        // let mut byte = [0u8; 1];
 
-        loop {
-            match stream.peek(&mut byte) {
-                Ok(_bytes) => {
-                    run(app.clone(), &mut stream);
-                }
-                Err(err) if err.kind() == io::ErrorKind::ConnectionAborted => break,
-                Err(err) => {
-                    log::error!("{}", err)
-                }
-            }
-        }
+        // loop {
+        //     match stream.peek(&mut byte) {
+        //         Ok(_bytes) => {
+        //             run(app.clone(), &mut stream);
+        //         }
+        //         Err(err) if err.kind() == io::ErrorKind::ConnectionAborted => break,
+        //         Err(err) => {
+        //             log::error!("{}", err)
+        //         }
+        //     }
+        // }
     }
 
     fn thread_handle(app: Arc<BuiltApp>, stream: &mut TcpStream) -> Result<(), ThreadError> {
-        let (header_data, body) = http::read_request(stream)?;
+        let mut buf_reader = BufReader::new(stream);
+        let mut request = HttpRequest::from_buf_reader(Arc::clone(&app.data), &mut buf_reader)?;
+        let stream = buf_reader.into_inner();
+
+        // let (header_data, body) = http::read_request(stream)?;
 
         let (service, params) = app
             .tree
-            .get(&header_data.method)
-            .and_then(|tree| tree.find(&header_data.url))
+            .get(&request.method)
+            .and_then(|tree| tree.find(&request.uri.path))
             .map(|(service, params)| {
-                let mut map: ArrayMap<String, String, 32> = ArrayMap::new();
+                let mut map = ParsedParams(ArrayMap::new());
 
                 for (key, value) in params.into_iter() {
-                    map.insert(key.to_string(), value.to_string());
+                    map.0.insert(key.to_string(), value.to_string());
                 }
 
                 (Arc::clone(service), map)
             })
-            .unwrap_or_else(|| (app.default_service.clone(), ArrayMap::new()));
+            .unwrap_or_else(|| (app.default_service.clone(), ParsedParams(ArrayMap::new())));
 
-        let compress = if let Some(header) = header_data.headers.get(&ACCEPT_ENCODING) {
+        let compress = if let Some(header) = request.headers.get(&ACCEPT_ENCODING) {
             header.contains("deflate")
         } else {
             false
         };
 
-        let mut request = HttpRequest {
-            header_data,
-            body,
-            params,
-            data: Arc::clone(&app.data),
-            extensions: Extensions::new(),
-        };
+        // let mut request = HttpRequest {
+        //     header_data,
+        //     body,
+        //     params,
+        //     data: Arc::clone(&app.data),
+        //     extensions: Extensions::new(),
+        // };
 
         for middleware in &*app.middleware {
             middleware.before(&mut request);

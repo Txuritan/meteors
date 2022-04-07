@@ -4,13 +4,22 @@ use std::{
     str::FromStr,
 };
 
-use crate::{error::InternalError, extractor::Extractor, http::HttpRequest, Error};
+use crate::{
+    error::InternalError, extractor::Extractor, http::HttpRequest, utils::ArrayMap, Error,
+};
 
-fn get_value<'req>(req: &'req HttpRequest, key: &'static str) -> Option<&'req String> {
-    req.params.get(key)
+pub(crate) struct ParsedParams(pub(crate) ArrayMap<String, String, 32>);
+
+fn get_value<'req>(req: &'req mut HttpRequest, key: &'static str) -> Option<&'req String> {
+    req.extensions
+        .get::<ParsedParams>()
+        .and_then(|parsed| parsed.0.get(key))
 }
 
-fn get_value_err<'req>(req: &'req HttpRequest, key: &'static str) -> Result<&'req String, Error> {
+fn get_value_err<'req>(
+    req: &'req mut HttpRequest,
+    key: &'static str,
+) -> Result<&'req String, Error> {
     match get_value(req, key) {
         Some(v) => Ok(v),
         None => Err(InternalError::BadRequest(format!(
@@ -42,7 +51,7 @@ impl<const KEY: &'static str> Extractor for Param<KEY> {
     type Error = Error;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
-        match get_value_err(&*req, KEY) {
+        match get_value_err(req, KEY) {
             Ok(value) => Ok(Self {
                 value: value.clone(),
             }),
@@ -74,7 +83,7 @@ impl<const KEY: &'static str> Extractor for OptionalParam<KEY> {
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         Ok(Self {
-            value: get_value(&*req, KEY).cloned(),
+            value: get_value(req, KEY).cloned(),
         })
     }
 }
@@ -117,7 +126,7 @@ where
     type Error = Error;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
-        match get_value_err(&*req, KEY) {
+        match get_value_err(req, KEY) {
             Ok(value) => match T::from_str(value) {
                 Ok(value) => Ok(Self { value }),
                 Err(err) => Err(InternalError::BadRequest(format!(

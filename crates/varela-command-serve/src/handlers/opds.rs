@@ -3,7 +3,7 @@ use common::models::FileKind;
 use {
     crate::{templates::pages::opds::OpdsFeed, utils},
     common::{database::Database, models::Existing, prelude::*},
-    enrgy::{http::headers::CONTENT_TYPE, web, http::HttpResponse},
+    enrgy::{http::headers::CONTENT_TYPE, http::HttpResponse, web},
     std::str::FromStr,
 };
 

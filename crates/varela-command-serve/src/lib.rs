@@ -24,16 +24,6 @@ pub use self::router::res;
 
 #[inline(never)]
 pub fn run(mut args: common::Args) -> Result<()> {
-    // let stop = Arc::new(AtomicBool::new(false));
-
-    // ctrlc::set_handler({
-    //     let stop = Arc::clone(&stop);
-
-    //     move || {
-    //         stop.store(true, Ordering::SeqCst);
-    //     }
-    // })?;
-
     if args.peek().map(|a| a == "--help").unwrap_or_default() {
         println!("Usage:");
         println!("  varela serve <ARGS>");
@@ -94,7 +84,9 @@ pub fn run(mut args: common::Args) -> Result<()> {
             .service(web::get("/origin/:id").to(handlers::entity))
             .service(web::get("/tag/:id").to(handlers::entity))
             .service(web::get("/opds/root.:ext").to(handlers::catalog))
-            .default_service(web::to(|| -> enrgy::http::HttpResponse { crate::res!(404) }))
+            .default_service(web::to(|| -> enrgy::http::HttpResponse {
+                crate::res!(404)
+            }))
             .wrap(LoggerMiddleware),
     )
     .bind(addr);
@@ -136,21 +128,23 @@ impl Middleware<enrgy::http::HttpRequest, enrgy::http::HttpResponse> for LoggerM
             }
         }
 
-        let url = req.header_data.url.clone();
-
-        let (url, _) = url.split_at(url.find('?').unwrap_or(url.len()));
+        let path = req.uri.path.clone();
 
         info!(
             target: "command_serve::router",
             "{}/{} {} {}",
             "HTTP".bright_yellow(),
-            req.header_data.version,
-            to_colored_string(&req.header_data.method),
-            url.bright_purple(),
+            req.version,
+            to_colored_string(&req.method),
+            path.bright_purple(),
         );
     }
 
-    fn after(&self, req: &enrgy::http::HttpRequest, res: enrgy::http::HttpResponse) -> enrgy::http::HttpResponse {
+    fn after(
+        &self,
+        req: &enrgy::http::HttpRequest,
+        res: enrgy::http::HttpResponse,
+    ) -> enrgy::http::HttpResponse {
         let dur = req
             .extensions
             .get::<Instant>()

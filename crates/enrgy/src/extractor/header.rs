@@ -7,8 +7,7 @@ use std::{
 use crate::{error::InternalError, extractor::Extractor, http::HttpRequest, Error};
 
 fn get_value<'req>(req: &'req HttpRequest, key: &'static str) -> Option<&'req String> {
-    req.header_data
-        .headers
+    req.headers
         .iter()
         .find(|(k, _)| k.0.eq_ignore_ascii_case(key))
         .map(|(_, value)| value)

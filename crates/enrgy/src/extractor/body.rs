@@ -1,6 +1,10 @@
 use std::ops::{Deref, DerefMut};
 
-use crate::{extractor::Extractor, http::HttpRequest, Error};
+use crate::{
+    extractor::Extractor,
+    http::HttpRequest,
+    Error,
+};
 
 pub struct Body {
     value: Vec<u8>,
@@ -25,7 +29,10 @@ impl Extractor for Body {
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         Ok(Body {
-            value: req.body.clone(),
+            value: match req.body.as_ref() {
+                Some(body) => body.as_vec(),
+                None => todo!(), // TODO: return error here
+            },
         })
     }
 }

@@ -1,4 +1,4 @@
-mod encoding;
+pub(crate) mod encoding;
 
 pub mod headers;
 pub mod uri;
@@ -6,9 +6,7 @@ pub mod uri;
 mod status;
 
 use std::{
-    borrow::Cow,
     cmp, fmt,
-    io::Read,
     io::{BufRead, Write},
     net::TcpStream,
     str::FromStr,
@@ -51,11 +49,19 @@ impl const From<std::num::ParseIntError> for HttpError {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum HttpBody {
-    None,
     Bytes(&'static [u8]),
     Vector(Vec<u8>),
+}
+
+impl HttpBody {
+    pub fn as_vec(&self) -> Vec<u8> {
+        match self {
+            HttpBody::Bytes(bytes) => bytes.to_vec(),
+            HttpBody::Vector(vector) => vector.clone(),
+        }
+    }
 }
 
 impl const From<&'static str> for HttpBody {
@@ -147,7 +153,7 @@ impl FromStr for HttpVersion {
 pub type HttpHeaders = ArrayMap<headers::HttpHeaderName, String, 32>;
 pub type HttpParams = ArrayMap<String, String, 32>;
 
-pub struct HttpRequest2 {
+pub struct HttpRequest {
     /// The request's method
     pub method: HttpMethod,
     /// The request's URI
@@ -158,15 +164,17 @@ pub struct HttpRequest2 {
     /// The request's headers
     pub headers: HttpHeaders,
 
+    /// The server's extensions
+    pub data: Arc<Extensions>,
     /// The request's extensions
     pub extensions: Extensions,
 
     /// The request's body
-    pub body: HttpBody,
+    pub body: Option<HttpBody>,
 }
 
-impl HttpRequest2 {
-    pub fn from_buf_reader<T>(reader: &mut T) -> Result<HttpRequest2, HttpError>
+impl HttpRequest {
+    pub fn from_buf_reader<T>(data: Arc<Extensions>, reader: &mut T) -> Result<Self, HttpError>
     where
         T: BufRead,
     {
@@ -174,11 +182,12 @@ impl HttpRequest2 {
         let headers = Self::read_headers(reader)?;
         let body = Self::read_body(reader, &headers)?;
 
-        Ok(HttpRequest2 {
+        Ok(Self {
             method,
             version,
             uri,
             headers,
+            data,
             extensions: Extensions::new(),
             body,
         })
@@ -285,7 +294,10 @@ impl HttpRequest2 {
         Ok(headers)
     }
 
-    pub fn read_body<T>(reader: &mut T, headers: &HttpHeaders) -> Result<HttpBody, HttpError>
+    pub fn read_body<T>(
+        reader: &mut T,
+        headers: &HttpHeaders,
+    ) -> Result<Option<HttpBody>, HttpError>
     where
         T: BufRead,
     {
@@ -294,14 +306,14 @@ impl HttpRequest2 {
                 let len = len.parse::<usize>()?;
 
                 if len == 0 {
-                    Ok(HttpBody::None)
+                    Ok(None)
                 } else {
                     // TODO(txuritan): limit the amount of bytes that can be read
                     let mut content = vec![0; len];
 
                     reader.read_exact(&mut content[0..len])?;
 
-                    Ok(HttpBody::Vector(content))
+                    Ok(Some(HttpBody::Vector(content)))
                 }
             }
             None => match headers.get(&headers::TRANSFER_ENCODING) {
@@ -309,13 +321,13 @@ impl HttpRequest2 {
                     todo!()
                 }
                 Some(value) => todo!("handle `Transfer-Encoding` value `{}`", value),
-                None => Ok(HttpBody::None),
+                None => Ok(None),
             },
         }
     }
 }
 
-impl fmt::Debug for HttpRequest2 {
+impl fmt::Debug for HttpRequest {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("HttpRequest2")
             .field("method", &self.method)
@@ -327,7 +339,7 @@ impl fmt::Debug for HttpRequest2 {
     }
 }
 
-impl cmp::PartialEq for HttpRequest2 {
+impl cmp::PartialEq for HttpRequest {
     fn eq(&self, other: &Self) -> bool {
         self.method == other.method
             && self.uri == other.uri
@@ -338,6 +350,7 @@ impl cmp::PartialEq for HttpRequest2 {
 }
 
 #[derive(Debug, PartialEq)]
+#[deprecated]
 pub struct HttpHeaderData {
     pub method: HttpMethod,
     pub url: String,
@@ -347,32 +360,20 @@ pub struct HttpHeaderData {
     pub headers: HttpHeaders,
 }
 
-pub struct HttpRequest {
-    pub header_data: HttpHeaderData,
-    pub body: Vec<u8>,
-
-    pub params: HttpParams,
-
-    pub data: Arc<Extensions>,
-
-    pub extensions: Extensions,
-}
-
 pub struct HttpResponse {
     pub version: HttpVersion,
     pub status: StatusCode,
     pub headers: ArrayMap<headers::HttpHeaderName, String, 64>,
-    pub body: HttpBody,
+    pub body: Option<HttpBody>,
 }
 
 impl HttpResponse {
-    #[allow(clippy::new_ret_no_self)]
     pub const fn new(status: StatusCode) -> Self {
         Self {
             version: HttpVersion::Http10,
             status,
             headers: ArrayMap::new(),
-            body: HttpBody::None,
+            body: None,
         }
     }
 
@@ -411,175 +412,10 @@ impl HttpResponse {
     where
         B: Into<HttpBody>,
     {
-        self.body = body.into();
+        self.body = Some(body.into());
 
         self
     }
-}
-
-pub fn read_request<R>(reader: &mut R) -> Result<(HttpHeaderData, Vec<u8>), HttpError>
-where
-    R: Read,
-{
-    struct State {
-        data: Vec<u8>,
-        total_read: usize,
-        amount_read: usize,
-        read_buffer: [u8; BUFFER_SIZE],
-    }
-
-    fn double_newline(bytes: &[u8]) -> bool {
-        bytes == &b"\r\n\r\n"[..]
-    }
-
-    const BUFFER_SIZE: usize = 512;
-    const MAX_BYTES: usize = 1028 * 8;
-
-    let mut state = State {
-        data: Vec::with_capacity(512),
-        total_read: 0,
-        amount_read: BUFFER_SIZE,
-        read_buffer: [0; BUFFER_SIZE],
-    };
-
-    loop {
-        if state.amount_read == 0 {
-            break;
-        }
-
-        state.amount_read = reader.read(&mut state.read_buffer)?;
-
-        if state.amount_read == 0 {
-            break;
-        }
-
-        (state.total_read) += state.amount_read;
-
-        state
-            .data
-            .extend_from_slice(&state.read_buffer[..state.amount_read]);
-
-        (state.read_buffer) = [0; BUFFER_SIZE];
-
-        if state.data.windows(4).any(double_newline) {
-            break;
-        }
-
-        if state.total_read >= MAX_BYTES {
-            break;
-        }
-    }
-
-    let header_bytes = if let Some(i) = state.data.windows(4).position(double_newline) {
-        &state.data[..(i + 2)]
-    } else {
-        &state.data[..]
-    };
-
-    let header_str = String::from_utf8_lossy(header_bytes);
-
-    let header_data = parse_header(header_str.as_ref())?;
-
-    let (header_data, body) =
-        if let Some(header) = header_data.headers.get(&headers::CONTENT_LENGTH) {
-            let amount_of_bytes = header.trim().parse::<usize>()?;
-
-            let left_to_read = MAX_BYTES.saturating_sub(state.total_read);
-
-            if amount_of_bytes >= left_to_read {
-                (header_data, vec![])
-            } else {
-                let mut body = Vec::with_capacity(left_to_read.min(amount_of_bytes));
-
-                reader
-                    .by_ref()
-                    .take(amount_of_bytes as u64)
-                    .read_to_end(&mut body)?;
-
-                (header_data, Vec::from(&body[..]))
-            }
-        } else {
-            (header_data, vec![])
-        };
-
-    Ok((header_data, body))
-}
-
-pub fn parse_header(headers: &str) -> Result<HttpHeaderData, HttpError> {
-    let mut lines = headers.lines();
-
-    let meta = lines.next().ok_or(HttpError::ParseMissingMeta)?;
-
-    let (method, url, query, query_params, version) = {
-        let mut meta_parts = meta.split(' ').filter(|part| !part.is_empty());
-
-        let method = HttpMethod::from_str(
-            meta_parts
-                .next()
-                .ok_or(HttpError::ParseMetaMissingMethod)?
-                .trim(),
-        )?;
-
-        let url = meta_parts
-            .next()
-            .ok_or(HttpError::ParseMetaMissingUri)?
-            .trim();
-
-        let (url, query) = url.split_at(url.find('?').unwrap_or(url.len()));
-
-        let mut query_params = HttpParams::new();
-
-        for (key, value) in
-            crate::http::encoding::form::parse(query.trim_start_matches('?').as_bytes())
-        {
-            query_params.insert(key.to_string(), value.to_string());
-        }
-
-        let version = HttpVersion::from_str(
-            meta_parts
-                .next()
-                .ok_or(HttpError::ParseMetaMissingVersion)?
-                .trim(),
-        )?;
-
-        (
-            method,
-            url.to_string(),
-            query.to_string(),
-            query_params,
-            version,
-        )
-    };
-
-    let headers = {
-        let mut headers = HttpHeaders::new();
-
-        for header in &mut lines {
-            if header.is_empty() {
-                break;
-            }
-
-            if let Some(idx) = header.find(':') {
-                let (key, value) = header.split_at(idx);
-
-                headers.insert(
-                    headers::HttpHeaderName(Cow::Owned(key.trim().to_string())),
-                    value.trim_start_matches(": ").trim().to_string(),
-                );
-            }
-        }
-
-        headers
-    };
-
-    Ok(HttpHeaderData {
-        method,
-        url,
-        query,
-        query_params,
-        version,
-        headers,
-    })
 }
 
 pub fn write_response(
@@ -634,14 +470,14 @@ pub fn write_response(
     }
 
     match res.body {
-        HttpBody::None => {
-            write!(stream, "Content-Length: 0\r\n")?;
-        }
-        HttpBody::Bytes(bytes) => {
+        Some(HttpBody::Bytes(bytes)) => {
             write_bytes(&res.headers, bytes, compress, stream)?;
         }
-        HttpBody::Vector(bytes) => {
+        Some(HttpBody::Vector(bytes)) => {
             write_bytes(&res.headers, bytes.as_slice(), compress, stream)?;
+        }
+        None => {
+            write!(stream, "Content-Length: 0\r\n")?;
         }
     }
 

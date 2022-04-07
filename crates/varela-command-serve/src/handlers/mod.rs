@@ -17,11 +17,12 @@ pub use crate::handlers::{
 use {
     crate::utils,
     enrgy::{
+        http::HttpResponse,
         http::{
             self,
             headers::{CACHE_CONTROL, CONTENT_TYPE, ETAG},
         },
-        web, http::HttpResponse,
+        web,
     },
 };
 

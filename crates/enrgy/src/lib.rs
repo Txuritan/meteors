@@ -1,4 +1,7 @@
-#![allow(incomplete_features)]
+#![allow(
+    incomplete_features,
+    stable_features, // remove once cross updates
+)]
 #![warn(nonstandard_style, rust_2018_idioms, future_incompatible)]
 #![feature(
     adt_const_params,
@@ -10,7 +13,10 @@
     const_trait_impl,
     decl_macro,
     generic_const_exprs,
-    slice_ptr_get
+    slice_ptr_get,
+    // these two have to be here until cross publishes a new version
+    const_fn_trait_bound,
+    const_ptr_offset,
 )]
 
 mod extractor;

@@ -1,11 +1,13 @@
 #![feature(decl_macro)]
 
+use std::sync::Arc;
+
 use enrgy::{
     dev::Extensions,
     http::{
         headers::{
             HttpHeaderName, ACCEPT, ACCEPT_CHARSET, ACCEPT_ENCODING, ACCEPT_LANGUAGE, CONNECTION,
-            HOST, KEEP_ALIVE, USER_AGENT, CONTENT_LENGTH,
+            CONTENT_LENGTH, HOST, KEEP_ALIVE, USER_AGENT,
         },
         uri::HttpResource,
         *,
@@ -28,11 +30,12 @@ macro request {
     ) => {{
         $( $building )*
 
-        HttpRequest2 {
+        HttpRequest {
             method: $m,
             uri: $u,
             version: $v,
             headers: $h,
+            data: Arc::new(Extensions::new()),
             extensions: Extensions::new(),
             body: $body,
         }
@@ -97,7 +100,7 @@ macro request {
 }
 
 macro raw($( $raw:expr )*) {
-    HttpRequest2::from_buf_reader(&mut std::io::Cursor::new(
+    HttpRequest::from_buf_reader(Arc::new(Extensions::new()), &mut std::io::Cursor::new(
         concat!($( $raw ),*).as_bytes(),
     )).unwrap()
 }
@@ -109,7 +112,7 @@ http_test!(
         USER_AGENT => "curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1";
         HOST => "0.0.0.0=5000";
         ACCEPT => "*/*";
-        { HttpBody::None },
+        { None },
     ),
     raw!(
         "GET /test HTTP/1.1\r\n"
@@ -132,7 +135,7 @@ http_test!(
         ACCEPT_CHARSET => "ISO-8859-1,utf-8;q=0.7,*;q=0.7";
         KEEP_ALIVE => "300";
         CONNECTION => "keep-alive";
-        { HttpBody::None },
+        { None },
     ),
     raw!(
         "GET /favicon.ico HTTP/1.1\r\n"
@@ -153,7 +156,7 @@ http_test!(
     request!((m, u, v, h),
         Get, "/dumbfuck", None, None, Http11;
         HttpHeaderName::new("aaaaaaaaaaaaa") => "++++++++++";
-        { HttpBody::None },
+        { None },
     ),
     raw!(
         "GET /dumbfuck HTTP/1.1\r\n"
@@ -167,7 +170,7 @@ http_test!(
     request!((m, u, v, h),
         Get, "/get_funky_content_length_body_hello", None, None, Http11;
         CONTENT_LENGTH => "5";
-        { HttpBody::Vector(b"HELLO".to_vec()) },
+        { Some(HttpBody::Vector(b"HELLO".to_vec())) },
     ),
     raw!(
         "GET /get_funky_content_length_body_hello HTTP/1.1\r\n"
@@ -182,7 +185,7 @@ http_test!(
     request!((m, u, v, h),
         Get, "/δ¶/δt/pope", Some("q=1"), Some("narf"), Http11;
         HOST => "github.com";
-        { HttpBody::None },
+        { None },
     ),
     raw!(
         "GET /δ¶/δt/pope?q=1#narf HTTP/1.1\r\n"

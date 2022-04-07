@@ -303,16 +303,6 @@ impl<'a> From<PercentEncode<'a>> for Cow<'a, str> {
     }
 }
 
-/// Percent-decode the given string.
-///
-/// <https://url.spec.whatwg.org/#string-percent-decode>
-///
-/// See [`percent_decode`] regarding the return type.
-#[inline]
-pub fn percent_decode_str(input: &str) -> PercentDecode<'_> {
-    percent_decode(input.as_bytes())
-}
-
 /// Percent-decode the given bytes.
 ///
 /// <https://url.spec.whatwg.org/#percent-decode>

@@ -22,4 +22,4 @@ tasks:
     env:
       NODE_ENV: production
     cmds:
-      - npx tailwindcss -c tailwind.config.js -i varela/command/serve/assets/index.css -o varela/command/serve/assets/dist/index.css --minify
+      - npx tailwindcss -c tailwind.config.js -i crates/varela-command-serve/assets/index.css -o crates/varela-command-serve/assets/dist/index.css --minify

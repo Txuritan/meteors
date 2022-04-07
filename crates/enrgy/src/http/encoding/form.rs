@@ -13,12 +13,9 @@
 //! Converts between a string (such as an URL’s query string)
 //! and a sequence of (name, value) pairs.
 
-use std::{
-    borrow::Cow,
-    str,
-};
+use std::{borrow::Cow, str};
 
-use crate::http::encoding::percent::{percent_decode, percent_encode_byte, decode_utf8_lossy};
+use crate::http::encoding::percent::{decode_utf8_lossy, percent_decode, percent_encode_byte};
 
 /// Convert a byte string in the `application/x-www-form-urlencoded` syntax
 /// into a iterator of (name, value) pairs.
