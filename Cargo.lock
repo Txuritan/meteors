@@ -21,7 +21,7 @@ version = "0.1.0"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn",
+ "venial",
 ]
 
 [[package]]
@@ -569,6 +569,16 @@ version = "0.1.0"
 dependencies = [
  "query",
  "varela-common",
+]
+
+[[package]]
+name = "venial"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "39a1af830478db65d14301ea42aa021a2377f688341d88f399e41ff864b20cce"
+dependencies = [
+ "proc-macro2",
+ "quote",
 ]
 
 [[package]]

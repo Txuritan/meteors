@@ -1,6 +1,6 @@
-macro_rules! syn_err {
+macro_rules! err {
     ($spanned:expr, $msg:expr) => {
-        syn::Error::new_spanned($spanned, $msg).to_compile_error()
+        venial::Error::new_at_tokens($spanned, $msg).to_compile_error()
     };
 }
 
@@ -9,16 +9,12 @@ mod structure;
 
 #[proc_macro_derive(Aloene, attributes(aloene))]
 pub fn aloene_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let derive = syn::parse_macro_input!(input as syn::DeriveInput);
+    let decl = venial::parse_declaration(proc_macro2::TokenStream::from(input));
 
-    let stream = match derive.data {
-        syn::Data::Enum(data_enum) => enumeration::derive(derive.ident, data_enum),
-        syn::Data::Struct(data_struct) => {
-            structure::derive(derive.ident, data_struct, derive.generics)
-        }
-        _ => {
-            syn_err!(derive, "Aloene can not be used on `union`s")
-        }
+    let stream = match decl {
+        venial::Declaration::Struct(decl) => structure::derive(decl),
+        venial::Declaration::Enum(decl) => enumeration::derive(decl.name, decl.variants),
+        _ => err!(decl, "Aloene can only be used on `structs`s or `enum`s"),
     };
 
     if false {

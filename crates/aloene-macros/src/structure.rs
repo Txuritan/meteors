@@ -1,26 +1,40 @@
-pub fn derive(
-    struct_name: syn::Ident,
-    data_struct: syn::DataStruct,
-    generics: syn::Generics,
-) -> proc_macro2::TokenStream {
-    let field_iter = data_struct.fields.iter().map(|field| {
-        let ident = field.ident.as_ref().unwrap();
+pub fn derive(decl: venial::Struct) -> proc_macro2::TokenStream {
+    let inline_generic_params = decl.get_inline_generic_args();
 
-        quote::quote! { #ident }
-    });
-
-    let de_iter = data_struct.fields.iter().map(de_field);
-    let se_iter = data_struct.fields.iter().map(se_field);
-
-    let syn::Generics {
-        lt_token,
-        params,
-        gt_token,
+    let venial::Struct {
+        _struct,
+        name,
+        generic_params,
         where_clause,
-    } = generics;
+        fields,
+        _semicolon,
+        ..
+    } = &decl;
+
+    let field_iter = match &fields {
+        venial::StructFields::Named(named) => named
+            .fields
+            .iter()
+            .map(|field| {
+                let ident = &field.0.name;
+
+                quote::quote! { #ident }
+            })
+            .collect::<Vec<_>>(),
+        _ => return err!(fields, "aloene does not support unit or tuple structs."),
+    };
+
+    let de_iter = match &fields {
+        venial::StructFields::Named(named) => named.fields.iter().map(|(field, _)| de_field(field)),
+        _ => return err!(fields, "aloene does not support unit or tuple structs."),
+    };
+    let se_iter = match &fields {
+        venial::StructFields::Named(named) => named.fields.iter().map(|(field, _)| se_field(field)),
+        _ => return err!(fields, "aloene does not support unit or tuple structs."),
+    };
 
     quote::quote! {
-        impl #lt_token #params #gt_token ::aloene::Aloene for #struct_name #lt_token #params #gt_token #where_clause {
+        impl #generic_params ::aloene::Aloene for #name #inline_generic_params #where_clause {
             fn deserialize<R: ::std::io::Read>(reader: &mut R) -> ::std::result::Result<Self, ::aloene::Error> {
                 ::aloene::io::assert_byte(reader, ::aloene::bytes::Container::STRUCT)?;
 
@@ -40,31 +54,18 @@ pub fn derive(
     }
 }
 
-fn field_help(field: &syn::Field) -> Result<(&syn::Ident, &syn::Ident), proc_macro2::TokenStream> {
-    let field_name = match &field.ident {
-        Some(ident) => ident,
-        None => {
-            return Err(syn_err!(field, "Invalid field"));
-        }
+fn field_help(
+    field: &venial::NamedField,
+) -> Result<(&proc_macro2::Ident, &proc_macro2::Ident), proc_macro2::TokenStream> {
+    let field_name = &field.name;
+
+    let ident = match field.ty.tokens.first() {
+        Some(tree) => match tree {
+            proc_macro2::TokenTree::Ident(name) => name,
+            _ => return Err(err!(field, "aloene structs field type mut be an ident.")),
+        },
+        None => return Err(err!(field, "aloene structs field require a type.")),
     };
-
-    let field_path = match &field.ty {
-        syn::Type::Path(field_path) => field_path,
-        _ => {
-            return Err(syn_err!(field, "Invalid field"));
-        }
-    };
-
-    let path_segments = &field_path.path.segments;
-
-    let first_segment = match path_segments.iter().next() {
-        Some(first_segment) => first_segment,
-        None => {
-            return Err(syn_err!(path_segments, "Invalid type"));
-        }
-    };
-
-    let ident = &first_segment.ident;
 
     Ok((field_name, ident))
 }
@@ -76,7 +77,7 @@ static BUILTIN_TYPES: [&str; 12] = [
     "u8", "u16", "u32", "u64", "usize",
 ];
 
-pub fn de_field(field: &syn::Field) -> proc_macro2::TokenStream {
+pub fn de_field(field: &venial::NamedField) -> proc_macro2::TokenStream {
     let (field_name, ident) = match field_help(field) {
         Ok(pair) => pair,
         Err(err) => return err,
@@ -102,7 +103,7 @@ pub fn de_field(field: &syn::Field) -> proc_macro2::TokenStream {
     }
 }
 
-fn se_field(field: &syn::Field) -> proc_macro2::TokenStream {
+fn se_field(field: &venial::NamedField) -> proc_macro2::TokenStream {
     let (field_name, ident) = match field_help(field) {
         Ok(pair) => pair,
         Err(err) => return err,
