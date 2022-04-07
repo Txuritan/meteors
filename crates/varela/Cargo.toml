@@ -14,6 +14,3 @@ common = { path = "../varela-common", package = "varela-common" }
 command-config = { path = "../varela-command-config", package = "varela-command-config" }
 command-index = { path = "../varela-command-index", package = "varela-command-index" }
 command-serve = { path = "../varela-command-serve", package = "varela-command-serve" }
-
-[build-dependencies]
-embed-resource = "1.6"
