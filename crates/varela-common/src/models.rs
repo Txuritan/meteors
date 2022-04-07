@@ -1,7 +1,6 @@
-use {
-    aloene::Aloene,
-    std::{borrow::Cow, collections::HashMap, ops::Range},
-};
+use std::{borrow::Cow, collections::HashMap, ops::Range};
+
+use aloene::Aloene;
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Id(Cow<'static, str>);

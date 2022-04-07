@@ -1,9 +1,8 @@
 extern crate proc_macro;
 
-use {
-    std::collections::HashMap,
-    syn::{Expr, ItemStatic, Lit},
-};
+use std::collections::HashMap;
+
+use syn::{Expr, ItemStatic, Lit};
 
 macro_rules! syn_err {
     ($to:expr, $ms:expr) => {

@@ -1,10 +1,6 @@
 use std::ops::{Deref, DerefMut};
 
-use crate::{
-    extractor::Extractor,
-    http::HttpRequest,
-    Error,
-};
+use crate::{extractor::Extractor, http::HttpRequest, Error};
 
 pub struct Body {
     value: Vec<u8>,

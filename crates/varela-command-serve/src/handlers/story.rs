@@ -1,10 +1,9 @@
-use {
-    crate::{
-        templates::{pages, partials, Layout, Width},
-        utils,
-    },
-    common::{database::Database, models::Id, prelude::*},
-    enrgy::{http::HttpResponse, web},
+use common::{database::Database, models::Id, prelude::*};
+use enrgy::{http::HttpResponse, web};
+
+use crate::{
+    templates::{pages, partials, Layout, Width},
+    utils,
 };
 
 pub fn story(

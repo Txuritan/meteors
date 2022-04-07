@@ -1,9 +1,8 @@
 //! Interior IO util, use at own risk.
 
-use {
-    crate::Error,
-    std::io::{Read, Write},
-};
+use std::io::{Read, Write};
+
+use crate::Error;
 
 macro impl_fn($size:ident, $read:ident, $write:ident) {
     pub fn $read<R: std::io::Read>(reader: &mut R) -> Result<$size, Error> {

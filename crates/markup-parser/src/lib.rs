@@ -1,6 +1,10 @@
 #![deny(rust_2018_idioms)]
 
-use std::{collections::HashMap, iter::Peekable, str::CharIndices};
+use std::{
+    collections::HashMap,
+    iter::{Map, Peekable},
+    str::CharIndices,
+};
 
 #[derive(Debug)]
 pub enum Error {
@@ -54,65 +58,78 @@ pub struct Span<'input> {
     pub end: usize,
 }
 
+#[derive(Debug, Clone, Copy)]
+struct Token(usize, char);
+
+impl Token {
+    const fn new((u, c): (usize, char)) -> Self {
+        Self(u, c)
+    }
+
+    const fn assert(&self, expected: char) -> Result<usize, Error> {
+        if self.1 == expected {
+            Ok(self.0)
+        } else {
+            Err(Error::UnexpectedCharacter {
+                expected,
+                got: self.1,
+            })
+        }
+    }
+}
+
 #[derive(Debug)]
 struct Parser<'input> {
     text: &'input str,
-    reader: Peekable<CharIndices<'input>>,
+    reader: Peekable<Map<CharIndices<'input>, fn((usize, char)) -> Token>>,
     first: bool,
-    current: Option<(usize, char)>,
+    current: Option<Token>,
 }
 
 impl<'input> Parser<'input> {
     fn new(text: &'input str) -> Self {
         Self {
-            reader: text.char_indices().peekable(),
+            reader: text
+                .char_indices()
+                .map(Token::new as fn((usize, char)) -> Token)
+                .peekable(),
             text,
             first: true,
             current: None,
         }
     }
 
-    fn current(&mut self) -> Option<&(usize, char)> {
+    fn current(&mut self) -> Option<Token> {
         if self.first {
             self.current = self.reader.next();
 
             self.first = false;
         }
 
-        self.current.as_ref()
+        self.current
     }
 
-    fn next(&mut self) -> Option<(usize, char)> {
+    fn next(&mut self) -> Option<Token> {
+        if self.first || self.current.is_none() {
+            self.first = false;
+
+            return self.current();
+        }
+
         self.current = self.reader.next();
 
-        if self.first {
-            self.first = false;
-        }
-
-        self.current().copied()
-    }
-
-    fn assert(&mut self, expected: char) -> Result<usize, Error> {
-        if let Some((index, got)) = self.next() {
-            if expected == got {
-                Ok(index)
-            } else {
-                Err(Error::UnexpectedCharacter { expected, got })
-            }
-        } else {
-            Err(Error::UnexpectedEof)
-        }
+        self.current()
     }
 
     #[allow(clippy::while_let_loop)]
     fn eat_whitespace(&mut self) -> Result<usize, Error> {
         let mut index = self
             .current()
-            .map_or(Err(Error::UnexpectedEof), |(i, _)| Ok(*i))?;
+            .map_or(Err(Error::UnexpectedEof), |Token(i, _)| Ok(i))?;
 
         loop {
             match self.reader.peek() {
-                Some((_, c)) => {
+                Some(Token(_, c)) => {
                     if !c.is_whitespace() {
                         break;
                     }
@@ -120,7 +137,7 @@ impl<'input> Parser<'input> {
                 None => break,
             }
 
-            let (i, _) = unsafe { self.next().unwrap_unchecked() };
+            let Token(i, _) = unsafe { self.next().unwrap_unchecked() };
 
             index = i;
         }
@@ -131,16 +148,16 @@ impl<'input> Parser<'input> {
     fn read_ident(&mut self) -> Result<&'input str, Error> {
         let index = self
             .current()
-            .map_or(Err(Error::UnexpectedEof), |(i, _)| Ok(*i))?;
+            .map_or(Err(Error::UnexpectedEof), |Token(i, _)| Ok(i))?;
 
         let mut endex = index;
 
         loop {
             match self.reader.peek() {
-                Some((_, '>')) => break,
-                Some((_, c)) if c.is_whitespace() => break,
+                Some(Token(_, '>')) => break,
+                Some(Token(_, c)) if c.is_whitespace() => break,
                 Some(_) => {
-                    if let Some((i, c)) = self.next() {
+                    if let Some(Token(i, c)) = self.next() {
                         endex = i + c.len_utf8();
                     }
                 }
@@ -169,7 +186,7 @@ mod test_read_ident {
 
 impl<'input> Parser<'input> {
     fn read_attrs(&mut self) -> Result<Attributes<'input>, Error> {
-        if self.reader.peek().map_or(false, |(_, c)| *c == '>') {
+        if self.reader.peek().map_or(false, |Token(_, c)| *c == '>') {
             return Ok(Attributes::new());
         }
 
@@ -183,7 +200,7 @@ impl<'input> Parser<'input> {
     }
 
     fn read_attr(&mut self) -> Result<Option<(&'input str, Option<&'input str>)>, Error> {
-        if self.reader.peek().map_or(false, |(_, c)| *c == '>') {
+        if self.reader.peek().map_or(false, |Token(_, c)| *c == '>') {
             return Ok(None);
         }
 
@@ -194,8 +211,8 @@ impl<'input> Parser<'input> {
 
         self.eat_whitespace()?;
 
-        let value = if self.reader.peek().map_or(false, |(_, c)| *c == '=') {
-            self.assert('=')?;
+        let value = if self.reader.peek().map_or(false, |Token(_, c)| *c == '=') {
+            self.next().ok_or(Error::UnexpectedEof)?.assert('=')?;
 
             self.eat_whitespace()?;
 
@@ -263,13 +280,13 @@ mod test_read_attrs {
 
 impl<'input> Parser<'input> {
     fn read_tag(&mut self) -> Result<(&'input str, bool, Attributes<'input>), Error> {
-        self.assert('<')?;
+        self.next().ok_or(Error::UnexpectedEof)?.assert('<')?;
 
         let name = self.read_ident()?;
 
         let attrs = self.read_attrs()?;
 
-        self.assert('>')?;
+        self.next().ok_or(Error::UnexpectedEof)?.assert('>')?;
 
         Ok((name, false, attrs))
     }
@@ -286,4 +303,3 @@ mod test_read_tag {
         parser.read_tag().unwrap();
     }
 }
-

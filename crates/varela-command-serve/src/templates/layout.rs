@@ -1,9 +1,9 @@
-use {
-    crate::templates::{pages, partials::nav, Width},
-    common::models::Theme,
-    opal::Template,
-    std::borrow::Cow,
-};
+use std::borrow::Cow;
+
+use common::models::Theme;
+use opal::Template;
+
+use crate::templates::{pages, partials::nav, Width};
 
 #[derive(opal::Template)]
 #[template(path = "layout.hbs")]

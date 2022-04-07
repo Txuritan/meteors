@@ -1,13 +1,12 @@
-use {
-    crate::prelude::*,
-    // chrono::Utc,
-    log::{Level, LevelFilter, Log, Metadata, Record},
-    owo_colors::OwoColorize as _,
-    std::{
-        env,
-        io::{self, Stdout, Write as _},
-    },
+use std::{
+    env,
+    io::{self, Stdout, Write as _},
 };
+
+use log::{Level, LevelFilter, Log, Metadata, Record};
+use owo_colors::OwoColorize as _;
+
+use crate::prelude::*;
 
 pub fn init() -> Result<()> {
     let bypass = env::var("VARELA_LOG_ALL").is_ok();

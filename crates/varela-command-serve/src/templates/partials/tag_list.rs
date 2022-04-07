@@ -1,7 +1,6 @@
-use {
-    crate::templates::TagKind,
-    common::models::{Entity, Existing},
-};
+use common::models::{Entity, Existing};
+
+use crate::templates::TagKind;
 
 #[derive(opal::Template)]
 #[template(path = "partials/tag-list.hbs")]

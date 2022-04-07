@@ -158,7 +158,7 @@ impl Vm {
 
     fn take_u16(&mut self) -> Option<u16> {
         if self.pointer + 2 > self.byte_code.len() {
-            return None
+            return None;
         }
 
         let bytes = unsafe {
@@ -175,7 +175,7 @@ impl Vm {
 
     fn take_u32(&mut self) -> Option<u32> {
         if self.pointer + 8 > self.byte_code.len() {
-            return None
+            return None;
         }
 
         let bytes = unsafe {
@@ -194,7 +194,7 @@ impl Vm {
 
     fn take_u64(&mut self) -> Option<u64> {
         if self.pointer + 8 > self.byte_code.len() {
-            return None
+            return None;
         }
 
         let bytes = unsafe {
@@ -240,13 +240,13 @@ impl Vm {
                 let value = self.take_u32()? as usize;
 
                 if value > self.byte_code.len() {
-                    return None
+                    return None;
                 }
 
                 self.pointer = value;
 
                 Some(true)
-            },
+            }
 
             Opcode::Calc => todo!(),
             Opcode::Cmp => todo!(),

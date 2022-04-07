@@ -1,15 +1,12 @@
-use {
-    common::{
-        database::Database,
-        models::{
-            Entity, Existing, Id, Index, ResolvedStory, ResolvedStoryMeta, StoryInfo, StoryMeta,
-        },
-        prelude::*,
-    },
-    enrgy::http::HttpResponse,
-    once_cell::sync::Lazy,
-    std::{collections::HashMap, sync::RwLock},
+use std::{collections::HashMap, sync::RwLock};
+
+use common::{
+    database::Database,
+    models::{Entity, Existing, Id, Index, ResolvedStory, ResolvedStoryMeta, StoryInfo, StoryMeta},
+    prelude::*,
 };
+use enrgy::http::HttpResponse;
+use once_cell::sync::Lazy;
 
 pub fn wrap<F>(fun: F) -> HttpResponse
 where

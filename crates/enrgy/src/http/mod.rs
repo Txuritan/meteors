@@ -33,6 +33,8 @@ pub enum HttpError {
     ParseUnknownMethod,
     ParseUnknownVersion,
 
+    ZeroBytesRead,
+
     Io(std::io::Error),
     ParseInt(std::num::ParseIntError),
 }
@@ -205,7 +207,8 @@ impl HttpRequest {
 
         let len = reader.read_until(b'\n', &mut buffer)?;
         if len == 0 {
-            todo!()
+            // TODO: maybe try and read a few times to see if it timed out
+            return Err(HttpError::ZeroBytesRead);
         }
 
         let mut offset = 0;
@@ -245,7 +248,8 @@ impl HttpRequest {
 
             let len = reader.read_until(b'\n', &mut buffer)?;
             if len == 0 {
-                todo!()
+                // TODO: maybe try and read a few times to see if it timed out
+                return Err(HttpError::ZeroBytesRead);
             }
 
             if buffer == b"\r\n" {

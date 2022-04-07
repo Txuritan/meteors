@@ -1,9 +1,7 @@
 use std::convert::TryFrom;
 
-pub use {
-    html_parser::{Attributes, Dom, DomVariant, Element, ElementVariant, Node, NodeData, Span},
-    query_macros::selector,
-};
+pub use html_parser::{Attributes, Dom, DomVariant, Element, ElementVariant, Node, NodeData, Span};
+pub use query_macros::selector;
 
 #[derive(Debug)]
 pub struct Document<'input> {

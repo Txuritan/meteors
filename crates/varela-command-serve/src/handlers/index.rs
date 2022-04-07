@@ -1,11 +1,9 @@
-use {
-    crate::{
-        templates::{pages, partials, Layout, Width},
-        utils,
-    },
-    common::{database::Database, prelude::*},
-    enrgy::{http::headers::CONTENT_TYPE, http::HttpResponse, web},
+use crate::{
+    templates::{pages, partials, Layout, Width},
+    utils,
 };
+use common::{database::Database, prelude::*};
+use enrgy::{http::headers::CONTENT_TYPE, http::HttpResponse, web};
 
 pub fn index(db: web::Data<Database>) -> HttpResponse {
     utils::wrap(|| {

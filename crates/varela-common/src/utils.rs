@@ -1,8 +1,9 @@
-use crate::{models::Id, prelude::*};
 use std::{
     fs::{self, DirEntry},
     process::Command,
 };
+
+use crate::{models::Id, prelude::*};
 
 pub fn command(arg: &str) -> Command {
     let shell = if cfg!(target_os = "windows") {

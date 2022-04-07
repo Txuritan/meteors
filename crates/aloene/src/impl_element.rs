@@ -1,12 +1,11 @@
-use {
-    crate::{bytes::*, io, Aloene, Error, Result},
-    std::{
-        collections::HashMap,
-        hash::Hash,
-        io::{Read, Write},
-        ops::Range,
-    },
+use std::{
+    collections::HashMap,
+    hash::Hash,
+    io::{Read, Write},
+    ops::Range,
 };
+
+use crate::{bytes::*, io, Aloene, Error, Result};
 
 // TODO: maybe write a container before v is serialized
 impl<K: Hash + Ord + Aloene, V: Aloene> Aloene for HashMap<K, V> {

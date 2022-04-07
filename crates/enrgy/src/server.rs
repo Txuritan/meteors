@@ -176,28 +176,7 @@ impl HttpServer<SocketAddr> {
             }
         }
 
-        // if let Err(err) = stream.set_read_timeout(None) {
-        //     log::error!(
-        //         "internal tcp stream error, unable to make `read` blocking: {}",
-        //         err
-        //     );
-        // }
-
-        run(app.clone(), &mut stream);
-
-        // let mut byte = [0u8; 1];
-
-        // loop {
-        //     match stream.peek(&mut byte) {
-        //         Ok(_bytes) => {
-        //             run(app.clone(), &mut stream);
-        //         }
-        //         Err(err) if err.kind() == io::ErrorKind::ConnectionAborted => break,
-        //         Err(err) => {
-        //             log::error!("{}", err)
-        //         }
-        //     }
-        // }
+        run(app, &mut stream);
     }
 
     fn thread_handle(app: Arc<BuiltApp>, stream: &mut TcpStream) -> Result<(), ThreadError> {
@@ -222,19 +201,13 @@ impl HttpServer<SocketAddr> {
             })
             .unwrap_or_else(|| (app.default_service.clone(), ParsedParams(ArrayMap::new())));
 
+        request.extensions.insert(params);
+
         let compress = if let Some(header) = request.headers.get(&ACCEPT_ENCODING) {
             header.contains("deflate")
         } else {
             false
         };
-
-        // let mut request = HttpRequest {
-        //     header_data,
-        //     body,
-        //     params,
-        //     data: Arc::clone(&app.data),
-        //     extensions: Extensions::new(),
-        // };
 
         for middleware in &*app.middleware {
             middleware.before(&mut request);

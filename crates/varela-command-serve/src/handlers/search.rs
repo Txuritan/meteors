@@ -1,13 +1,13 @@
-use {
-    crate::{
-        search,
-        templates::{pages, partials, Layout, Width},
-        utils,
-    },
-    common::{database::Database, prelude::*},
-    enrgy::{http::HttpResponse, web},
-    qstring::QString,
-    std::borrow::Cow,
+use std::borrow::Cow;
+
+use common::{database::Database, prelude::*};
+use enrgy::{http::HttpResponse, web};
+use qstring::QString;
+
+use crate::{
+    search,
+    templates::{pages, partials, Layout, Width},
+    utils,
 };
 
 fn rebuild_query(raw_query: &web::RawQuery) -> Cow<'static, str> {

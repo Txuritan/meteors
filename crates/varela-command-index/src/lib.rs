@@ -1,20 +1,19 @@
-use {
-    common::{
-        database::Database,
-        models::{Chapter, Entity, FileKind, Id, Site, Story, StoryInfo, StoryMeta},
-        prelude::*,
-        utils::{self, FileIter},
-    },
-    format_ao3::{ParsedChapters, ParsedInfo, ParsedMeta},
-    std::{
-        collections::HashMap,
-        ffi::OsStr,
-        fs::{self, DirEntry},
-        hash::Hasher as _,
-        path::Path,
-        time::SystemTime,
-    },
+use std::{
+    collections::HashMap,
+    ffi::OsStr,
+    fs::{self, DirEntry},
+    hash::Hasher as _,
+    path::Path,
+    time::SystemTime,
 };
+
+use common::{
+    database::Database,
+    models::{Chapter, Entity, FileKind, Id, Site, Story, StoryInfo, StoryMeta},
+    prelude::*,
+    utils::{self, FileIter},
+};
+use format_ao3::{ParsedChapters, ParsedInfo, ParsedMeta};
 
 // open index
 // create id list

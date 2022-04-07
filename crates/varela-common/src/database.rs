@@ -1,20 +1,20 @@
-use {
-    crate::{
-        models::{Config, Entity, EntityKind, Id, Index, Settings, Theme, Version},
-        prelude::*,
-        utils::FileIter,
-    },
-    aloene::Aloene as _,
-    fs2::FileExt as _,
-    memmap2::Mmap,
-    std::{
-        collections::HashMap,
-        env,
-        ffi::OsStr,
-        fs::{self, File},
-        mem,
-        path::PathBuf,
-    },
+use std::{
+    collections::HashMap,
+    env,
+    ffi::OsStr,
+    fs::{self, File},
+    mem,
+    path::PathBuf,
+};
+
+use aloene::Aloene as _;
+use fs2::FileExt as _;
+use memmap2::Mmap;
+
+use crate::{
+    models::{Config, Entity, EntityKind, Id, Index, Settings, Theme, Version},
+    prelude::*,
+    utils::FileIter,
 };
 
 #[derive(Debug)]

@@ -1,11 +1,13 @@
-use common::models::FileKind;
+use std::str::FromStr;
 
-use {
-    crate::{templates::pages::opds::OpdsFeed, utils},
-    common::{database::Database, models::Existing, prelude::*},
-    enrgy::{http::headers::CONTENT_TYPE, http::HttpResponse, web},
-    std::str::FromStr,
+use common::{
+    database::Database,
+    models::{Existing, FileKind},
+    prelude::*,
 };
+use enrgy::{http::headers::CONTENT_TYPE, http::HttpResponse, web};
+
+use crate::{templates::pages::opds::OpdsFeed, utils};
 
 pub enum CatalogFormat {
     Atom, // opds+1.2

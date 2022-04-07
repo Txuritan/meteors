@@ -1,10 +1,9 @@
-use {
-    common::{
-        database::Database,
-        models::{Node, Theme},
-        prelude::*,
-    },
-    std::path::PathBuf,
+use std::path::PathBuf;
+
+use common::{
+    database::Database,
+    models::{Node, Theme},
+    prelude::*,
 };
 
 pub fn run(mut args: common::Args) -> Result<()> {

@@ -10,15 +10,14 @@ mod search;
 mod template;
 mod utils;
 
-use {
-    common::{database::Database, prelude::*},
-    enrgy::{middleware::Middleware, web, App, HttpServer},
-    std::time::Instant,
-    std::{
-        net::{Ipv4Addr, SocketAddr},
-        sync::Arc,
-    },
+use std::{
+    net::{Ipv4Addr, SocketAddr},
+    sync::Arc,
+    time::Instant,
 };
+
+use common::{database::Database, prelude::*};
+use enrgy::{middleware::Middleware, web, App, HttpServer};
 
 pub use self::router::res;
 

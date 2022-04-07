@@ -1,13 +1,13 @@
-use {
-    crate::templates::{
-        partials::{Contrast, Link, OriginList, TagList},
-        TagKind,
-    },
-    common::{
-        models::{Entity, Existing, Id, Rating, ResolvedStory, ResolvedStoryMeta, StoryInfo},
-        prelude::*,
-    },
-    std::borrow::Cow,
+use std::borrow::Cow;
+
+use common::{
+    models::{Entity, Existing, Id, Rating, ResolvedStory, ResolvedStoryMeta, StoryInfo},
+    prelude::*,
+};
+
+use crate::templates::{
+    partials::{Contrast, Link, OriginList, TagList},
+    TagKind,
 };
 
 #[derive(opal::Template)]

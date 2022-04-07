@@ -1,6 +1,8 @@
 mod parser;
 
-use {parser::Stage4, std::str::FromStr as _};
+use std::str::FromStr as _;
+
+use parser::Stage4;
 
 #[proc_macro_derive(Template, attributes(template))]
 pub fn template_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -128,18 +130,17 @@ pub fn template_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
     proc_macro::TokenStream::from(tokens)
 }
 
-#[derive(Debug)]
 struct Pair {
-    key: syn::Ident,
-    eq_token: syn::Token![=],
+    _key: syn::Ident,
+    _eq_token: syn::Token![=],
     value: syn::LitStr,
 }
 
 impl syn::parse::Parse for Pair {
     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
         Ok(Pair {
-            key: input.parse()?,
-            eq_token: input.parse()?,
+            _key: input.parse()?,
+            _eq_token: input.parse()?,
             value: input.parse()?,
         })
     }

@@ -1,11 +1,11 @@
-use {
-    crate::{
-        templates::{pages, Layout, Width},
-        utils,
-    },
-    common::{database::Database, prelude::*},
-    enrgy::{http::HttpResponse, web},
-    std::fs,
+use std::fs;
+
+use common::{database::Database, prelude::*};
+use enrgy::{http::HttpResponse, web};
+
+use crate::{
+    templates::{pages, Layout, Width},
+    utils,
 };
 
 pub fn download_get(db: web::Data<Database>) -> HttpResponse {

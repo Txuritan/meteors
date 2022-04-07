@@ -1,13 +1,12 @@
-use {
-    common::{
-        database::Database,
-        models::{Entity, Id, Index, Rating, Story},
-    },
-    std::{
-        borrow::{Borrow as _, Cow},
-        collections::HashMap,
-        hash::Hash,
-    },
+use std::{
+    borrow::{Borrow as _, Cow},
+    collections::HashMap,
+    hash::Hash,
+};
+
+use common::{
+    database::Database,
+    models::{Entity, Id, Index, Rating, Story},
 };
 
 pub fn search_v2<'s>(

@@ -14,17 +14,16 @@ pub use crate::handlers::{
     story::story,
 };
 
-use {
-    crate::utils,
-    enrgy::{
-        http::HttpResponse,
-        http::{
-            self,
-            headers::{CACHE_CONTROL, CONTENT_TYPE, ETAG},
-        },
-        web,
+use enrgy::{
+    http::HttpResponse,
+    http::{
+        self,
+        headers::{CACHE_CONTROL, CONTENT_TYPE, ETAG},
     },
+    web,
 };
+
+use crate::utils;
 
 pub fn style(header: web::OptionalHeader<"If-None-Match">) -> HttpResponse {
     utils::wrap(|| {

@@ -1,7 +1,6 @@
-use {
-    opal::Template,
-    std::io::{self, Write},
-};
+use std::io::{self, Write};
+
+use opal::Template;
 
 pub fn percent_encode<B: AsRef<[u8]>>(bytes: B) -> PercentEncode<B> {
     PercentEncode(bytes)

@@ -1,7 +1,6 @@
-use {
-    crate::{bytes::*, io, Aloene, Result},
-    std::io::{Read, Write},
-};
+use std::io::{Read, Write};
+
+use crate::{bytes::*, io, Aloene, Result};
 
 impl Aloene for bool {
     fn deserialize<R: Read>(reader: &mut R) -> Result<Self> {

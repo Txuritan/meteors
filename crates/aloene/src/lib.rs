@@ -8,7 +8,9 @@ mod error;
 mod impl_element;
 mod impl_value;
 
-pub use {self::error::Error, aloene_macros::Aloene};
+pub use aloene_macros::Aloene;
+
+pub use crate::error::Error;
 
 pub(crate) type Result<T> = std::result::Result<T, Error>;
 
