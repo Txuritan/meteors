@@ -24,7 +24,7 @@ pub fn download_get(db: web::Data<Database>) -> HttpResponse {
 
 pub fn download_post(db: web::Data<Database>, body: web::Body) -> HttpResponse {
     utils::wrap(|| {
-        let mut parse = form_urlencoded::parse(&body);
+        let mut parse = enrgy::http::encoding::form::parse(&body);
 
         if let Some((_, url)) = parse.find(|(key, _)| key == "download") {
             fn find_subsequence(haystack: &[u8], needle: &[u8]) -> Option<usize> {

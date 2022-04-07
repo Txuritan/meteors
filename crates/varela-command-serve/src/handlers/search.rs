@@ -1,26 +1,11 @@
-use std::borrow::Cow;
-
 use common::{database::Database, prelude::*};
 use enrgy::{http::HttpResponse, web};
-use qstring::QString;
 
 use crate::{
     search,
     templates::{pages, partials, Layout, Width},
     utils,
 };
-
-fn rebuild_query(raw_query: &web::RawQuery) -> Cow<'static, str> {
-    if raw_query.is_empty() {
-        Cow::from(String::new())
-    } else {
-        let mut parsed = QString::from(raw_query.as_str()).into_pairs();
-
-        parsed.retain(|(k, _)| k != "search");
-
-        Cow::from(format!("?{}", QString::new(parsed)))
-    }
-}
 
 pub fn search(
     db: web::Data<Database>,
@@ -30,7 +15,7 @@ pub fn search(
     utils::wrap(|| {
         let ids = search::search(&*db, &search);
 
-        let query = rebuild_query(&query);
+        let query = enrgy::http::encoding::percent::utf8_percent_encode(&query, enrgy::http::encoding::percent::CONTROLS).to_string();
 
         let mut stories = ids
             .iter()
@@ -54,12 +39,12 @@ pub fn search(
     })
 }
 
-pub fn search_v2(db: web::Data<Database>, query: web::RawQuery) -> HttpResponse {
+pub fn search_v2(db: web::Data<Database>, query: web::Query<"search">) -> HttpResponse {
     utils::wrap(|| {
         let mut stories = db.index().stories.iter().collect::<Vec<_>>();
 
         let parsed_query =
-            form_urlencoded::parse(query.trim_start_matches('?').as_bytes()).collect::<Vec<_>>();
+            enrgy::http::encoding::form::parse(query.trim_start_matches('?').as_bytes()).collect::<Vec<_>>();
 
         let stats = search::search_v2(&parsed_query[..], &mut stories)
             .fill(db.index())
@@ -67,7 +52,7 @@ pub fn search_v2(db: web::Data<Database>, query: web::RawQuery) -> HttpResponse 
                 anyhow!("Unable to fill out stats, an entity does not exist somewhere")
             })?;
 
-        let query = rebuild_query(&query);
+        let query = enrgy::http::encoding::percent::utf8_percent_encode(&query, enrgy::http::encoding::percent::CONTROLS).to_string();
 
         let mut stories = stories
             .into_iter()

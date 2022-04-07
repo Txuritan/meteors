@@ -25,11 +25,11 @@ pub struct StoryPartial<'s> {
     pub origins: OriginList,
     pub tags: TagList,
 
-    pub query: Option<Cow<'static, str>>,
+    pub query: Option<String>,
 }
 
 impl<'s> StoryPartial<'s> {
-    pub fn new(id: &'s Id, story: ResolvedStory, query: Option<Cow<'static, str>>) -> Result<Self> {
+    pub fn new(id: &'s Id, story: ResolvedStory, query: Option<String>) -> Result<Self> {
         let ResolvedStoryMeta {
             rating,
             authors,

@@ -1,4 +1,4 @@
-pub(crate) mod encoding;
+pub mod encoding;
 
 pub mod headers;
 pub mod uri;

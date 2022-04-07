@@ -15,7 +15,7 @@ where
     theme: Theme,
     title: String,
     nav: nav::Nav,
-    query: Option<Cow<'static, str>>,
+    query: Option<String>,
     body: B,
 }
 
@@ -28,7 +28,7 @@ where
         width: Width,
         theme: Theme,
         title: S,
-        query: Option<Cow<'static, str>>,
+        query: Option<String>,
         body: B,
     ) -> Self
     where
