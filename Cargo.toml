@@ -2,6 +2,7 @@
 members = [
     "crates/aloene",
     "crates/aloene-macros",
+    "crates/eaves-vm",
     "crates/enrgy",
     "crates/html-parser",
     "crates/opal",

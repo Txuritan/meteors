@@ -126,6 +126,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "eaves-vm"
+version = "0.1.0"
+
+[[package]]
 name = "embed-resource"
 version = "1.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
