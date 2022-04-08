@@ -9,3 +9,4 @@ license = "MIT"
 workspace = "../.."
 
 [dependencies]
+honeycomb = "0.1.4"
