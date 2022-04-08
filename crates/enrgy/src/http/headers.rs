@@ -1,9 +1,9 @@
-use std::{borrow::Cow, cmp, fmt};
+use std::{borrow::Cow, cmp, convert::TryFrom, fmt};
 
 use crate::utils::{array_map, ArrayMap};
 
 pub struct HttpHeaderMap {
-    inner: ArrayMap<HttpHeaderName, HttpHeader, 64>,
+    inner: ArrayMap<HttpHeaderName, HttpHeaderValue, 64>,
 }
 
 impl HttpHeaderMap {
@@ -15,40 +15,48 @@ impl HttpHeaderMap {
     }
 
     #[inline]
-    pub fn get(&self, key: &HttpHeaderName) -> Option<&HttpHeader> {
+    pub fn get(&self, key: &HttpHeaderName) -> Option<&HttpHeaderValue> {
         self.inner.get(key)
     }
 
     #[inline]
-    pub fn insert(&mut self, key: HttpHeaderName, value: HttpHeader) {
+    pub fn insert(&mut self, key: HttpHeaderName, value: HttpHeaderValue) {
         self.inner.insert(key, value);
     }
 
     #[inline]
-    pub(crate) fn iter(&self) -> array_map::Iter<'_, HttpHeaderName, HttpHeader, 64> {
+    pub(crate) fn iter(&self) -> array_map::Iter<'_, HttpHeaderName, HttpHeaderValue, 64> {
         self.inner.iter()
     }
 }
 
 impl<'m> IntoIterator for &'m HttpHeaderMap {
-    type Item = (&'m HttpHeaderName, &'m HttpHeader);
+    type Item = (&'m HttpHeaderName, &'m HttpHeaderValue);
 
-    type IntoIter = array_map::Iter<'m, HttpHeaderName, HttpHeader, 64>;
+    type IntoIter = array_map::Iter<'m, HttpHeaderName, HttpHeaderValue, 64>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
 }
 
-pub struct HttpHeader(String);
+pub struct HttpHeaderValue(String);
 
-impl HttpHeader {
+impl HttpHeaderValue {
     pub(crate) fn new(value: String) -> Self {
         Self(value)
     }
 
     pub(crate) fn as_str(&self) -> &str {
         &self.0
+    }
+}
+
+impl TryFrom<String> for HttpHeaderValue {
+    type Error = std::convert::Infallible;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        Ok(Self(value))
     }
 }
 

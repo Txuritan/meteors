@@ -1,8 +1,8 @@
-//! A fork/modification of AXum's `IntoResponse` and `IntoResponseParts` system.
+use std::convert::{Infallible, TryInto};
 
 use crate::{
-    extensions::Extensions,
-    http::{headers::HttpHeaderMap, HttpResponse, StatusCode},
+    http::{self, HttpResponse, StatusCode},
+    response::{IntoResponseParts, ResponseParts},
 };
 
 pub trait IntoResponse {
@@ -15,16 +15,23 @@ impl IntoResponse for HttpResponse {
     }
 }
 
-impl<T, E> IntoResponse for Result<T, E>
-where
-    T: IntoResponse,
-    E: IntoResponse,
-{
+impl IntoResponse for () {
     fn into_response(self) -> HttpResponse {
-        match self {
-            Ok(value) => value.into_response(),
-            Err(err) => err.into_response(),
-        }
+        HttpResponse::new(StatusCode::OK)
+    }
+}
+
+impl IntoResponse for Infallible {
+    fn into_response(self) -> HttpResponse {
+        match self {}
+    }
+}
+
+impl IntoResponse for StatusCode {
+    fn into_response(self) -> HttpResponse {
+        let mut res = ().into_response();
+        *res.status_mut() = self;
+        res
     }
 }
 
@@ -59,6 +66,51 @@ where
     fn into_response(self) -> HttpResponse {
         let mut res = self.1.into_response();
         *res.status_mut() = self.0;
+        res
+    }
+}
+
+impl<T, E> IntoResponse for Result<T, E>
+where
+    T: IntoResponse,
+    E: IntoResponse,
+{
+    fn into_response(self) -> HttpResponse {
+        match self {
+            Ok(value) => value.into_response(),
+            Err(err) => err.into_response(),
+        }
+    }
+}
+
+impl<K, V, const N: usize> IntoResponse for [(K, V); N]
+where
+    K: TryInto<http::HttpHeaderName>,
+    K::Error: std::fmt::Display,
+    V: TryInto<http::HttpHeaderValue>,
+    V::Error: std::fmt::Display,
+{
+    fn into_response(self) -> HttpResponse {
+        let mut res = ().into_response();
+
+        for (key, value) in self {
+            let key = match key.try_into() {
+                Ok(key) => key,
+                Err(err) => {
+                    return (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()).into_response()
+                }
+            };
+
+            let value = match value.try_into() {
+                Ok(value) => value,
+                Err(err) => {
+                    return (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()).into_response()
+                }
+            };
+
+            res.headers_mut().insert(key, value);
+        }
+
         res
     }
 }
@@ -120,88 +172,3 @@ macro_rules! impl_into_response {
 }
 
 all_the_tuples!(impl_into_response);
-
-pub struct ResponseParts {
-    res: HttpResponse,
-}
-
-impl ResponseParts {
-    #[inline]
-    pub const fn status(&self) -> StatusCode {
-        self.res.status
-    }
-
-    #[inline]
-    pub const fn status_mut(&mut self) -> &mut StatusCode {
-        &mut self.res.status
-    }
-
-    #[inline]
-    pub const fn headers(&self) -> &HttpHeaderMap {
-        &self.res.headers
-    }
-
-    #[inline]
-    pub const fn headers_mut(&mut self) -> &mut HttpHeaderMap {
-        &mut self.res.headers
-    }
-
-    #[inline]
-    pub const fn extensions(&self) -> &Extensions {
-        &self.res.extensions
-    }
-
-    #[inline]
-    pub const fn extensions_mut(&mut self) -> &mut Extensions {
-        &mut self.res.extensions
-    }
-}
-
-pub trait IntoResponseParts {
-    type Error: IntoResponse;
-
-    fn into_response_parts(self, res: ResponseParts) -> Result<ResponseParts, Self::Error>;
-}
-
-impl<T> IntoResponseParts for Option<T>
-where
-    T: IntoResponseParts,
-{
-    type Error = T::Error;
-
-    fn into_response_parts(self, res: ResponseParts) -> Result<ResponseParts, Self::Error> {
-        match self {
-            Some(t) => t.into_response_parts(res),
-            None => Ok(res),
-        }
-    }
-}
-
-macro_rules! impl_into_response_parts {
-    ( $( $ty:ident ),* $(,)? ) => {
-        #[allow(non_snake_case)]
-        impl<$($ty,)*> IntoResponseParts for ($($ty,)*)
-        where
-            $( $ty: IntoResponseParts, )*
-        {
-            type Error = HttpResponse;
-
-            fn into_response_parts(self, res: ResponseParts) -> Result<ResponseParts, Self::Error> {
-                let ($($ty,)*) = self;
-
-                $(
-                    let res = match $ty.into_response_parts(res) {
-                        Ok(res) => res,
-                        Err(err) => {
-                            return Err(err.into_response());
-                        }
-                    };
-                )*
-
-                Ok(res)
-            }
-        }
-    };
-}
-
-all_the_tuples!(impl_into_response_parts);

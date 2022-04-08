@@ -21,7 +21,7 @@ use crate::{
 
 #[doc(inline)]
 pub use self::{
-    headers::{HttpHeader, HttpHeaderMap, HttpHeaderName},
+    headers::{HttpHeaderMap, HttpHeaderName, HttpHeaderValue},
     status::StatusCode,
 };
 
@@ -421,7 +421,7 @@ impl HttpResponse {
         V: ToString,
     {
         self.headers
-            .insert(key, headers::HttpHeader::new(value.to_string()));
+            .insert(key, headers::HttpHeaderValue::new(value.to_string()));
 
         self
     }
