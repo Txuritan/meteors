@@ -2,13 +2,14 @@ use std::sync::Arc;
 
 use crate::{
     extensions::Extensions,
+    extractor,
     handler::HandlerService,
     http::{HttpMethod, HttpRequest, HttpResponse},
     middleware::{BoxedMiddleware, Middleware},
     route::{self, Route},
     service::BoxedService,
     utils::{ArrayMap, PathTree},
-    web, Error,
+    Error,
 };
 
 type InnerRoute = BoxedService<HttpRequest, HttpResponse, Error>;
@@ -37,7 +38,7 @@ impl App {
     where
         T: Send + Sync + 'static,
     {
-        self.data.insert(web::Data { data });
+        self.data.insert(extractor::Data { data });
 
         self
     }

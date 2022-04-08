@@ -17,7 +17,7 @@ use std::{
 };
 
 use common::{database::Database, prelude::*};
-use enrgy::{middleware::Middleware, web, App, HttpServer};
+use enrgy::{middleware::Middleware, route, App, HttpServer};
 
 pub use self::router::res;
 
@@ -71,19 +71,19 @@ pub fn run(mut args: common::Args) -> Result<()> {
     let server = HttpServer::new(
         App::new()
             .data(database.clone())
-            .service(web::get("/").to(handlers::index))
-            .service(web::get("/download").to(handlers::download_get))
-            .service(web::post("/download").to(handlers::download_post))
-            .service(web::get("/story/:id/:chapter").to(handlers::story))
-            .service(web::get("/search").to(handlers::search))
-            .service(web::get("/search2").to(handlers::search_v2))
-            .service(web::get("/style.css").to(handlers::style))
-            .service(web::get("/favicon.ico").to(handlers::favicon))
-            .service(web::get("/author/:id").to(handlers::entity))
-            .service(web::get("/origin/:id").to(handlers::entity))
-            .service(web::get("/tag/:id").to(handlers::entity))
-            .service(web::get("/opds/root.:ext").to(handlers::catalog))
-            .default_service(web::to(|| -> enrgy::http::HttpResponse {
+            .service(route::get("/").to(handlers::index))
+            .service(route::get("/download").to(handlers::download_get))
+            .service(route::post("/download").to(handlers::download_post))
+            .service(route::get("/story/:id/:chapter").to(handlers::story))
+            .service(route::get("/search").to(handlers::search))
+            .service(route::get("/search2").to(handlers::search_v2))
+            .service(route::get("/style.css").to(handlers::style))
+            .service(route::get("/favicon.ico").to(handlers::favicon))
+            .service(route::get("/author/:id").to(handlers::entity))
+            .service(route::get("/origin/:id").to(handlers::entity))
+            .service(route::get("/tag/:id").to(handlers::entity))
+            .service(route::get("/opds/root.:ext").to(handlers::catalog))
+            .default_service(route::to(|| -> enrgy::http::HttpResponse {
                 crate::res!(404)
             }))
             .wrap(LoggerMiddleware),

@@ -2,15 +2,16 @@ use crate::{
     extractor::Extractor,
     handler::{Handler, HandlerService},
     http::{HttpMethod, HttpRequest, HttpResponse},
+    response::IntoResponse,
     service::BoxedService,
-    Error, Responder,
+    Error,
 };
 
 pub fn to<F, T, R>(handler: F) -> Route<'static>
 where
     F: Handler<T, R> + Send + Sync + 'static,
     T: Extractor<Error = Error> + Send + Sync + 'static,
-    R: Responder + Send + Sync + 'static,
+    R: IntoResponse + Send + Sync + 'static,
 {
     Route {
         method: HttpMethod::Get,
@@ -65,7 +66,7 @@ impl<'s> Route<'s> {
     where
         F: Handler<T, R> + Send + Sync + 'static,
         T: Extractor<Error = Error> + Send + Sync + 'static,
-        R: Responder + Send + Sync + 'static,
+        R: IntoResponse + Send + Sync + 'static,
     {
         self.service = BoxedService::new(HandlerService::new(handler));
 

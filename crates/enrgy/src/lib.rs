@@ -19,23 +19,24 @@
     const_ptr_offset,
 )]
 
-mod extractor;
+#[macro_use]
 mod utils;
 
 mod app;
 mod extensions;
 mod handler;
-mod responder;
-mod route;
 mod server;
 mod service;
 
+pub mod extractor;
 pub mod http;
 
 pub mod error;
 pub mod middleware;
+pub mod response;
+pub mod route;
 
-pub use crate::{app::App, responder::Responder, server::HttpServer};
+pub use crate::{app::App, server::HttpServer};
 
 #[doc(inline)]
 pub use crate::error::Error;
@@ -47,16 +48,6 @@ pub mod dev {
     };
 }
 
-pub mod web {
-    pub use crate::{
-        extractor::{
-            Body, Data, Header, OptionalHeader, OptionalParam, OptionalQuery, Param, ParseHeader,
-            ParseParam, ParseQuery, Query, RawQuery,
-        },
-        route::{connect, delete, get, head, options, patch, post, put, to, trace},
-    };
-}
-
 // A module for testing different route handlers.
 // Mostly making sure they compile.
 #[cfg(test)]
@@ -65,11 +56,11 @@ mod test_compile {
 
     #[test]
     fn test_responder() {
-        fn index() -> impl Responder {
+        fn index() -> impl response::IntoResponse {
             "Hello World!"
         }
 
-        App::new().service(web::get("/").to(index));
+        App::new().service(route::get("/").to(index));
     }
 
     #[test]
@@ -78,7 +69,7 @@ mod test_compile {
             "Hello World!"
         }
 
-        App::new().service(web::get("/").to(index));
+        App::new().service(route::get("/").to(index));
     }
 
     #[test]
@@ -87,16 +78,16 @@ mod test_compile {
             "Hello World!".to_string()
         }
 
-        App::new().service(web::get("/").to(index));
+        App::new().service(route::get("/").to(index));
     }
 
     #[test]
     fn test_string_param() {
-        fn index(name: web::Param<"name">) -> String {
+        fn index(name: extractor::Param<"name">) -> String {
             format!("Hello {}!", *name)
         }
 
-        App::new().service(web::get("/:name").to(index));
+        App::new().service(route::get("/:name").to(index));
     }
 
     #[derive(Debug)]
@@ -108,7 +99,11 @@ mod test_compile {
         }
     }
 
-    impl error::ResponseError for TestError {}
+    impl response::IntoResponse for TestError {
+        fn into_response(self) -> http::HttpResponse {
+            http::HttpResponse::new(http::StatusCode::INTERNAL_SERVER_ERROR)
+        }
+    }
 
     #[test]
     fn test_error_string() {
@@ -116,6 +111,6 @@ mod test_compile {
             Ok("Hello World!".to_string())
         }
 
-        App::new().service(web::get("/").to(index));
+        App::new().service(route::get("/").to(index));
     }
 }

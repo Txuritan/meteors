@@ -3,9 +3,9 @@ use crate::{
     utils,
 };
 use common::{database::Database, prelude::*};
-use enrgy::{http::headers::CONTENT_TYPE, http::HttpResponse, web};
+use enrgy::{extractor, http::headers::CONTENT_TYPE, http::HttpResponse};
 
-pub fn index(db: web::Data<Database>) -> HttpResponse {
+pub fn index(db: extractor::Data<Database>) -> HttpResponse {
     utils::wrap(|| {
         let mut stories = db
             .index()

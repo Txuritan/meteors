@@ -1,14 +1,14 @@
 use std::fs;
 
 use common::{database::Database, prelude::*};
-use enrgy::{http::HttpResponse, web};
+use enrgy::{extractor, http::HttpResponse};
 
 use crate::{
     templates::{pages, Layout, Width},
     utils,
 };
 
-pub fn download_get(db: web::Data<Database>) -> HttpResponse {
+pub fn download_get(db: extractor::Data<Database>) -> HttpResponse {
     utils::wrap(|| {
         let body = Layout::new(
             Width::Slim,
@@ -22,7 +22,7 @@ pub fn download_get(db: web::Data<Database>) -> HttpResponse {
     })
 }
 
-pub fn download_post(db: web::Data<Database>, body: web::Body) -> HttpResponse {
+pub fn download_post(db: extractor::Data<Database>, body: extractor::Body) -> HttpResponse {
     utils::wrap(|| {
         let mut parse = enrgy::http::encoding::form::parse(&body);
 

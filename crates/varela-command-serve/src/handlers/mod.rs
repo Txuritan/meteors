@@ -15,17 +15,17 @@ pub use crate::handlers::{
 };
 
 use enrgy::{
+    extractor,
     http::HttpResponse,
     http::{
         self,
         headers::{CACHE_CONTROL, CONTENT_TYPE, ETAG},
     },
-    web,
 };
 
 use crate::utils;
 
-pub fn style(header: web::OptionalHeader<"If-None-Match">) -> HttpResponse {
+pub fn style(header: extractor::OptionalHeader<"If-None-Match">) -> HttpResponse {
     utils::wrap(|| {
         static CSS: &str = include_str!("../../assets/dist/index.css");
         // RELEASE: change anytime theres a release and the style gets updated
@@ -41,7 +41,8 @@ pub fn style(header: web::OptionalHeader<"If-None-Match">) -> HttpResponse {
 
         if let Some(header) = header.as_deref() {
             if header == CSS_TAG {
-                return Ok(res.status(http::StatusCode(304)));
+                *res.status_mut() = http::StatusCode(304);
+                return Ok(res);
             }
         }
 

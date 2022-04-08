@@ -1,5 +1,5 @@
 use common::{database::Database, models::Id, prelude::*};
-use enrgy::{http::HttpResponse, web};
+use enrgy::{extractor, http::HttpResponse};
 
 use crate::{
     templates::{pages, partials, Layout, Width},
@@ -7,9 +7,9 @@ use crate::{
 };
 
 pub fn story(
-    db: web::Data<Database>,
-    id: web::ParseParam<"id", Id>,
-    index: web::Param<"chapter">,
+    db: extractor::Data<Database>,
+    id: extractor::ParseParam<"id", Id>,
+    index: extractor::Param<"chapter">,
 ) -> HttpResponse {
     utils::wrap(|| {
         let index: usize = index.parse().map_err(anyhow::Error::from)?;

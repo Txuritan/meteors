@@ -1,5 +1,5 @@
 use common::{database::Database, prelude::*};
-use enrgy::{http::HttpResponse, web};
+use enrgy::{extractor, http::HttpResponse};
 
 use crate::{
     search,
@@ -8,14 +8,18 @@ use crate::{
 };
 
 pub fn search(
-    db: web::Data<Database>,
-    search: web::Query<"search">,
-    query: web::RawQuery,
+    db: extractor::Data<Database>,
+    search: extractor::Query<"search">,
+    query: extractor::RawQuery,
 ) -> HttpResponse {
     utils::wrap(|| {
         let ids = search::search(&*db, &search);
 
-        let query = enrgy::http::encoding::percent::utf8_percent_encode(&query, enrgy::http::encoding::percent::CONTROLS).to_string();
+        let query = enrgy::http::encoding::percent::utf8_percent_encode(
+            &query,
+            enrgy::http::encoding::percent::CONTROLS,
+        )
+        .to_string();
 
         let mut stories = ids
             .iter()
@@ -39,12 +43,13 @@ pub fn search(
     })
 }
 
-pub fn search_v2(db: web::Data<Database>, query: web::Query<"search">) -> HttpResponse {
+pub fn search_v2(db: extractor::Data<Database>, query: extractor::Query<"search">) -> HttpResponse {
     utils::wrap(|| {
         let mut stories = db.index().stories.iter().collect::<Vec<_>>();
 
         let parsed_query =
-            enrgy::http::encoding::form::parse(query.trim_start_matches('?').as_bytes()).collect::<Vec<_>>();
+            enrgy::http::encoding::form::parse(query.trim_start_matches('?').as_bytes())
+                .collect::<Vec<_>>();
 
         let stats = search::search_v2(&parsed_query[..], &mut stories)
             .fill(db.index())
@@ -52,7 +57,11 @@ pub fn search_v2(db: web::Data<Database>, query: web::Query<"search">) -> HttpRe
                 anyhow!("Unable to fill out stats, an entity does not exist somewhere")
             })?;
 
-        let query = enrgy::http::encoding::percent::utf8_percent_encode(&query, enrgy::http::encoding::percent::CONTROLS).to_string();
+        let query = enrgy::http::encoding::percent::utf8_percent_encode(
+            &query,
+            enrgy::http::encoding::percent::CONTROLS,
+        )
+        .to_string();
 
         let mut stories = stories
             .into_iter()

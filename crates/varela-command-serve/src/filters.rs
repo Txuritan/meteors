@@ -16,7 +16,10 @@ impl<B: AsRef<[u8]>> Template for PercentEncode<B> {
         write!(
             writer,
             "{}",
-            enrgy::http::encoding::percent::percent_encode(self.0.as_ref(), enrgy::http::encoding::percent::CONTROLS)
+            enrgy::http::encoding::percent::percent_encode(
+                self.0.as_ref(),
+                enrgy::http::encoding::percent::CONTROLS
+            )
         )?;
 
         Ok(())

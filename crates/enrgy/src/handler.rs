@@ -3,14 +3,15 @@ use std::marker::PhantomData;
 use crate::{
     extractor::Extractor,
     http::{HttpRequest, HttpResponse},
+    response::IntoResponse,
     service::Service,
-    Error, Responder,
+    Error,
 };
 
 pub trait Handler<T, R>
 where
     T: Extractor<Error = Error>,
-    R: Responder,
+    R: IntoResponse,
 {
     fn call(&self, param: T) -> R;
 }
@@ -19,7 +20,7 @@ pub struct HandlerService<F, T, R>
 where
     F: Handler<T, R>,
     T: Extractor<Error = Error>,
-    R: Responder,
+    R: IntoResponse,
 {
     inner: F,
     _phantom: PhantomData<(T, R)>,
@@ -29,7 +30,7 @@ impl<F, T, R> HandlerService<F, T, R>
 where
     F: Handler<T, R>,
     T: Extractor<Error = Error>,
-    R: Responder,
+    R: IntoResponse,
 {
     pub(crate) const fn new(fun: F) -> Self {
         Self {
@@ -43,7 +44,7 @@ impl<F, T, R> Service<HttpRequest> for HandlerService<F, T, R>
 where
     F: Handler<T, R>,
     T: Extractor<Error = Error>,
-    R: Responder,
+    R: IntoResponse,
 {
     type Response = HttpResponse;
 
@@ -54,14 +55,14 @@ where
 
         let res = self.inner.call(param);
 
-        res.respond_to(&*req)
+        Ok(res.into_response())
     }
 }
 
 impl<FUN, R> Handler<(), R> for FUN
 where
     FUN: Fn() -> R,
-    R: Responder,
+    R: IntoResponse,
 {
     #[allow(non_snake_case)]
     fn call(&self, _param: ()) -> R {
@@ -75,7 +76,7 @@ macro_rules! tuple (
         where
             FUN: Fn($($param),*) -> R,
             $($param: Extractor<Error = Error>,)*
-            R: Responder,
+            R: IntoResponse,
         {
             #[allow(non_snake_case)]
             fn call(&self, ($($param,)*): ($($param,)*)) -> R {

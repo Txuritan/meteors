@@ -1,8 +1,56 @@
 use std::{borrow::Cow, cmp, fmt};
 
-pub struct HttpHeaders {}
+use crate::utils::{array_map, ArrayMap};
 
-pub struct HttpHeader {}
+pub struct HttpHeaderMap {
+    inner: ArrayMap<HttpHeaderName, HttpHeader, 64>,
+}
+
+impl HttpHeaderMap {
+    #[inline]
+    pub const fn new() -> Self {
+        Self {
+            inner: ArrayMap::new(),
+        }
+    }
+
+    #[inline]
+    pub fn get(&self, key: &HttpHeaderName) -> Option<&HttpHeader> {
+        self.inner.get(key)
+    }
+
+    #[inline]
+    pub fn insert(&mut self, key: HttpHeaderName, value: HttpHeader) {
+        self.inner.insert(key, value);
+    }
+
+    #[inline]
+    pub(crate) fn iter(&self) -> array_map::Iter<'_, HttpHeaderName, HttpHeader, 64> {
+        self.inner.iter()
+    }
+}
+
+impl<'m> IntoIterator for &'m HttpHeaderMap {
+    type Item = (&'m HttpHeaderName, &'m HttpHeader);
+
+    type IntoIter = array_map::Iter<'m, HttpHeaderName, HttpHeader, 64>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+pub struct HttpHeader(String);
+
+impl HttpHeader {
+    pub(crate) fn new(value: String) -> Self {
+        Self(value)
+    }
+
+    pub(crate) fn as_str(&self) -> &str {
+        &self.0
+    }
+}
 
 #[derive(Debug, Clone, Eq, PartialOrd, Ord)]
 pub struct HttpHeaderName(pub(crate) Cow<'static, str>);

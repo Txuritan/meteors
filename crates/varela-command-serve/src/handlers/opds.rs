@@ -5,7 +5,7 @@ use common::{
     models::{Existing, FileKind},
     prelude::*,
 };
-use enrgy::{http::headers::CONTENT_TYPE, http::HttpResponse, web};
+use enrgy::{extractor, http::headers::CONTENT_TYPE, http::HttpResponse};
 
 use crate::{templates::pages::opds::OpdsFeed, utils};
 
@@ -29,8 +29,8 @@ impl FromStr for CatalogFormat {
 }
 
 pub fn catalog(
-    db: web::Data<Database>,
-    ext: web::ParseParam<"ext", CatalogFormat>,
+    db: extractor::Data<Database>,
+    ext: extractor::ParseParam<"ext", CatalogFormat>,
 ) -> HttpResponse {
     utils::wrap(|| {
         let mut stories = db

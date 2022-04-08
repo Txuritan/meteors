@@ -1,9 +1,9 @@
+mod status;
+
 pub mod encoding;
 
 pub mod headers;
 pub mod uri;
-
-mod status;
 
 use std::{
     cmp, fmt,
@@ -19,7 +19,11 @@ use crate::{
     utils::{ArrayMap, Ascii, Const},
 };
 
-pub use self::{headers::HttpHeaderName, status::StatusCode};
+#[doc(inline)]
+pub use self::{
+    headers::{HttpHeader, HttpHeaderMap, HttpHeaderName},
+    status::StatusCode,
+};
 
 #[derive(Debug)]
 pub enum HttpError {
@@ -353,21 +357,11 @@ impl cmp::PartialEq for HttpRequest {
     }
 }
 
-#[derive(Debug, PartialEq)]
-#[deprecated]
-pub struct HttpHeaderData {
-    pub method: HttpMethod,
-    pub url: String,
-    pub query: String,
-    pub query_params: HttpParams,
-    pub version: HttpVersion,
-    pub headers: HttpHeaders,
-}
-
 pub struct HttpResponse {
     pub version: HttpVersion,
     pub status: StatusCode,
-    pub headers: ArrayMap<headers::HttpHeaderName, String, 64>,
+    pub extensions: Extensions,
+    pub headers: headers::HttpHeaderMap,
     pub body: Option<HttpBody>,
 }
 
@@ -376,7 +370,8 @@ impl HttpResponse {
         Self {
             version: HttpVersion::Http10,
             status,
-            headers: ArrayMap::new(),
+            extensions: Extensions::new(),
+            headers: headers::HttpHeaderMap::new(),
             body: None,
         }
     }
@@ -397,17 +392,36 @@ impl HttpResponse {
         Self::new(StatusCode::BAD_REQUEST)
     }
 
-    pub const fn status(mut self, status: StatusCode) -> Self {
-        self.status = status;
+    pub const fn status(&self) -> StatusCode {
+        self.status
+    }
 
-        self
+    pub const fn status_mut(&mut self) -> &mut StatusCode {
+        &mut self.status
+    }
+
+    pub const fn headers(&self) -> &headers::HttpHeaderMap {
+        &self.headers
+    }
+
+    pub const fn headers_mut(&mut self) -> &mut headers::HttpHeaderMap {
+        &mut self.headers
+    }
+
+    pub const fn extensions(&self) -> &Extensions {
+        &self.extensions
+    }
+
+    pub const fn extensions_mut(&mut self) -> &mut Extensions {
+        &mut self.extensions
     }
 
     pub fn header<V>(mut self, key: headers::HttpHeaderName, value: V) -> Self
     where
         V: ToString,
     {
-        self.headers.insert(key, value.to_string());
+        self.headers
+            .insert(key, headers::HttpHeader::new(value.to_string()));
 
         self
     }
@@ -436,11 +450,11 @@ pub fn write_response(
     )?;
 
     for (key, value) in &res.headers {
-        write!(stream, "{}: {}\r\n", key, value)?;
+        write!(stream, "{}: {}\r\n", key, value.as_str())?;
     }
 
     fn write_bytes(
-        headers: &ArrayMap<headers::HttpHeaderName, String, 64>,
+        headers: &headers::HttpHeaderMap,
         bytes: &[u8],
         compress: bool,
         stream: &mut TcpStream,

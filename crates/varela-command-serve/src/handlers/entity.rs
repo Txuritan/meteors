@@ -3,14 +3,14 @@ use common::{
     models::{EntityKind, Id},
     prelude::*,
 };
-use enrgy::{http::HttpResponse, web};
+use enrgy::{extractor, http::HttpResponse};
 
 use crate::{
     templates::{pages, partials, Layout, Width},
     utils,
 };
 
-pub fn entity(db: web::Data<Database>, id: web::ParseParam<"id", Id>) -> HttpResponse {
+pub fn entity(db: extractor::Data<Database>, id: extractor::ParseParam<"id", Id>) -> HttpResponse {
     utils::wrap(|| {
         if let Some(kind) = db.get_entity_from_id(&*id) {
             let entity = {
