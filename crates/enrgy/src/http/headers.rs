@@ -40,11 +40,15 @@ impl<'m> IntoIterator for &'m HttpHeaderMap {
     }
 }
 
-pub struct HttpHeaderValue(String);
+pub struct HttpHeaderValue(Cow<'static, str>);
 
 impl HttpHeaderValue {
     pub(crate) fn new(value: String) -> Self {
-        Self(value)
+        Self(Cow::Owned(value))
+    }
+
+    pub(crate) fn new_static(value: &'static str) -> Self {
+        Self(Cow::Borrowed(value))
     }
 
     pub(crate) fn as_str(&self) -> &str {
@@ -52,11 +56,19 @@ impl HttpHeaderValue {
     }
 }
 
+impl TryFrom<&'static str> for HttpHeaderValue {
+    type Error = std::convert::Infallible;
+
+    fn try_from(value: &'static str) -> Result<Self, Self::Error> {
+        Ok(Self::new_static(value))
+    }
+}
+
 impl TryFrom<String> for HttpHeaderValue {
     type Error = std::convert::Infallible;
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
-        Ok(Self(value))
+        Ok(Self::new(value))
     }
 }
 

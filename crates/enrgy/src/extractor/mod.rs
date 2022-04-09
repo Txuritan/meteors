@@ -4,6 +4,9 @@ pub mod header;
 pub mod param;
 pub mod query;
 
+use crate::{http::HttpRequest, Error};
+
+#[doc(inline)]
 pub use self::{
     body::Body,
     data::Data,
@@ -11,8 +14,6 @@ pub use self::{
     param::{OptionalParam, Param, ParseParam},
     query::{OptionalQuery, ParseQuery, Query, RawQuery},
 };
-
-use crate::{http::HttpRequest, Error};
 
 pub trait Extractor: Sized {
     type Error;

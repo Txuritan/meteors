@@ -10,20 +10,32 @@ pub use self::{
     into_response_parts::{IntoResponseParts, ResponseParts},
 };
 
-pub struct Html<T>(pub T);
+macro_rules! impl_responder {
+    ($( $name:ident => $mime:expr , )*) => {
+        $(
+            pub struct $name<T>(pub T);
 
-impl<T> IntoResponse for Html<T>
-where
-    T: IntoResponse,
-{
-    fn into_response(self) -> HttpResponse {
-        (
-            [(
-                headers::CONTENT_TYPE,
-                headers::HttpHeaderValue::new("text/html; charset=utf-8".to_string()),
-            )],
-            self.0,
-        )
-            .into_response()
-    }
+            impl<T> IntoResponse for $name<T>
+            where
+                T: IntoResponse,
+            {
+                fn into_response(self) -> HttpResponse {
+                    (
+                        [(
+                            headers::CONTENT_TYPE,
+                            headers::HttpHeaderValue::new_static($mime),
+                        )],
+                        self.0,
+                    )
+                        .into_response()
+                }
+            }
+        )*
+    };
+}
+
+impl_responder! {
+    Atom => "application/atom+xml; charset=utf-8",
+    Html => "text/html; charset=utf-8",
+    Xml => "application/xml; charset=utf-8",
 }
