@@ -21,9 +21,23 @@ use enrgy::{
         self,
         headers::{CACHE_CONTROL, CONTENT_TYPE, ETAG},
     },
+    response::{Html, IntoResponse},
 };
 
 use crate::utils;
+
+pub struct Template<T>(pub T)
+where
+    T: opal::Template;
+
+impl<T> IntoResponse for Template<T>
+where
+    T: opal::Template,
+{
+    fn into_response(self) -> HttpResponse {
+        Html(unsafe { self.0.render_as_string_unchecked() }).into_response()
+    }
+}
 
 pub fn style(header: extractor::OptionalHeader<"If-None-Match">) -> HttpResponse {
     utils::wrap(|| {

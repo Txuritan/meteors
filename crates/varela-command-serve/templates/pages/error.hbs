@@ -1,9 +1,17 @@
 <div class="flex items-center h-screen">
     <div class="mx-auto container flex items-center justify-center">
         <div class="max-w-md text-center text-white text-opacity-90">
-            <div class="text-5xl font-mono font-bold">{{ self.error }}</div>
-            <p class="text-2xl md:text-3xl font-light leading-normal mb-4">{{ self.message }}</p>
-            <a href="/" class="inline-block px-3 py-2 my-1 rounded text-sm text-center text-white text-opacity-60 hover:text-opacity-90 bg-gray-800 hover:bg-indigo-600 cursor-pointer">back to homepage</a>
+            {{ #if self.is_error() }}
+                {{ let len = self.as_error().unwrap(); }}
+                <div class="text-5xl font-mono font-bold">500</div>
+                <p class="text-2xl md:text-3xl font-light leading-normal mb-4">Internal Server Error</p>
+                <a href="/" class="inline-block px-3 py-2 my-1 rounded text-sm text-center text-white text-opacity-60 hover:text-opacity-90 bg-gray-800 hover:bg-indigo-600 cursor-pointer">back to homepage</a>
+            {{ else }}
+                {{ let len = self.as_http().unwrap(); }}
+                <div class="text-5xl font-mono font-bold">{{ len.0 }}</div>
+                <p class="text-2xl md:text-3xl font-light leading-normal mb-4">{{ len.1 }}</p>
+                <a href="/" class="inline-block px-3 py-2 my-1 rounded text-sm text-center text-white text-opacity-60 hover:text-opacity-90 bg-gray-800 hover:bg-indigo-600 cursor-pointer">back to homepage</a>
+            {{ /if }}
         </div>
     </div>
 </div>

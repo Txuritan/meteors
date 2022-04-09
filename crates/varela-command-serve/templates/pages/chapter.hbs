@@ -1,6 +1,6 @@
 <main>
     {{ let len = self.card.len; }}
-    {{ let id = self.card.id; }}
+    {{ let id = &self.card.id; }}
     {{ self.card.render(writer) }}
     <div class="hidden sm:block sm:px-6 lg:px-8 text-sm" aria-hidden="true">
         <div class="border-t border-gray-700"></div>

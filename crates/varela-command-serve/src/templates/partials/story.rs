@@ -12,8 +12,8 @@ use crate::templates::{
 
 #[derive(opal::Template)]
 #[template(path = "partials/story.hbs")]
-pub struct StoryPartial<'s> {
-    pub id: &'s Id,
+pub struct StoryPartial {
+    pub id: Id,
 
     pub len: usize,
     pub info: StoryInfo,
@@ -28,8 +28,8 @@ pub struct StoryPartial<'s> {
     pub query: Option<String>,
 }
 
-impl<'s> StoryPartial<'s> {
-    pub fn new(id: &'s Id, story: ResolvedStory, query: Option<String>) -> Result<Self> {
+impl StoryPartial {
+    pub fn new(id: Id, story: ResolvedStory, query: Option<String>) -> Result<Self> {
         let ResolvedStoryMeta {
             rating,
             authors,

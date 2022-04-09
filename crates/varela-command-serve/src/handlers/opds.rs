@@ -5,7 +5,7 @@ use common::{
     models::{Existing, FileKind},
     prelude::*,
 };
-use enrgy::{extractor, http::headers::CONTENT_TYPE, http::HttpResponse};
+use enrgy::{extractor, http::headers::CONTENT_TYPE, http::HttpResponse, response::IntoResponse};
 
 use crate::{templates::pages::opds::OpdsFeed, utils};
 
@@ -31,7 +31,7 @@ impl FromStr for CatalogFormat {
 pub fn catalog(
     db: extractor::Data<Database>,
     ext: extractor::ParseParam<"ext", CatalogFormat>,
-) -> HttpResponse {
+) -> impl IntoResponse {
     utils::wrap(|| {
         let mut stories = db
             .index()

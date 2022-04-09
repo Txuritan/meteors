@@ -2,15 +2,15 @@ use crate::templates::partials::{Pagination, StoryPartial};
 
 #[derive(opal::Template)]
 #[template(path = "pages/chapter.hbs")]
-pub struct Chapter<'s> {
-    pub card: StoryPartial<'s>,
-    pub chapter: &'s str,
+pub struct Chapter {
+    pub card: StoryPartial,
+    pub chapter: String,
     pub index: usize,
     pub pagination: Pagination,
 }
 
-impl<'s> Chapter<'s> {
-    pub fn new(card: StoryPartial<'s>, chapter: &'s str, index: usize) -> Self {
+impl Chapter {
+    pub fn new(card: StoryPartial, chapter: String, index: usize) -> Self {
         Self {
             chapter,
             index,

@@ -81,14 +81,14 @@ pub struct Stats<'m> {
 
 pub struct StatKind {}
 
-pub struct FilledStats<'m> {
+pub struct FilledStats {
     pub ratings: Vec<(Rating, usize)>,
-    pub warnings: Vec<(&'m Entity, usize)>,
-    pub categories: Vec<(&'m Entity, usize)>,
-    pub origins: Vec<(&'m Entity, usize)>,
-    pub pairings: Vec<(&'m Entity, usize)>,
-    pub characters: Vec<(&'m Entity, usize)>,
-    pub generals: Vec<(&'m Entity, usize)>,
+    pub warnings: Vec<(Entity, usize)>,
+    pub categories: Vec<(Entity, usize)>,
+    pub origins: Vec<(Entity, usize)>,
+    pub pairings: Vec<(Entity, usize)>,
+    pub characters: Vec<(Entity, usize)>,
+    pub generals: Vec<(Entity, usize)>,
 }
 
 impl<'m> Stats<'m> {
@@ -156,13 +156,13 @@ impl<'m> Stats<'m> {
         }
     }
 
-    pub fn fill(self, index: &'m Index) -> Option<FilledStats<'m>> {
+    pub fn fill(self, index: &'m Index) -> Option<FilledStats> {
         fn fill<'m>(
             list: Vec<(&'m Id, usize)>,
             tree: &'m HashMap<Id, Entity>,
-        ) -> Option<Vec<(&'m Entity, usize)>> {
+        ) -> Option<Vec<(Entity, usize)>> {
             list.into_iter()
-                .map(|(id, count)| tree.get(id).map(|entity| (entity, count)))
+                .map(|(id, count)| tree.get(id).map(|entity| (entity.clone(), count)))
                 .collect::<Option<Vec<_>>>()
         }
 

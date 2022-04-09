@@ -1,72 +1,68 @@
 use std::fs;
 
 use common::{database::Database, prelude::*};
-use enrgy::{extractor, http::HttpResponse};
+use enrgy::{extractor, response::IntoResponse};
 
 use crate::{
+    handlers::Template,
     templates::{pages, Layout, Width},
     utils,
 };
 
-pub fn download_get(db: extractor::Data<Database>) -> HttpResponse {
-    utils::wrap(|| {
-        let body = Layout::new(
-            Width::Slim,
-            db.settings().theme,
-            "downloads",
-            None,
-            pages::Download::new(),
-        );
-
-        Ok(crate::res!(200; body))
-    })
+pub fn download_get(db: extractor::Data<Database>) -> impl IntoResponse {
+    Template(Layout::new(
+        Width::Slim,
+        db.settings().theme,
+        "downloads",
+        None,
+        pages::Download::new(),
+    ))
 }
 
-pub fn download_post(db: extractor::Data<Database>, body: extractor::Body) -> HttpResponse {
-    utils::wrap(|| {
-        let mut parse = enrgy::http::encoding::form::parse(&body);
+pub fn download_post(
+    db: extractor::Data<Database>,
+    body: extractor::Body,
+) -> Result<impl IntoResponse, pages::Error> {
+    let mut parse = enrgy::http::encoding::form::parse(&body);
 
-        if let Some((_, url)) = parse.find(|(key, _)| key == "download") {
-            fn find_subsequence(haystack: &[u8], needle: &[u8]) -> Option<usize> {
-                haystack
-                    .windows(needle.len())
-                    .position(|window| window == needle)
-            }
+    let (_, url) = parse
+        .find(|(key, _)| key == "download")
+        .ok_or(pages::Error::bad_request())?;
 
-            let bytes = utils::http::get(&db.temp_path, &url)?;
+    fn find_subsequence(haystack: &[u8], needle: &[u8]) -> Option<usize> {
+        haystack
+            .windows(needle.len())
+            .position(|window| window == needle)
+    }
 
-            static TARGET_START: &[u8; 7] = b"<title>";
-            static TARGET_END: &[u8; 8] = b"</title>";
+    let bytes = utils::http::get(&db.temp_path, &url)?;
 
-            let start = find_subsequence(&bytes[..], &TARGET_START[..])
-                .ok_or_else(|| anyhow!("Unable to find start of page title"))?;
-            let end = find_subsequence(&bytes[..], &TARGET_END[..])
-                .ok_or_else(|| anyhow!("Unable to find end of page title"))?;
+    static TARGET_START: &[u8; 7] = b"<title>";
+    static TARGET_END: &[u8; 8] = b"</title>";
 
-            let whole_title = &bytes[(start + TARGET_START.len())..end];
+    let start = find_subsequence(&bytes[..], &TARGET_START[..])
+        .ok_or_else(|| anyhow!("Unable to find start of page title"))?;
+    let end = find_subsequence(&bytes[..], &TARGET_END[..])
+        .ok_or_else(|| anyhow!("Unable to find end of page title"))?;
 
-            let first_dash = find_subsequence(whole_title, b" - ")
-                .ok_or_else(|| anyhow!("Unable to find title separator"))?;
+    let whole_title = &bytes[(start + TARGET_START.len())..end];
 
-            let title = &whole_title[0..first_dash];
+    let first_dash = find_subsequence(whole_title, b" - ")
+        .ok_or_else(|| anyhow!("Unable to find title separator"))?;
 
-            let save_path = db
-                .data_path
-                .join(format!("{}.html", String::from_utf8(title.to_vec())?));
+    let title = &whole_title[0..first_dash];
 
-            fs::write(save_path, bytes)?;
+    let save_path = db
+        .data_path
+        .join(format!("{}.html", String::from_utf8(title.to_vec())?));
 
-            let body = Layout::new(
-                Width::Slim,
-                db.settings().theme,
-                "downloads",
-                None,
-                pages::Download::new(),
-            );
+    fs::write(save_path, bytes)?;
 
-            Ok(crate::res!(200; body))
-        } else {
-            Ok(crate::res!(503))
-        }
-    })
+    Ok(Template(Layout::new(
+        Width::Slim,
+        db.settings().theme,
+        "downloads",
+        None,
+        pages::Download::new(),
+    )))
 }

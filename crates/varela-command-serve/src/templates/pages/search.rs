@@ -2,13 +2,13 @@ use crate::{search::FilledStats, templates::partials::StoryPartial};
 
 #[derive(opal::Template)]
 #[template(path = "pages/search.hbs")]
-pub struct Search<'s> {
-    pub stories: Vec<StoryPartial<'s>>,
-    pub stats: FilledStats<'s>,
+pub struct Search {
+    pub stories: Vec<StoryPartial>,
+    pub stats: FilledStats,
 }
 
-impl<'s> Search<'s> {
-    pub fn new(stories: Vec<StoryPartial<'s>>, stats: FilledStats<'s>) -> Self {
+impl Search {
+    pub fn new(stories: Vec<StoryPartial>, stats: FilledStats) -> Self {
         Self { stories, stats }
     }
 }
