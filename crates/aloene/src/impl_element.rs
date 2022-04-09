@@ -3,9 +3,31 @@ use std::{
     hash::Hash,
     io::{Read, Write},
     ops::Range,
+    rc::Rc,
+    sync::Arc,
 };
 
 use crate::{bytes::*, io, Aloene, Error, Result};
+
+impl<T: Aloene> Aloene for Arc<T> {
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> Result<Self> {
+        T::deserialize(reader).map(Arc::new)
+    }
+
+    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> Result<()> {
+        self.as_ref().serialize(writer)
+    }
+}
+
+impl<T: Aloene> Aloene for Rc<T> {
+    fn deserialize<R: std::io::Read>(reader: &mut R) -> Result<Self> {
+        T::deserialize(reader).map(Rc::new)
+    }
+
+    fn serialize<W: std::io::Write>(&self, writer: &mut W) -> Result<()> {
+        self.as_ref().serialize(writer)
+    }
+}
 
 // TODO: maybe write a container before v is serialized
 impl<K: Hash + Ord + Aloene, V: Aloene> Aloene for HashMap<K, V> {
