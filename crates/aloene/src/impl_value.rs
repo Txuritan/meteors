@@ -1,4 +1,7 @@
-use std::io::{Read, Write};
+use std::{
+    borrow::Cow,
+    io::{Read, Write},
+};
 
 use crate::{bytes::*, io, Aloene, Result};
 
@@ -15,6 +18,22 @@ impl Aloene for bool {
         io::write_u8(writer, Value::BOOL)?;
 
         io::write_u8(writer, if *self { 0x01 } else { 0x00 })?;
+
+        Ok(())
+    }
+}
+
+impl Aloene for Cow<'static, str> {
+    fn deserialize<R: Read>(reader: &mut R) -> Result<Self> {
+        io::assert_byte(reader, Value::STRING)?;
+
+        io::read_string(reader).map(Cow::Owned)
+    }
+
+    fn serialize<W: Write>(&self, writer: &mut W) -> Result<()> {
+        io::write_u8(writer, Value::STRING)?;
+
+        io::write_string(writer, self.as_ref())?;
 
         Ok(())
     }
