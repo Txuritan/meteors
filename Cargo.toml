@@ -5,6 +5,7 @@ members = [
     "crates/eaves-vm",
     "crates/enrgy",
     "crates/html-parser",
+    "crates/markup-parser",
     "crates/opal",
     "crates/opal-macros",
     "crates/query",
