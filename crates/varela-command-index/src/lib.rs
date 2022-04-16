@@ -14,6 +14,7 @@ use common::{
     utils::{self, FileIter},
 };
 use format_ao3::{ParsedChapters, ParsedInfo, ParsedMeta};
+use vfmt::uDisplay as _;
 
 // open index
 // create id list
@@ -35,7 +36,7 @@ pub fn run(_args: common::Args) -> Result<()> {
 
     debug!(
         "checking `{}` for files",
-        database.data_path.display().bright_purple()
+        database.data_path.bright_purple()
     );
 
     for entry in FileIter::new(fs::read_dir(&database.data_path)?) {
@@ -54,13 +55,13 @@ pub fn run(_args: common::Args) -> Result<()> {
             Some(story) => {
                 debug!(
                     "  removing missing story: {}",
-                    story.info.file_name.bright_green(),
+                    story.info.file_name.bright_green().to_string(),
                 );
             }
             None => {
                 warn!(
                     "  removing nonexistent story with id `{}`",
-                    id.bright_blue(),
+                    id.bright_blue().to_string(),
                 );
             }
         }
@@ -68,7 +69,10 @@ pub fn run(_args: common::Args) -> Result<()> {
 
     debug!("done");
 
-    trace!("found {} stories", index.stories.len().bright_purple(),);
+    trace!(
+        "found {} stories",
+        index.stories.len().bright_purple().to_string()
+    );
 
     database.save()?;
 
@@ -208,12 +212,12 @@ where
             // either it was overwritten with a new version
             // or it was edited in some way
             // either way the index entry needed to be updated
-            debug!("  found updated story: {}", name.bright_green(),);
+            debug!("  found updated story: {}", name.bright_green().to_string());
 
             Ok(Some((id.clone(), hash, true)))
         }
     } else {
-        debug!("  found new story: {}", name.bright_green(),);
+        debug!("  found new story: {}", name.bright_green().to_string());
 
         let id = new_id(&index.stories);
 
@@ -254,7 +258,7 @@ fn add_to_index(
             .chapters
             .into_iter()
             .map(|chapter| Chapter {
-                title: chapter.title.to_string(),
+                title: chapter.title.to_owned(),
                 content: chapter.content,
                 summary: chapter.summary,
                 start_notes: chapter.start_notes,
@@ -262,11 +266,11 @@ fn add_to_index(
             })
             .collect(),
         info: StoryInfo {
-            file_name: name.to_string(),
+            file_name: name.to_owned(),
             file_hash: hash,
-            title: info.title.to_string(),
+            title: info.title.to_owned(),
             kind,
-            summary: info.summary.to_string(),
+            summary: info.summary.to_owned(),
             created,
             updated: humantime::format_rfc3339(SystemTime::now()).to_string(),
         },

@@ -5,22 +5,7 @@ use common::{
     models::{Entity, Existing, Id, Index, ResolvedStory, ResolvedStoryMeta, StoryInfo, StoryMeta},
     prelude::*,
 };
-use enrgy::http::HttpResponse;
 use once_cell::sync::Lazy;
-
-pub fn wrap<F>(fun: F) -> HttpResponse
-where
-    F: FnOnce() -> Result<HttpResponse>,
-{
-    match fun() {
-        Ok(res) => res,
-        Err(err) => {
-            error!("handler error: {}", err);
-
-            HttpResponse::internal_server_error()
-        }
-    }
-}
 
 pub mod http {
     use {

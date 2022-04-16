@@ -35,6 +35,15 @@ impl std::fmt::Display for Id {
     }
 }
 
+impl vfmt::uDisplay for Id {
+    fn fmt<W>(&self, f: &mut vfmt::Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: vfmt::uWrite + ?Sized,
+    {
+        self.0.fmt(f)
+    }
+}
+
 impl Aloene for Id {
     fn deserialize<R: std::io::Read>(reader: &mut R) -> Result<Self, aloene::Error> {
         <String as Aloene>::deserialize(reader).map(Id::from)

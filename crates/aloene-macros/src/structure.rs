@@ -2,12 +2,10 @@ pub fn derive(decl: venial::Struct) -> proc_macro2::TokenStream {
     let inline_generic_params = decl.get_inline_generic_args();
 
     let venial::Struct {
-        _struct,
         name,
         generic_params,
         where_clause,
         fields,
-        _semicolon,
         ..
     } = &decl;
 

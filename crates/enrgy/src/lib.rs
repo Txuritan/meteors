@@ -48,6 +48,17 @@ pub mod dev {
     };
 }
 
+#[cfg(all(feature = "std", feature = "vfmt"))]
+compile_error!("feature clash, only enable `std` OR `vfmt`");
+
+pub(crate) mod wrapper {
+    #[cfg(feature = "std")]
+    pub use std::{write, format};
+
+    #[cfg(feature = "vfmt")]
+    pub use vfmt::{uwrite as write, format};
+}
+
 // A module for testing different route handlers.
 // Mostly making sure they compile.
 #[cfg(test)]

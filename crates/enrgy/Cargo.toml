@@ -14,11 +14,13 @@ workspace = "../.."
 keywords = [ "synchronous", "http", "server", "nightly" ]
 
 [features]
+default = [ "vfmt" ]
 compression = [ ]
 
 [dependencies]
 log = "0.4" # TODO: remove dependency on this
 miniz_oxide = "0.5"
+vfmt = { path = "../vfmt", optional = true }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"

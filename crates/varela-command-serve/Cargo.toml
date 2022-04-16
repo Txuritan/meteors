@@ -16,3 +16,4 @@ chrono = { version = "0.4", default-features = false, features = [ "std" ] }
 enrgy = { path = "../enrgy" }
 humantime = "2.1"
 once_cell = "1.8"
+vfmt = { path = "../vfmt" }

@@ -133,12 +133,27 @@ pub enum HttpVersion {
     Http11,
 }
 
+#[cfg(feature = "std")]
 impl fmt::Display for HttpVersion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::Http09 => write!(f, "HTTP/0.9"),
             Self::Http10 => write!(f, "HTTP/1.0"),
             Self::Http11 => write!(f, "HTTP/1.1"),
+        }
+    }
+}
+
+#[cfg(feature = "vfmt")]
+impl vfmt::uDisplay for HttpVersion {
+    fn fmt<W>(&self, f: &mut vfmt::Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: vfmt::uWrite + ?Sized,
+    {
+        match self {
+            Self::Http09 => vfmt::uwrite!(f, "HTTP/0.9"),
+            Self::Http10 => vfmt::uwrite!(f, "HTTP/1.0"),
+            Self::Http11 => vfmt::uwrite!(f, "HTTP/1.1"),
         }
     }
 }
@@ -441,7 +456,7 @@ pub fn write_response(
     compress: bool,
     stream: &mut TcpStream,
 ) -> std::io::Result<()> {
-    write!(
+    crate::wrapper::write!(
         stream,
         "{} {} {}\r\n",
         res.version,

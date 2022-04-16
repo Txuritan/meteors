@@ -61,7 +61,7 @@ pub fn run(mut args: common::Args) -> Result<()> {
     let database = Arc::new({
         let mut db = Database::open()?;
 
-        trace!("with {} stories", db.index().stories.len().bright_purple(),);
+        trace!("with {} stories", db.index().stories.len().bright_purple());
 
         db.lock_data()?;
 
@@ -115,11 +115,11 @@ impl Middleware<enrgy::http::HttpRequest, enrgy::http::HttpResponse> for LoggerM
 
         fn to_colored_string(method: &HttpMethod) -> String {
             match method {
-                HttpMethod::Get => format!("{}", "GET".green()),
-                HttpMethod::Post => format!("{}", "POST".bright_blue()),
-                HttpMethod::Put => format!("{}", "PUT".bright_purple()),
-                HttpMethod::Patch => format!("{}", "PATCH".bright_yellow()),
-                HttpMethod::Delete => format!("{}", "DELETE".bright_red()),
+                HttpMethod::Get => vfmt::format!("{}", "GET".green()),
+                HttpMethod::Post => vfmt::format!("{}", "POST".bright_blue()),
+                HttpMethod::Put => vfmt::format!("{}", "PUT".bright_purple()),
+                HttpMethod::Patch => vfmt::format!("{}", "PATCH".bright_yellow()),
+                HttpMethod::Delete => vfmt::format!("{}", "DELETE".bright_red()),
                 HttpMethod::Head => "HEAD".to_owned(),
                 HttpMethod::Connect => "CONNECT".to_owned(),
                 HttpMethod::Options => "OPTION".to_owned(),
@@ -150,17 +150,17 @@ impl Middleware<enrgy::http::HttpRequest, enrgy::http::HttpResponse> for LoggerM
             .and_then(|earlier| {
                 chrono::Duration::from_std(Instant::now().duration_since(*earlier)).ok()
             })
-            .map(|dur| format!("{}", dur.num_milliseconds().bright_purple()))
-            .unwrap_or_else(|| format!("{}", "??".bright_red()));
+            .map(|dur| vfmt::format!("{}", dur.num_milliseconds().bright_purple()))
+            .unwrap_or_else(|| vfmt::format!("{}", "??".bright_red()));
 
         info!(
             target: "command_serve::router",
             "{} {}ms",
             match res.status.0 {
-                200 => format!("{}", "200".green()),
-                404 => format!("{}", "404".bright_yellow()),
-                503 => format!("{}", "503".bright_red()),
-                code => format!("{}", code.to_string().bright_blue()),
+                200 => vfmt::format!("{}", "200".green()),
+                404 => vfmt::format!("{}", "404".bright_yellow()),
+                503 => vfmt::format!("{}", "503".bright_red()),
+                code => vfmt::format!("{}", vfmt::uDisplay::to_string(&code).bright_blue()),
             },
             dur,
         );

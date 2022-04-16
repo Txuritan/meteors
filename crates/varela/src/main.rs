@@ -13,17 +13,17 @@ fn main() -> Result<()> {
 
     match args.next().as_deref() {
         Some("--help") => {
-            println!("Usage:");
-            println!("  varela");
-            println!("  varela <COMMAND> [<ARGS>]");
-            println!();
-            println!("Options:");
-            println!("  --help");
-            println!();
-            println!("Commands:");
-            println!("  config          access and change the config");
-            println!("  index           builds or updates the index");
-            println!("  serve           run the internal web server [default]");
+            vfmt::println!("Usage:");
+            vfmt::println!("  varela");
+            vfmt::println!("  varela <COMMAND> [<ARGS>]");
+            vfmt::println!();
+            vfmt::println!("Options:");
+            vfmt::println!("  --help");
+            vfmt::println!();
+            vfmt::println!("Commands:");
+            vfmt::println!("  config          access and change the config");
+            vfmt::println!("  index           builds or updates the index");
+            vfmt::println!("  serve           run the internal web server [default]");
         }
         Some("config") => {
             command_config::run(args)?;

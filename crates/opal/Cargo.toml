@@ -10,3 +10,4 @@ workspace = "../.."
 
 [dependencies]
 opal-macros = { path = "../opal-macros" }
+vfmt = { path = "../vfmt" }

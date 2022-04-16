@@ -15,4 +15,5 @@ format-ao3 = { path = "../varela-format-ao3", package = "varela-format-ao3" }
 
 crc32fast = "1.2"
 humantime = "2.1"
+vfmt = { path = "../vfmt" }
 zip = { version = "0.6.2", default-features = false, features = [ "deflate" ] }

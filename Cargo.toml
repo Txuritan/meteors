@@ -16,6 +16,9 @@ members = [
     "crates/varela-command-serve",
     "crates/varela-common",
     "crates/varela-format-ao3",
+    "crates/vfmt",
+    "crates/vfmt-log",
+    "crates/vfmt-macros",
 ]
 
 [profile.release]

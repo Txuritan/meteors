@@ -24,8 +24,6 @@ use enrgy::{
     response::{Html, IntoResponse},
 };
 
-use crate::utils;
-
 pub struct Template<T>(pub T)
 where
     T: opal::Template;
@@ -35,31 +33,29 @@ where
     T: opal::Template,
 {
     fn into_response(self) -> HttpResponse {
-        Html(unsafe { self.0.render_as_string_unchecked() }).into_response()
+        Html(unsafe { self.0.render_as_string().unwrap_unchecked() }).into_response()
     }
 }
 
 pub fn style(header: extractor::OptionalHeader<"If-None-Match">) -> HttpResponse {
-    utils::wrap(|| {
-        static CSS: &str = include_str!("../../assets/dist/index.css");
-        // RELEASE: change anytime theres a release and the style gets updated
-        static CSS_TAG: &str = "f621e1d55cbee8397c906c7d72d0fb9a4520a06be6218abeccff1ffcf75f00b3";
+    static CSS: &str = include_str!("../../assets/dist/index.css");
+    // RELEASE: change anytime theres a release and the style gets updated
+    static CSS_TAG: &str = "\"C0017857370FA4EDD51C10B2276FEE04C76BDCA4879B415E510F958E4C3FF091\"";
 
-        let mut res = HttpResponse::ok().header(CONTENT_TYPE, "text/css; charset=utf-8");
+    let mut res = HttpResponse::ok().header(CONTENT_TYPE, "text/css; charset=utf-8");
 
-        if !cfg!(debug_assertions) {
-            res = res
-                .header(CACHE_CONTROL, "public; max-age=31536000")
-                .header(ETAG, CSS_TAG);
+    if !cfg!(debug_assertions) {
+        res = res
+            .header(CACHE_CONTROL, "public; max-age=31536000")
+            .header(ETAG, CSS_TAG);
+    }
+
+    if let Some(header) = header.as_deref() {
+        if header == CSS_TAG {
+            *res.status_mut() = http::StatusCode(304);
+            return res;
         }
+    }
 
-        if let Some(header) = header.as_deref() {
-            if header == CSS_TAG {
-                *res.status_mut() = http::StatusCode(304);
-                return Ok(res);
-            }
-        }
-
-        Ok(res.body(CSS))
-    })
+    res.body(CSS)
 }

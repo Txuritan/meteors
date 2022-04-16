@@ -6,104 +6,132 @@ use parser::Stage4;
 
 #[proc_macro_derive(Template, attributes(template))]
 pub fn template_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let derive = syn::parse_macro_input!(input as syn::DeriveInput);
+    let decl = venial::parse_declaration(proc_macro2::TokenStream::from(input));
+
+    let (name, generic_params, where_clause, inline_generic_args, attributes) = match &decl {
+        venial::Declaration::Struct(decl) => (
+            &decl.name,
+            &decl.generic_params,
+            &decl.where_clause,
+            decl.get_inline_generic_args(),
+            &decl.attributes,
+        ),
+        venial::Declaration::Enum(decl) => (
+            &decl.name,
+            &decl.generic_params,
+            &decl.where_clause,
+            decl.get_inline_generic_args(),
+            &decl.attributes,
+        ),
+        _ => {
+            return venial::Error::new_at_tokens(
+                decl,
+                "Aloene can only be used on `structs`s and `enum`'s",
+            )
+            .to_compile_error()
+            .into()
+        }
+    };
 
     let root_dir = match std::env::var("CARGO_MANIFEST_DIR") {
         Ok(dir) => std::path::PathBuf::from(dir),
         Err(err) => {
-            return proc_macro::TokenStream::from(
-                syn::Error::new_spanned(derive, err).to_compile_error(),
-            )
+            return venial::Error::new_at_tokens(decl, err)
+                .to_compile_error()
+                .into()
         }
     };
 
-    let path = derive
-        .attrs
+    let path = attributes
         .iter()
-        .find(|attr| attr.path.is_ident("template"))
-        .map(|attr| attr.parse_args::<Pair>())
+        .find(|attr| {
+            attr.path
+                .first()
+                .map(|tree| {
+                    if let proc_macro2::TokenTree::Ident(ident) = tree {
+                        ident == "template"
+                    } else {
+                        false
+                    }
+                })
+                .unwrap_or(false)
+        })
+        .and_then(|attr| {
+            attr.value
+                .as_ref()
+                .map(|value| Pair::parse_stream(attr.tk_group.as_ref().unwrap().span, value))
+        })
         .transpose();
 
     let path = match path {
         Ok(path) => path,
         Err(err) => {
-            return proc_macro::TokenStream::from(
-                syn::Error::new_spanned(derive, err).to_compile_error(),
-            )
+            return venial::Error::new_at_tokens(decl, err)
+                .to_compile_error()
+                .into()
         }
     };
 
     let path = match path {
         Some(path) => path,
         None => {
-            return proc_macro::TokenStream::from(
-                syn::Error::new_spanned(derive, "missing path attribute").to_compile_error(),
-            )
+            return venial::Error::new_at_tokens(decl, "missing path attribute")
+                .to_compile_error()
+                .into()
         }
     };
 
-    let template_path = match root_dir
-        .join("templates")
-        .join(&path.value.value())
-        .canonicalize()
-    {
+    let temp_template_path = root_dir.join("templates").join(&path.value);
+
+    let template_path = match temp_template_path.canonicalize() {
         Ok(path) => path,
         Err(err) => {
-            return proc_macro::TokenStream::from(
-                syn::Error::new_spanned(derive, err).to_compile_error(),
+            return venial::Error::new_at_tokens(
+                decl,
+                format!("`{}`: {}", temp_template_path.display(), err),
             )
+            .to_compile_error()
+            .into()
         }
     };
 
     let content = match std::fs::read_to_string(&template_path) {
         Ok(content) => content,
         Err(err) => {
-            return proc_macro::TokenStream::from(
-                syn::Error::new_spanned(derive, err).to_compile_error(),
-            )
+            return venial::Error::new_at_tokens(decl, err)
+                .to_compile_error()
+                .into()
         }
     };
-
-    let syn::DeriveInput {
-        ident,
-        generics:
-            syn::Generics {
-                lt_token,
-                params,
-                gt_token,
-                where_clause,
-            },
-        ..
-    } = &derive;
 
     let tokens = parser::parse(&content);
 
     let size_hint = match write_size_hint(&tokens) {
         Ok(size_hint) => size_hint,
         Err(err) => {
-            return proc_macro::TokenStream::from(
-                syn::Error::new_spanned(derive, err).to_compile_error(),
-            )
+            return venial::Error::new_at_tokens(decl, err)
+                .to_compile_error()
+                .into()
         }
     };
 
     let render = match write_render(&tokens) {
         Ok(size_hint) => size_hint,
         Err(err) => {
-            return proc_macro::TokenStream::from(
-                syn::Error::new_spanned(derive, err).to_compile_error(),
-            )
+            return venial::Error::new_at_tokens(decl, err)
+                .to_compile_error()
+                .into()
         }
     };
 
-    let source_ident = quote::format_ident!("{}_SOURCE", ident.to_string().to_uppercase());
+    let source_ident = quote::format_ident!("{}_SOURCE", name.to_string().to_uppercase());
     let source_path = template_path.to_str().unwrap();
 
     let tokens = quote::quote! {
         #[allow(dead_code)]
         const #source_ident: &str = include_str!(#source_path);
 
-        impl #lt_token #params #gt_token ::opal::Template for #ident #lt_token #params #gt_token #where_clause {
+        impl #generic_params ::opal::Template for #name #inline_generic_args #where_clause {
             fn size_hint(&self) -> usize {
                 let mut hint = 0;
 
@@ -112,11 +140,12 @@ pub fn template_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
                 hint
             }
 
-            fn render<W>(&self, writer: &mut W) -> ::std::io::Result<()>
+            fn render<W>(&self, writer: &mut W) -> ::std::result::Result<(), W::Error>
             where
-                W: ::std::io::Write,
+                W: ::opal::io::Write,
             {
-                use {{::opal::Template as _, ::std::io::Write as _}};
+                #[allow(dead_code)]
+                use ::opal::{{Template as _, io::{{vfmt, Write as _}}}};
 
                 #render
 
@@ -131,20 +160,75 @@ pub fn template_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
 }
 
 struct Pair {
-    _key: syn::Ident,
-    _eq_token: syn::Token![=],
-    value: syn::LitStr,
+    _key: proc_macro2::Ident,
+    _eq_token: proc_macro2::Punct,
+    value: String,
 }
 
-impl syn::parse::Parse for Pair {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        Ok(Pair {
-            _key: input.parse()?,
-            _eq_token: input.parse()?,
-            value: input.parse()?,
+impl Pair {
+    fn parse_stream(
+        span: proc_macro2::Span,
+        stream: &[proc_macro2::TokenTree],
+    ) -> Result<Self, venial::Error> {
+        let mut stream_iter = stream.iter();
+
+        let key = stream_iter
+            .next()
+            .and_then(|tree| {
+                if let proc_macro2::TokenTree::Ident(ident) = tree {
+                    Some(ident.clone())
+                } else {
+                    None
+                }
+            })
+            .ok_or_else(|| venial::Error::new_at_span(span, "no key ident found"))?;
+
+        let token = stream_iter
+            .next()
+            .and_then(|tree| {
+                if let proc_macro2::TokenTree::Punct(punct) = tree {
+                    Some(punct.clone())
+                } else {
+                    None
+                }
+            })
+            .ok_or_else(|| venial::Error::new_at_span(span, "no `=` found"))?;
+
+        let value = stream_iter
+            .next()
+            .and_then(|tree| {
+                if let proc_macro2::TokenTree::Literal(literal) = tree {
+                    Some(literal)
+                } else {
+                    None
+                }
+            })
+            .map(|literal| {
+                literal
+                    .to_string()
+                    .trim_start_matches('"')
+                    .trim_end_matches('"')
+                    .to_string()
+            })
+            .ok_or_else(|| venial::Error::new_at_span(span, "no path literal found"))?;
+
+        Ok(Self {
+            _key: key,
+            _eq_token: token,
+            value,
         })
     }
 }
+
+// impl syn::parse::Parse for Pair {
+//     fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+//         Ok(Pair {
+//             _key: input.parse()?,
+//             _eq_token: input.parse()?,
+//             value: input.parse()?,
+//         })
+//     }
+// }
 
 fn write_size_hint(tokens: &[Stage4]) -> Result<proc_macro2::TokenStream, proc_macro2::LexError> {
     let mut stream = quote::quote! {};
@@ -251,7 +335,7 @@ fn write_render(tokens: &[Stage4]) -> Result<proc_macro2::TokenStream, proc_macr
                 stream = quote::quote! {
                     #stream
 
-                    write!(writer, "{}", #expr)?;
+                    ::opal::io::write!(writer, "{}", #expr)?;
                 };
             }
             Stage4::ExprAssign(expr) => {
@@ -316,7 +400,7 @@ fn write_render(tokens: &[Stage4]) -> Result<proc_macro2::TokenStream, proc_macr
                 stream = quote::quote! {
                     #stream
 
-                    write!(writer, #other)?;
+                    ::opal::io::write!(writer, #other)?;
                 };
             }
         }

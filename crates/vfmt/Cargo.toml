@@ -1,0 +1,17 @@
+[package]
+name = "vfmt"
+version = "0.1.0"
+authors = [ "Jorge Aparicio <jorge@japaric.io>", "Txuritan <txuritan@protonmail.com>" ]
+edition = "2021"
+
+license = "MIT"
+
+workspace = "../.."
+
+[features]
+default = [ "std" ]
+std = []
+
+[dependencies]
+libc = "0.2.123"
+vfmt-macros = { path = "../vfmt-macros" }

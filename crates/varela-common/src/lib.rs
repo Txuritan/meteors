@@ -1,3 +1,4 @@
+pub mod colorize;
 pub mod database;
 pub mod logger;
 pub mod models;
@@ -9,8 +10,8 @@ pub static ICON: &[u8] = include_bytes!("../assets/noel.ico");
 
 pub mod prelude {
     pub use {
+        crate::colorize::Colorize as _,
         ::anyhow::{self, anyhow, bail, Context as _, Result},
-        log::{debug, error, info, trace, warn},
-        owo_colors::OwoColorize as _,
+        vfmt_log::{debug, error, info, trace, warn},
     };
 }
