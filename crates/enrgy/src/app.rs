@@ -15,21 +15,21 @@ use crate::{
 type InnerRoute = BoxedService<HttpRequest, HttpResponse, Error>;
 
 #[derive(Clone)]
-pub struct BuiltApp {
+pub(crate) struct ArcRouter {
     pub(crate) tree: Arc<ArrayMap<HttpMethod, PathTree<Arc<InnerRoute>>, 9>>,
     pub(crate) data: Arc<Extensions>,
     pub(crate) middleware: Arc<Vec<BoxedMiddleware<HttpRequest, HttpResponse>>>,
     pub(crate) default_service: Arc<InnerRoute>,
 }
 
-pub struct App {
+pub struct Router {
     tree: ArrayMap<HttpMethod, PathTree<Arc<InnerRoute>>, 9>,
     data: Extensions,
     middleware: Vec<BoxedMiddleware<HttpRequest, HttpResponse>>,
     default_service: Arc<InnerRoute>,
 }
 
-impl App {
+impl Router {
     pub fn new() -> Self {
         Self::default()
     }
@@ -72,8 +72,8 @@ impl App {
         self
     }
 
-    pub fn build(self) -> BuiltApp {
-        BuiltApp {
+    pub(crate) fn build(self) -> ArcRouter {
+        ArcRouter {
             tree: Arc::new(self.tree),
             data: Arc::new(self.data),
             middleware: Arc::new(self.middleware),
@@ -82,7 +82,7 @@ impl App {
     }
 }
 
-impl Default for App {
+impl Default for Router {
     fn default() -> Self {
         Self {
             tree: ArrayMap::new(),

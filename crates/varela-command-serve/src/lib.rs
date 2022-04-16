@@ -17,7 +17,7 @@ use std::{
 };
 
 use common::{database::Database, prelude::*};
-use enrgy::{middleware::Middleware, route, App, HttpServer};
+use enrgy::{middleware::Middleware, route, Router, Server};
 
 pub use self::router::res;
 
@@ -68,8 +68,8 @@ pub fn run(mut args: common::Args) -> Result<()> {
         db
     });
 
-    let server = HttpServer::new(
-        App::new()
+    let server = Server::new(
+        Router::new()
             .data(database.clone())
             .service(route::get("/").to(handlers::index))
             .service(route::get("/download").to(handlers::download_get))

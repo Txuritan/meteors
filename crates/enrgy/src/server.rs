@@ -10,13 +10,13 @@ use std::{
 };
 
 use crate::{
-    app::BuiltApp,
+    app::ArcRouter,
     extractor::param::ParsedParams,
     http::{self, headers::ACCEPT_ENCODING, HttpRequest},
     middleware::Middleware as _,
     service::Service,
     utils::{signal, thread_pool::ThreadPool, ArrayMap},
-    App, Error,
+    Router, Error,
 };
 
 #[derive(Debug)]
@@ -57,31 +57,31 @@ impl std::error::Error for RunError {
 
 pub struct Unbound;
 
-pub struct HttpServer<Addr> {
+pub struct Server<Addr> {
     close: Arc<AtomicBool>,
 
     workers: Vec<JoinHandle<()>>,
 
     addr: Addr,
 
-    app: Arc<BuiltApp>,
+    app: ArcRouter,
 }
 
-impl HttpServer<Unbound> {
-    pub fn new(app: App) -> Self {
+impl Server<Unbound> {
+    pub fn new(app: Router) -> Self {
         Self {
             close: Arc::new(AtomicBool::new(false)),
             workers: Vec::with_capacity(4),
             addr: Unbound,
-            app: Arc::new(app.build()),
+            app: app.build(),
         }
     }
 
-    pub fn bind<A>(self, addr: A) -> HttpServer<SocketAddr>
+    pub fn bind<A>(self, addr: A) -> Server<SocketAddr>
     where
         A: Into<SocketAddr>,
     {
-        HttpServer {
+        Server {
             close: self.close,
             workers: self.workers,
             addr: addr.into(),
@@ -90,7 +90,7 @@ impl HttpServer<Unbound> {
     }
 }
 
-impl HttpServer<SocketAddr> {
+impl Server<SocketAddr> {
     pub fn run(self) -> Result<(), RunError> {
         signal::set_handler({
             let close = Arc::clone(&self.close);
@@ -105,11 +105,11 @@ impl HttpServer<SocketAddr> {
         let (pool, sender) = ThreadPool::new(4, Arc::clone(&self.close), Self::thread_pool_handler);
 
         thread::spawn({
-            let app = Arc::clone(&self.app);
+            let app = self.app.clone();
 
             move || {
                 while let Ok((stream, addr)) = listener.accept() {
-                    if sender.send((Arc::clone(&app), stream, addr)).is_err() {
+                    if sender.send((app.clone(), stream, addr)).is_err() {
                         break;
                     }
                 }
@@ -160,10 +160,10 @@ impl const From<std::string::FromUtf8Error> for ThreadError {
     }
 }
 
-impl HttpServer<SocketAddr> {
-    fn thread_pool_handler((app, mut stream, _addr): (Arc<BuiltApp>, TcpStream, SocketAddr)) {
-        fn run(app: Arc<BuiltApp>, stream: &mut TcpStream) {
-            if let Err(err) = HttpServer::thread_handle(app, stream) {
+impl Server<SocketAddr> {
+    fn thread_pool_handler((app, mut stream, _addr): (ArcRouter, TcpStream, SocketAddr)) {
+        fn run(app: ArcRouter, stream: &mut TcpStream) {
+            if let Err(err) = Server::thread_handle(app, stream) {
                 log::error!("unable to handle thread");
 
                 match err {
@@ -179,7 +179,7 @@ impl HttpServer<SocketAddr> {
         run(app, &mut stream);
     }
 
-    fn thread_handle(app: Arc<BuiltApp>, stream: &mut TcpStream) -> Result<(), ThreadError> {
+    fn thread_handle(app: ArcRouter, stream: &mut TcpStream) -> Result<(), ThreadError> {
         let mut buf_reader = BufReader::new(stream);
         let mut request = HttpRequest::from_buf_reader(Arc::clone(&app.data), &mut buf_reader)?;
         let stream = buf_reader.into_inner();

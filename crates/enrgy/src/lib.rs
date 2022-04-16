@@ -36,7 +36,7 @@ pub mod middleware;
 pub mod response;
 pub mod route;
 
-pub use crate::{app::App, server::HttpServer};
+pub use crate::{app::Router, server::Server};
 
 #[doc(inline)]
 pub use crate::error::Error;
@@ -71,7 +71,7 @@ mod test_compile {
             "Hello World!"
         }
 
-        App::new().service(route::get("/").to(index));
+        Router::new().service(route::get("/").to(index));
     }
 
     #[test]
@@ -80,7 +80,7 @@ mod test_compile {
             "Hello World!"
         }
 
-        App::new().service(route::get("/").to(index));
+        Router::new().service(route::get("/").to(index));
     }
 
     #[test]
@@ -89,7 +89,7 @@ mod test_compile {
             "Hello World!".to_string()
         }
 
-        App::new().service(route::get("/").to(index));
+        Router::new().service(route::get("/").to(index));
     }
 
     #[test]
@@ -98,7 +98,7 @@ mod test_compile {
             format!("Hello {}!", *name)
         }
 
-        App::new().service(route::get("/:name").to(index));
+        Router::new().service(route::get("/:name").to(index));
     }
 
     #[derive(Debug)]
@@ -122,6 +122,6 @@ mod test_compile {
             Ok("Hello World!".to_string())
         }
 
-        App::new().service(route::get("/").to(index));
+        Router::new().service(route::get("/").to(index));
     }
 }
