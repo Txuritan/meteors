@@ -24,7 +24,7 @@ impl Pagination {
             } else {
                 LinkState::Normal
             },
-            href: format!("{}/{}", url, page),
+            href: vfmt::format!("{}/{}", url, page),
             text: "previous".into(),
         };
 
@@ -60,7 +60,7 @@ impl Pagination {
             } else {
                 LinkState::Normal
             },
-            href: format!("{}/{}", url, page),
+            href: vfmt::format!("{}/{}", url, page),
             text: "next".into(),
         };
 
@@ -73,7 +73,7 @@ impl Pagination {
                     } else {
                         LinkState::Normal
                     },
-                    href: format!("{}/{}", url, page),
+                    href: vfmt::format!("{}/{}", url, page),
                     text: page.into_readable().to_string(),
                 },
                 Pager::Ellipse => Link {

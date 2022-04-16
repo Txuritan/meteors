@@ -69,7 +69,7 @@ impl Log for Logger {
         }
 
         if let Err(err) = self.print(record) {
-            println!("unable to print log: {}", err);
+            vfmt::println!("unable to print log: {}", err.to_string());
         }
     }
 

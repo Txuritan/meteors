@@ -24,15 +24,15 @@ pub use self::router::res;
 #[inline(never)]
 pub fn run(mut args: common::Args) -> Result<()> {
     if args.peek().map(|a| a == "--help").unwrap_or_default() {
-        println!("Usage:");
-        println!("  varela serve <ARGS>");
-        println!();
-        println!("Options:");
-        println!("  --help");
-        println!();
-        println!("Arguments:");
-        println!("  host            sets the server's bound IP address [default: 0.0.0.0]");
-        println!("  port            sets the port that the server will listen to requests on [default: 8723]");
+        vfmt::println!("Usage:");
+        vfmt::println!("  varela serve <ARGS>");
+        vfmt::println!("");
+        vfmt::println!("Options:");
+        vfmt::println!("  --help");
+        vfmt::println!("");
+        vfmt::println!("Arguments:");
+        vfmt::println!("  host            sets the server's bound IP address [default: 0.0.0.0]");
+        vfmt::println!("  port            sets the port that the server will listen to requests on [default: 8723]");
 
         return Ok(());
     }

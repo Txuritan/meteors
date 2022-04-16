@@ -97,7 +97,7 @@ fn handle_entry(db: &mut Database, known_ids: &mut Vec<Id>, entry: DirEntry) -> 
 
     if let Some(kind) = file_kind {
         let details = handle_file(db, known_ids, &path, name)
-            .with_context(|| format!("While reading file {}", name))?;
+            .with_context(|| vfmt::format!("While reading file {}", name))?;
 
         if let Some((id, hash, updating)) = details {
             struct Detector {

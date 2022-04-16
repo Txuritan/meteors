@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use common::models::Theme;
 use opal::Template;
 

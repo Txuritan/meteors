@@ -10,3 +10,4 @@ workspace = "../.."
 
 [dependencies]
 common = { path = "../varela-common", package = "varela-common" }
+vfmt = { path = "../vfmt" }

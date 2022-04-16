@@ -39,11 +39,11 @@ pub mod http {
             let mut err = anyhow!("curl return with error code {:?}", output.status);
 
             if let Ok(text) = String::from_utf8(output.stdout) {
-                err = err.context(format!("with stdout: {}", text));
+                err = err.context(vfmt::format!("with stdout: {}", text));
             }
 
             if let Ok(text) = String::from_utf8(output.stderr) {
-                err = err.context(format!("with stderr: {}", text));
+                err = err.context(vfmt::format!("with stderr: {}", text));
             }
 
             return Err(err);

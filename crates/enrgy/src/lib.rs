@@ -53,10 +53,10 @@ compile_error!("feature clash, only enable `std` OR `vfmt`");
 
 pub(crate) mod wrapper {
     #[cfg(feature = "std")]
-    pub use std::{write, format};
+    pub use std::{fmt::Debug, format, write};
 
     #[cfg(feature = "vfmt")]
-    pub use vfmt::{uwrite as write, format};
+    pub use vfmt::{format, uDebug as Debug, uwrite as write};
 }
 
 // A module for testing different route handlers.

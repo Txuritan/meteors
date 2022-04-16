@@ -1,5 +1,7 @@
 use crate::{uDebug, uDisplay, uWrite, Formatter};
 
+use core::convert::Infallible;
+
 impl uDebug for bool {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
     where
@@ -181,5 +183,14 @@ where
             Err(e) => f.debug_tuple("Err")?.field(e)?.finish(),
             Ok(x) => f.debug_tuple("Ok")?.field(x)?.finish(),
         }
+    }
+}
+
+impl uDebug for Infallible {
+    fn fmt<W>(&self, _: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite + ?Sized,
+    {
+        unsafe { core::hint::unreachable_unchecked() }
     }
 }

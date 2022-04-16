@@ -486,6 +486,7 @@ name = "varela-command-config"
 version = "0.1.0"
 dependencies = [
  "varela-common",
+ "vfmt",
 ]
 
 [[package]]

@@ -19,21 +19,32 @@ pub enum CatalogFormat {
 }
 
 impl FromStr for CatalogFormat {
-    type Err = anyhow::Error;
+    type Err = CatalogFormatError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "atom" | "xml" => Ok(CatalogFormat::Atom),
             "html" => Ok(CatalogFormat::Html),
             "json" => Ok(CatalogFormat::Json),
-            ext => Err(anyhow!("Unknown catalog format: {}", ext)),
+            ext => Err(CatalogFormatError(vfmt::format!("Unknown catalog format: {}", ext))),
         }
+    }
+}
+
+pub struct CatalogFormatError(String);
+
+impl vfmt::uDebug for CatalogFormatError {
+    fn fmt<W>(&self, f: &mut vfmt::Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: vfmt::uWrite + ?Sized,
+    {
+        f.write_str(&self.0)
     }
 }
 
 pub fn catalog(
     db: extractor::Data<Database>,
-    ext: extractor::ParseParam<"ext", CatalogFormat>,
+    _ext: extractor::ParseParam<"ext", CatalogFormat>,
 ) -> Result<impl IntoResponse, pages::Error> {
     let mut stories = db
         .index()

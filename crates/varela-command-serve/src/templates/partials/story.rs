@@ -1,5 +1,3 @@
-use std::borrow::Cow;
-
 use common::{
     models::{Entity, Existing, Id, Rating, ResolvedStory, ResolvedStoryMeta, StoryInfo},
     prelude::*,

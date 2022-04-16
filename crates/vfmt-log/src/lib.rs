@@ -546,19 +546,6 @@ impl std::fmt::Display for SetLoggerError {
 /// ```
 #[macro_export(local_inner_macros)]
 macro_rules! log {
-    // log!(target: "my_target", Level::Info; key1 = 42, key2 = true; "a {} event", "log");
-    (target: $target:expr, $lvl:expr, $($key:tt = $value:expr),+; $($arg:tt)+) => ({
-        let lvl = $lvl;
-        if lvl <= $crate::STATIC_MAX_LEVEL && lvl <= $crate::max_level() {
-            $crate::__private_api_log(
-                __log_format_args!($($arg)+),
-                lvl,
-                &($target, __log_module_path!(), __log_file!(), __log_line!()),
-                $crate::__private_api::Option::Some(&[$((__log_key!($key), &$value)),+])
-            );
-        }
-    });
-
     // log!(target: "my_target", Level::Info; "a {} event", "log");
     (target: $target:expr, $lvl:expr, $($arg:tt)+) => ({
         let lvl = $lvl;
@@ -743,13 +730,13 @@ macro_rules! log_enabled {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __log_format_args {
-    ($($args:tt)*) => {{
-        use $crate::__private_api::vfmt::{self, uwrite};
-
+    ($($args:tt)*) => {
         |fmt| {
-            let _ = uwrite!(fmt, $( $args )*);
+            use $crate::__private_api::vfmt::{self, write};
+
+            let _ = write!(fmt, $( $args )*);
         }
-    }};
+    };
 }
 
 #[doc(hidden)]

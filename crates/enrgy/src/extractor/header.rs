@@ -1,5 +1,4 @@
 use std::{
-    fmt::Debug,
     ops::{Deref, DerefMut},
     str::FromStr,
 };
@@ -16,7 +15,7 @@ fn get_value<'req>(req: &'req HttpRequest, key: &'static str) -> Option<&'req St
 fn get_value_err<'req>(req: &'req HttpRequest, key: &'static str) -> Result<&'req String, Error> {
     match get_value(req, key) {
         Some(v) => Ok(v),
-        None => Err(InternalError::BadRequest(format!(
+        None => Err(InternalError::BadRequest(crate::wrapper::format!(
             "HTTP request did not contain the header `{}`",
             key
         ))),
@@ -85,7 +84,7 @@ impl<const KEY: &'static str> Extractor for OptionalHeader<KEY> {
 pub struct ParseHeader<const KEY: &'static str, T>
 where
     T: FromStr,
-    <T as FromStr>::Err: Debug,
+    <T as FromStr>::Err: crate::wrapper::Debug,
 {
     value: T,
 }
@@ -93,7 +92,7 @@ where
 impl<const KEY: &'static str, T> const Deref for ParseHeader<KEY, T>
 where
     T: FromStr,
-    <T as FromStr>::Err: Debug,
+    <T as FromStr>::Err: crate::wrapper::Debug,
 {
     type Target = T;
 
@@ -105,7 +104,7 @@ where
 impl<const KEY: &'static str, T> const DerefMut for ParseHeader<KEY, T>
 where
     T: FromStr,
-    <T as FromStr>::Err: Debug,
+    <T as FromStr>::Err: crate::wrapper::Debug,
 {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
@@ -115,7 +114,7 @@ where
 impl<const KEY: &'static str, T> Extractor for ParseHeader<KEY, T>
 where
     T: FromStr,
-    <T as FromStr>::Err: Debug,
+    <T as FromStr>::Err: crate::wrapper::Debug,
 {
     type Error = Error;
 
@@ -123,9 +122,10 @@ where
         match get_value_err(&*req, KEY) {
             Ok(value) => match T::from_str(value) {
                 Ok(value) => Ok(Self { value }),
-                Err(err) => Err(InternalError::BadRequest(format!(
+                Err(err) => Err(InternalError::BadRequest(crate::wrapper::format!(
                     "HTTP request header with key `{}` could not be parsed: {:?}",
-                    KEY, err
+                    KEY,
+                    err
                 ))),
             },
             Err(err) => Err(err),

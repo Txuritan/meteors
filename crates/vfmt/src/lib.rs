@@ -236,10 +236,26 @@ pub use self::write::uWrite;
 /// `{{` and `}}` can be used to escape braces.
 pub use vfmt_macros::uwrite;
 
+/// A macro wrapper around [`uwrite`].
+#[macro_export]
+macro_rules! write {
+    ($fmt:expr, $($arg:tt)*) => {
+        $crate::uwrite!($fmt, $($arg)*)
+    };
+}
+
 /// Write formatted data into a buffer, with a newline appended
 ///
 /// See [`uwrite!`](macro.uwrite.html) for more details
 pub use vfmt_macros::uwriteln;
+
+/// A macro wrapper around [`uwriteln`].
+#[macro_export]
+macro_rules! writeln {
+    ($fmt:expr, $($arg:tt)*) => {
+        $crate::uwriteln!($fmt, $($arg)*)
+    };
+}
 
 pub use self::helpers::{DebugList, DebugMap, DebugStruct, DebugTuple};
 

@@ -9,17 +9,17 @@ use common::{
 pub fn run(mut args: common::Args) -> Result<()> {
     match args.next().as_deref() {
         Some("--help") => {
-            println!("Usage:");
-            println!("  varela config <COMMAND> [<ARGS>]");
-            println!();
-            println!("Options:");
-            println!("  --help");
-            println!();
-            println!("Commands:");
-            println!("  get             get and prints a configuration key");
-            println!("  set             set a configuration key");
-            println!("  push            add a entry onto a configuration list key");
-            println!("  pop             remove an entry onto a configuration list key");
+            vfmt::println!("Usage:");
+            vfmt::println!("  varela config <COMMAND> [<ARGS>]");
+            vfmt::println!();
+            vfmt::println!("Options:");
+            vfmt::println!("  --help");
+            vfmt::println!();
+            vfmt::println!("Commands:");
+            vfmt::println!("  get             get and prints a configuration key");
+            vfmt::println!("  set             set a configuration key");
+            vfmt::println!("  push            add a entry onto a configuration list key");
+            vfmt::println!("  pop             remove an entry onto a configuration list key");
         }
         Some("get") => {
             run_get(args)?;
@@ -45,14 +45,14 @@ fn run_get(mut args: common::Args) -> Result<()> {
     let settings = database.settings();
 
     if args.peek().map(|a| a == "--help").unwrap_or_default() {
-        println!("Usage:");
-        println!("  varela config get <KEY>");
-        println!();
-        println!("Options:");
-        println!("  --help");
-        println!();
-        println!("Arguments:");
-        println!("  key             the key to get");
+        vfmt::println!("Usage:");
+        vfmt::println!("  varela config get <KEY>");
+        vfmt::println!();
+        vfmt::println!("Options:");
+        vfmt::println!("  --help");
+        vfmt::println!();
+        vfmt::println!("Arguments:");
+        vfmt::println!("  key             the key to get");
 
         return Ok(());
     }
@@ -99,15 +99,15 @@ fn run_set(mut args: common::Args) -> Result<()> {
     let mut database = Database::open()?;
 
     if args.peek().map(|a| a == "--help").unwrap_or_default() {
-        println!("Usage:");
-        println!("  varela config set <KEY> <VALUE>");
-        println!();
-        println!("Options:");
-        println!("  --help");
-        println!();
-        println!("Arguments:");
-        println!("  key             the key to set");
-        println!("  value           the value to set the key to");
+        vfmt::println!("Usage:");
+        vfmt::println!("  varela config set <KEY> <VALUE>");
+        vfmt::println!();
+        vfmt::println!("Options:");
+        vfmt::println!("  --help");
+        vfmt::println!();
+        vfmt::println!("Arguments:");
+        vfmt::println!("  key             the key to set");
+        vfmt::println!("  value           the value to set the key to");
 
         return Ok(());
     }
@@ -179,15 +179,15 @@ fn run_push(mut args: common::Args) -> Result<()> {
     let settings = database.settings_mut();
 
     if args.peek().map(|a| a == "--help").unwrap_or_default() {
-        println!("Usage:");
-        println!("  varela config push <KEY> <VALUE>");
-        println!();
-        println!("Options:");
-        println!("  --help");
-        println!();
-        println!("Arguments:");
-        println!("  key             the list to add to");
-        println!("  value           the value to add to the list");
+        vfmt::println!("Usage:");
+        vfmt::println!("  varela config push <KEY> <VALUE>");
+        vfmt::println!();
+        vfmt::println!("Options:");
+        vfmt::println!("  --help");
+        vfmt::println!();
+        vfmt::println!("Arguments:");
+        vfmt::println!("  key             the list to add to");
+        vfmt::println!("  value           the value to add to the list");
 
         return Ok(());
     }
@@ -241,14 +241,14 @@ fn run_pop(mut args: common::Args) -> Result<()> {
     let settings = database.settings_mut();
 
     if args.peek().map(|a| a == "--help").unwrap_or_default() {
-        println!("Usage:");
-        println!("  varela config pop <KEY>");
-        println!();
-        println!("Options:");
-        println!("  --help");
-        println!();
-        println!("Arguments:");
-        println!("  key             the list item to remove");
+        vfmt::println!("Usage:");
+        vfmt::println!("  varela config pop <KEY>");
+        vfmt::println!();
+        vfmt::println!("Options:");
+        vfmt::println!("  --help");
+        vfmt::println!();
+        vfmt::println!("Arguments:");
+        vfmt::println!("  key             the list item to remove");
 
         return Ok(());
     }

@@ -16,7 +16,7 @@ use crate::{
     middleware::Middleware as _,
     service::Service,
     utils::{signal, thread_pool::ThreadPool, ArrayMap},
-    Router, Error,
+    Error, Router,
 };
 
 #[derive(Debug)]
@@ -105,7 +105,7 @@ impl Server<SocketAddr> {
         let (pool, sender) = ThreadPool::new(4, Arc::clone(&self.close), Self::thread_pool_handler);
 
         thread::spawn({
-            let app = self.app.clone();
+            let app = self.app;
 
             move || {
                 while let Ok((stream, addr)) = listener.accept() {

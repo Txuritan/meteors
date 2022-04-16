@@ -54,7 +54,7 @@ pub fn download_post(
 
     let save_path = db
         .data_path
-        .join(format!("{}.html", String::from_utf8(title.to_vec())?));
+        .join(vfmt::format!("{}.html", String::from_utf8(title.to_vec())?));
 
     fs::write(save_path, bytes)?;
 

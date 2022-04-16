@@ -1,7 +1,7 @@
 const colors = require('tailwindcss/colors');
 
 module.exports = {
-    purge: [
+    content: [
         './crates/varela-command-serve/templates/**/*.hbs',
         './crates/varela-command-serve/src/templates/mod.rs',
     ],
