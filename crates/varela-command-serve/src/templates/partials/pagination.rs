@@ -74,7 +74,7 @@ impl Pagination {
                         LinkState::Normal
                     },
                     href: vfmt::format!("{}/{}", url, page),
-                    text: page.into_readable().to_string(),
+                    text: vfmt::uDisplay::to_string(&page.into_readable()),
                 },
                 Pager::Ellipse => Link {
                     state: LinkState::Normal,

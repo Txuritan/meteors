@@ -13,6 +13,7 @@
     const_trait_impl,
     decl_macro,
     generic_const_exprs,
+    maybe_uninit_array_assume_init,
     slice_ptr_get,
     // these two have to be here until cross publishes a new version
     const_fn_trait_bound,
@@ -22,7 +23,6 @@
 #[macro_use]
 mod utils;
 
-mod app;
 mod extensions;
 mod handler;
 mod server;
@@ -36,7 +36,7 @@ pub mod middleware;
 pub mod response;
 pub mod route;
 
-pub use crate::{app::Router, server::Server};
+pub use crate::server::Server;
 
 #[doc(inline)]
 pub use crate::error::Error;
@@ -71,7 +71,7 @@ mod test_compile {
             "Hello World!"
         }
 
-        Router::new().service(route::get("/").to(index));
+        Server::new().service(route::get("/").to(index));
     }
 
     #[test]
@@ -80,7 +80,7 @@ mod test_compile {
             "Hello World!"
         }
 
-        Router::new().service(route::get("/").to(index));
+        Server::new().service(route::get("/").to(index));
     }
 
     #[test]
@@ -89,7 +89,7 @@ mod test_compile {
             "Hello World!".to_string()
         }
 
-        Router::new().service(route::get("/").to(index));
+        Server::new().service(route::get("/").to(index));
     }
 
     #[test]
@@ -98,7 +98,7 @@ mod test_compile {
             format!("Hello {}!", *name)
         }
 
-        Router::new().service(route::get("/:name").to(index));
+        Server::new().service(route::get("/:name").to(index));
     }
 
     #[derive(Debug)]
@@ -122,6 +122,6 @@ mod test_compile {
             Ok("Hello World!".to_string())
         }
 
-        Router::new().service(route::get("/").to(index));
+        Server::new().service(route::get("/").to(index));
     }
 }

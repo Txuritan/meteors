@@ -6,17 +6,20 @@ use std::{
         atomic::{AtomicBool, Ordering},
         Arc,
     },
-    thread::{self, JoinHandle},
+    thread,
 };
 
 use crate::{
-    app::ArcRouter,
-    extractor::param::ParsedParams,
-    http::{self, headers::ACCEPT_ENCODING, HttpRequest},
-    middleware::Middleware as _,
+    dev::BoxedService,
+    extensions::Extensions,
+    extractor::{self, param::ParsedParams},
+    handler::HandlerService,
+    http::{self, headers::ACCEPT_ENCODING, HttpMethod, HttpRequest, HttpResponse},
+    middleware::{BoxedMiddleware, Middleware as _},
+    route::{self, Route},
     service::Service,
-    utils::{signal, thread_pool::ThreadPool, ArrayMap},
-    Error, Router,
+    utils::{signal, thread_pool::ThreadPool, ArrayMap, PathTree},
+    Error,
 };
 
 #[derive(Debug)]
@@ -55,25 +58,81 @@ impl std::error::Error for RunError {
     }
 }
 
+type InnerRoute = BoxedService<HttpRequest, HttpResponse, Error>;
+type RouterTree = ArrayMap<HttpMethod, PathTree<Arc<InnerRoute>>, 9>;
+type Middleware = Vec<BoxedMiddleware<HttpRequest, HttpResponse>>;
+
+#[derive(Clone)]
+struct Shared {
+    data: Arc<Extensions>,
+    default: Arc<InnerRoute>,
+    tree: Arc<RouterTree>,
+    middleware: Arc<Middleware>,
+}
+
 pub struct Unbound;
 
 pub struct Server<Addr> {
     close: Arc<AtomicBool>,
 
-    workers: Vec<JoinHandle<()>>,
-
     addr: Addr,
 
-    app: ArcRouter,
+    data: Extensions,
+    default: Arc<InnerRoute>,
+    tree: RouterTree,
+    middleware: Middleware,
+}
+
+impl<Addr> Server<Addr> {
+    pub fn data<T>(mut self, data: Arc<T>) -> Self
+    where
+        T: Send + Sync + 'static,
+    {
+        self.data.insert(extractor::Data { data });
+
+        self
+    }
+
+    pub fn wrap<M>(mut self, middleware: M) -> Self
+    where
+        M: crate::middleware::Middleware<HttpRequest, HttpResponse> + Send + Sync + 'static,
+    {
+        self.middleware.push(BoxedMiddleware::new(middleware));
+
+        self
+    }
+
+    pub fn service(mut self, route: Route<'_>) -> Self {
+        let node = if let Some(node) = self.tree.get_mut(route.method) {
+            node
+        } else {
+            self.tree.insert(route.method, PathTree::new());
+
+            unsafe { self.tree.get_mut(route.method).unwrap_unchecked() }
+        };
+
+        node.insert(route.path, Arc::new(route.service));
+
+        self
+    }
+
+    pub fn default(mut self, service: Route<'static>) -> Self {
+        self.default = Arc::new(service.service);
+
+        self
+    }
 }
 
 impl Server<Unbound> {
-    pub fn new(app: Router) -> Self {
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> Self {
         Self {
             close: Arc::new(AtomicBool::new(false)),
-            workers: Vec::with_capacity(4),
             addr: Unbound,
-            app: app.build(),
+            data: Extensions::new(),
+            default: Arc::new(BoxedService::new(HandlerService::new(route::not_found))),
+            tree: RouterTree::new(),
+            middleware: Middleware::new(),
         }
     }
 
@@ -83,33 +142,49 @@ impl Server<Unbound> {
     {
         Server {
             close: self.close,
-            workers: self.workers,
             addr: addr.into(),
-            app: self.app,
+            data: self.data,
+            default: self.default,
+            tree: self.tree,
+            middleware: self.middleware,
         }
     }
 }
 
 impl Server<SocketAddr> {
     pub fn run(self) -> Result<(), RunError> {
+        let Server {
+            close,
+            addr,
+            data,
+            default,
+            tree,
+            middleware,
+        } = self;
+
+        let shared = Shared {
+            data: Arc::new(data),
+            default,
+            tree: Arc::new(tree),
+            middleware: Arc::new(middleware),
+        };
+
         signal::set_handler({
-            let close = Arc::clone(&self.close);
+            let close = Arc::clone(&close);
 
             move || {
                 close.store(true, Ordering::SeqCst);
             }
         })?;
 
-        let listener = TcpListener::bind(self.addr)?;
+        let listener = TcpListener::bind(addr)?;
 
-        let (pool, sender) = ThreadPool::new(4, Arc::clone(&self.close), Self::thread_pool_handler);
+        let (pool, sender) = ThreadPool::<_, 4>::new(Arc::clone(&close), Self::thread_pool_handler);
 
         thread::spawn({
-            let app = self.app;
-
             move || {
                 while let Ok((stream, addr)) = listener.accept() {
-                    if sender.send((app.clone(), stream, addr)).is_err() {
+                    if sender.send((shared.clone(), stream, addr)).is_err() {
                         break;
                     }
                 }
@@ -161,9 +236,9 @@ impl const From<std::string::FromUtf8Error> for ThreadError {
 }
 
 impl Server<SocketAddr> {
-    fn thread_pool_handler((app, mut stream, _addr): (ArcRouter, TcpStream, SocketAddr)) {
-        fn run(app: ArcRouter, stream: &mut TcpStream) {
-            if let Err(err) = Server::thread_handle(app, stream) {
+    fn thread_pool_handler((shared, mut stream, _addr): (Shared, TcpStream, SocketAddr)) {
+        fn run(shared: Shared, stream: &mut TcpStream) {
+            if let Err(err) = Server::thread_handle(shared, stream) {
                 log::error!("unable to handle thread");
 
                 match err {
@@ -176,17 +251,15 @@ impl Server<SocketAddr> {
             }
         }
 
-        run(app, &mut stream);
+        run(shared, &mut stream);
     }
 
-    fn thread_handle(app: ArcRouter, stream: &mut TcpStream) -> Result<(), ThreadError> {
+    fn thread_handle(shared: Shared, stream: &mut TcpStream) -> Result<(), ThreadError> {
         let mut buf_reader = BufReader::new(stream);
-        let mut request = HttpRequest::from_buf_reader(Arc::clone(&app.data), &mut buf_reader)?;
+        let mut request = HttpRequest::from_buf_reader(Arc::clone(&shared.data), &mut buf_reader)?;
         let stream = buf_reader.into_inner();
 
-        // let (header_data, body) = http::read_request(stream)?;
-
-        let (service, params) = app
+        let (service, params) = shared
             .tree
             .get(&request.method)
             .and_then(|tree| tree.find(&request.uri.path))
@@ -199,7 +272,7 @@ impl Server<SocketAddr> {
 
                 (Arc::clone(service), map)
             })
-            .unwrap_or_else(|| (app.default_service.clone(), ParsedParams(ArrayMap::new())));
+            .unwrap_or_else(|| (shared.default.clone(), ParsedParams(ArrayMap::new())));
 
         request.extensions.insert(params);
 
@@ -209,13 +282,13 @@ impl Server<SocketAddr> {
             false
         };
 
-        for middleware in &*app.middleware {
+        for middleware in &*shared.middleware {
             middleware.before(&mut request);
         }
 
         let mut response = service.call(&mut request)?;
 
-        for middleware in &*app.middleware {
+        for middleware in &*shared.middleware {
             response = middleware.after(&request, response);
         }
 

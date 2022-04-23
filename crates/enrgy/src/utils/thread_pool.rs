@@ -6,21 +6,21 @@ use std::{
         Arc, Mutex,
     },
     thread::{self, JoinHandle},
-    time::Duration,
+    time::Duration, mem::MaybeUninit,
 };
 
-pub struct ThreadPool<Data>
+pub struct ThreadPool<Data, const SIZE: usize>
 where
     Data: Send + Sync + 'static,
 {
-    workers: Vec<Worker<Data>>,
+    workers: [Worker<Data>; SIZE],
 }
 
-impl<Data> ThreadPool<Data>
+impl<Data, const SIZE: usize> ThreadPool<Data, SIZE>
 where
     Data: Send + Sync + 'static,
 {
-    pub fn new<F>(size: usize, close: Arc<AtomicBool>, handler: F) -> (Self, Sender<Data>)
+    pub fn new<F>(close: Arc<AtomicBool>, handler: F) -> (Self, Sender<Data>)
     where
         F: Fn(Data) + Clone + Send + Sync + 'static,
     {
@@ -28,17 +28,18 @@ where
 
         let receiver = Arc::new(Mutex::new(receiver));
 
-        let workers = (0..size)
-            .into_iter()
-            .map(|id| {
-                Worker::new(
-                    id,
-                    Arc::clone(&close),
-                    Arc::clone(&receiver),
-                    handler.clone(),
-                )
-            })
-            .collect();
+        let mut workers: [MaybeUninit<Worker<Data>>; SIZE] = unsafe { MaybeUninit::uninit().assume_init() };
+
+        for (i, worker) in workers.iter_mut().enumerate().take(SIZE) {
+            *worker = MaybeUninit::new(Worker::new(
+                i,
+                Arc::clone(&close),
+                Arc::clone(&receiver),
+                handler.clone(),
+            ));
+        }
+
+        let workers = unsafe { MaybeUninit::array_assume_init(workers) };
 
         (Self { workers }, sender)
     }

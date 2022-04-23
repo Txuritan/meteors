@@ -17,7 +17,7 @@ use std::{
 };
 
 use common::{database::Database, prelude::*};
-use enrgy::{middleware::Middleware, route, Router, Server};
+use enrgy::{middleware::Middleware, route, Server};
 
 pub use self::router::res;
 
@@ -68,27 +68,25 @@ pub fn run(mut args: common::Args) -> Result<()> {
         db
     });
 
-    let server = Server::new(
-        Router::new()
-            .data(database.clone())
-            .service(route::get("/").to(handlers::index))
-            .service(route::get("/download").to(handlers::download_get))
-            .service(route::post("/download").to(handlers::download_post))
-            .service(route::get("/story/:id/:chapter").to(handlers::story))
-            .service(route::get("/search").to(handlers::search))
-            .service(route::get("/search2").to(handlers::search_v2))
-            .service(route::get("/style.css").to(handlers::style))
-            .service(route::get("/favicon.ico").to(handlers::favicon))
-            .service(route::get("/author/:id").to(handlers::entity))
-            .service(route::get("/origin/:id").to(handlers::entity))
-            .service(route::get("/tag/:id").to(handlers::entity))
-            .service(route::get("/opds/root.:ext").to(handlers::catalog))
-            .default_service(route::to(|| -> enrgy::http::HttpResponse {
-                crate::res!(404)
-            }))
-            .wrap(LoggerMiddleware),
-    )
-    .bind(addr);
+    let server = Server::new()
+        .data(database.clone())
+        .service(route::get("/").to(handlers::index))
+        .service(route::get("/download").to(handlers::download_get))
+        .service(route::post("/download").to(handlers::download_post))
+        .service(route::get("/story/:id/:chapter").to(handlers::story))
+        .service(route::get("/search").to(handlers::search))
+        .service(route::get("/search2").to(handlers::search_v2))
+        .service(route::get("/style.css").to(handlers::style))
+        .service(route::get("/favicon.ico").to(handlers::favicon))
+        .service(route::get("/author/:id").to(handlers::entity))
+        .service(route::get("/origin/:id").to(handlers::entity))
+        .service(route::get("/tag/:id").to(handlers::entity))
+        .service(route::get("/opds/root.:ext").to(handlers::catalog))
+        .default(route::to(|| -> enrgy::http::HttpResponse {
+            crate::res!(404)
+        }))
+        .wrap(LoggerMiddleware)
+        .bind(addr);
 
     info!("sever listening on: {}", addr.bright_purple());
 

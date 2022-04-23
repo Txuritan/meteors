@@ -26,7 +26,10 @@ impl FromStr for CatalogFormat {
             "atom" | "xml" => Ok(CatalogFormat::Atom),
             "html" => Ok(CatalogFormat::Html),
             "json" => Ok(CatalogFormat::Json),
-            ext => Err(CatalogFormatError(vfmt::format!("Unknown catalog format: {}", ext))),
+            ext => Err(CatalogFormatError(vfmt::format!(
+                "Unknown catalog format: {}",
+                ext
+            ))),
         }
     }
 }

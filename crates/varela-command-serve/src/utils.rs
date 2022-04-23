@@ -146,21 +146,24 @@ pub fn get_story_full(db: &Database, id: &Id) -> Result<ResolvedStory> {
 
 pub struct Readable<N>
 where
-    N: std::fmt::Display,
+    N: vfmt::uDisplay,
 {
     inner: N,
 }
 
-impl<N> std::fmt::Display for Readable<N>
+impl<N> vfmt::uDisplay for Readable<N>
 where
-    N: std::fmt::Display,
+    N: vfmt::uDisplay,
 {
     #[allow(clippy::needless_collect)]
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let values: Vec<(Option<char>, char)> = self
-            .inner
-            .to_string()
-            .chars()
+    fn fmt<W>(&self, f: &mut vfmt::Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: vfmt::uWrite + ?Sized,
+    {
+        let chars = self.inner.to_string().chars().collect::<Vec<_>>();
+
+        let values = chars
+            .into_iter()
             .rev()
             .enumerate()
             .map(|(i, c)| {
@@ -173,13 +176,13 @@ where
                     c,
                 )
             })
-            .collect();
+            .rev();
 
-        for (s, c) in values.into_iter().rev() {
-            write!(f, "{}", c)?;
+        for (s, c) in values {
+            vfmt::write!(f, "{}", c)?;
 
             if let Some(c) = s {
-                write!(f, "{}", c)?;
+                vfmt::write!(f, "{}", c)?;
             }
         }
 
@@ -187,7 +190,7 @@ where
     }
 }
 
-pub trait IntoReadable: std::fmt::Display + Sized {
+pub trait IntoReadable: vfmt::uDisplay + Sized {
     fn into_readable(self) -> Readable<Self> {
         Readable { inner: self }
     }

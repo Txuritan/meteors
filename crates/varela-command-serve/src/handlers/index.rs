@@ -36,5 +36,5 @@ pub fn index(db: extractor::Data<Database>) -> Result<impl IntoResponse, pages::
 pub fn favicon() -> HttpResponse {
     HttpResponse::ok()
         .header(CONTENT_TYPE, "image/x-icon")
-        .body(Vec::from(common::ICON))
+        .body(common::ICON)
 }
