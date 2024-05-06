@@ -42,8 +42,8 @@ pub fn derive(
 fn de_variant(variant: &venial::EnumVariant) -> proc_macro2::TokenStream {
     let variant_ident = &variant.name;
 
-    let handler = match &variant.contents {
-        venial::StructFields::Named(_named) => {
+    let handler = match &variant.fields {
+        venial::Fields::Named(_named) => {
             // let field_idents = named.named.iter().map(|field| {
             //     let ident = field.ident.as_ref().unwrap();
 
@@ -65,7 +65,7 @@ fn de_variant(variant: &venial::EnumVariant) -> proc_macro2::TokenStream {
                 "Aloene does not yet support enums with struct like variants"
             )
         }
-        venial::StructFields::Tuple(_unnamed) => {
+        venial::Fields::Tuple(_unnamed) => {
             // let fields = unnamed.unnamed.iter().map(|field| {
             //     quote::quote! {}
             // });
@@ -81,7 +81,7 @@ fn de_variant(variant: &venial::EnumVariant) -> proc_macro2::TokenStream {
                 "Aloene does not yet support enums with tuple like variants"
             )
         }
-        venial::StructFields::Unit => {
+        venial::Fields::Unit => {
             quote::quote! {
                 ::aloene::io::assert_byte(reader, ::aloene::bytes::Container::UNIT)?;
 
@@ -98,16 +98,16 @@ fn de_variant(variant: &venial::EnumVariant) -> proc_macro2::TokenStream {
 fn se_variant(variant: &venial::EnumVariant) -> proc_macro2::TokenStream {
     let variant_ident = &variant.name;
 
-    let handler = match &variant.contents {
-        venial::StructFields::Named(_named) => err!(
+    let handler = match &variant.fields {
+        venial::Fields::Named(_named) => err!(
             variant,
             "Aloene does not yet support enums with struct like variants"
         ),
-        venial::StructFields::Tuple(_unnamed) => err!(
+        venial::Fields::Tuple(_unnamed) => err!(
             variant,
             "Aloene does not yet support enums with tuple like variants"
         ),
-        venial::StructFields::Unit => {
+        venial::Fields::Unit => {
             quote::quote! {
                 ::aloene::io::write_u8(writer, ::aloene::bytes::Value::STRING)?;
 
@@ -130,16 +130,16 @@ fn enum_variant_name(
     let variant_idents = variants.iter().map(|(variant, _)| &variant.name);
     let variant_kind_idents = variants.iter().map(|(variant, _)| &variant.name);
 
-    let variant_kind = variants.iter().map(|(variant, _)| match &variant.contents {
-        venial::StructFields::Named(_) => quote::quote! { { .. } },
-        venial::StructFields::Tuple(unnamed) => {
+    let variant_kind = variants.iter().map(|(variant, _)| match &variant.fields {
+        venial::Fields::Named(_) => quote::quote! { { .. } },
+        venial::Fields::Tuple(unnamed) => {
             let fields = unnamed.fields.len();
 
             let blanks = (0..fields).map(|_| quote::quote! { _ });
 
             quote::quote! { ( #( #blanks ),* ) }
         }
-        venial::StructFields::Unit => quote::quote! {},
+        venial::Fields::Unit => quote::quote! {},
     });
 
     quote::quote! {

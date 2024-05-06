@@ -13,7 +13,7 @@ pub fn search(
     search: extractor::Query<"search">,
     query: extractor::RawQuery,
 ) -> Result<impl IntoResponse, pages::Error> {
-    let ids = search::search(&*db, &search);
+    let ids = search::search(&db, &search);
 
     let query = enrgy::http::encoding::percent::utf8_percent_encode(
         &query,
@@ -24,7 +24,7 @@ pub fn search(
     let mut stories = ids
         .iter()
         .map(|id| {
-            utils::get_story_full(&*db, id).and_then(|story| {
+            utils::get_story_full(&db, id).and_then(|story| {
                 partials::StoryPartial::new(id.clone(), story, Some(query.clone()))
             })
         })
@@ -63,7 +63,7 @@ pub fn search_v2(
     let mut stories = stories
         .into_iter()
         .map(|(id, _)| {
-            utils::get_story_full(&*db, id).and_then(|story| {
+            utils::get_story_full(&db, id).and_then(|story| {
                 partials::StoryPartial::new(id.clone(), story, Some(query.clone()))
             })
         })

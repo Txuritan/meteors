@@ -4,11 +4,10 @@ use std::{
 };
 
 use crate::{
-    error::InternalError,
     extractor::Extractor,
-    http::{encoding::percent::percent_decode, HttpRequest},
+    http::{encoding::percent::percent_decode, HttpRequest, HttpResponse},
+    response::IntoResponse,
     utils::ArrayMap,
-    Error,
 };
 
 struct ParsedQuery(ArrayMap<String, Option<String>, 32>);
@@ -109,16 +108,12 @@ fn get_value<'req>(req: &'req mut HttpRequest, key: &'static str) -> Option<&'re
         .and_then(|parsed| parsed.0.get(key).and_then(Option::as_ref))
 }
 
-fn get_value_err<'req>(
+fn get_value_err<'req, const KEY: &'static str>(
     req: &'req mut HttpRequest,
-    key: &'static str,
-) -> Result<&'req String, Error> {
-    match get_value(req, key) {
+) -> Result<&'req String, QueryMissingRejection<KEY>> {
+    match get_value(req, KEY) {
         Some(v) => Ok(v),
-        None => Err(InternalError::BadRequest(crate::wrapper::format!(
-            "HTTP request URL query did not contain a value with the key `{}`",
-            key
-        ))),
+        None => Err(QueryMissingRejection {}),
     }
 }
 
@@ -141,10 +136,10 @@ impl<const KEY: &'static str> DerefMut for Query<KEY> {
 }
 
 impl<const KEY: &'static str> Extractor for Query<KEY> {
-    type Error = Error;
+    type Error = QueryMissingRejection<KEY>;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
-        match get_value_err(req, KEY) {
+        match get_value_err::<KEY>(req) {
             Ok(value) => Ok(Self {
                 value: value.clone(),
             }),
@@ -172,7 +167,7 @@ impl<const KEY: &'static str> DerefMut for OptionalQuery<KEY> {
 }
 
 impl<const KEY: &'static str> Extractor for OptionalQuery<KEY> {
-    type Error = Error;
+    type Error = QueryMissingRejection<KEY>;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         Ok(Self {
@@ -181,55 +176,27 @@ impl<const KEY: &'static str> Extractor for OptionalQuery<KEY> {
     }
 }
 
-pub struct ParseQuery<const KEY: &'static str, T>
-where
-    T: FromStr,
-    <T as FromStr>::Err: crate::wrapper::Debug,
-{
-    value: T,
-}
+pub struct QueryMissingRejection<const KEY: &'static str> {}
 
-impl<const KEY: &'static str, T> const Deref for ParseQuery<KEY, T>
-where
-    T: FromStr,
-    <T as FromStr>::Err: crate::wrapper::Debug,
-{
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.value
+#[cfg(feature = "std")]
+impl<const KEY: &'static str> IntoResponse for QueryMissingRejection<KEY> {
+    fn into_response(self) -> HttpResponse {
+        std::format!(
+            "HTTP request URL query did not contain a value with the key `{}`",
+            KEY,
+        )
+        .into_response()
     }
 }
 
-impl<const KEY: &'static str, T> const DerefMut for ParseQuery<KEY, T>
-where
-    T: FromStr,
-    <T as FromStr>::Err: crate::wrapper::Debug,
-{
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.value
-    }
-}
-
-impl<const KEY: &'static str, T> Extractor for ParseQuery<KEY, T>
-where
-    T: FromStr,
-    <T as FromStr>::Err: crate::wrapper::Debug,
-{
-    type Error = Error;
-
-    fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
-        match get_value_err(req, KEY) {
-            Ok(value) => match T::from_str(value) {
-                Ok(value) => Ok(Self { value }),
-                Err(err) => Err(InternalError::BadRequest(crate::wrapper::format!(
-                    "HTTP request URL query with key `{}` could not be parsed: {:?}",
-                    KEY,
-                    err
-                ))),
-            },
-            Err(err) => Err(err),
-        }
+#[cfg(feature = "vfmt")]
+impl<const KEY: &'static str> IntoResponse for QueryMissingRejection<KEY> {
+    fn into_response(self) -> HttpResponse {
+        vfmt::format!(
+            "HTTP request URL query did not contain a value with the key `{}`",
+            KEY,
+        )
+        .into_response()
     }
 }
 
@@ -252,14 +219,177 @@ impl const DerefMut for RawQuery {
 }
 
 impl Extractor for RawQuery {
+    type Error = RawQueryMissingRejection;
+
+    fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
+        let value = match &req.uri.query {
+            Some(query) => Clone::clone(query),
+            None => return Err(RawQueryMissingRejection {}),
+        };
+
+        Ok(Self { value })
+    }
+}
+
+pub struct RawQueryMissingRejection {}
+
+#[cfg(feature = "std")]
+impl IntoResponse for RawQueryMissingRejection {
+    fn into_response(self) -> HttpResponse {
+        "HTTP request URL did not contain a query".into_response()
+    }
+}
+
+#[cfg(feature = "vfmt")]
+impl IntoResponse for RawQueryMissingRejection {
+    fn into_response(self) -> HttpResponse {
+        "HTTP request URL did not contain a query".into_response()
+    }
+}
+
+#[cfg(feature = "std")]
+pub struct ParseQuery<const KEY: &'static str, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: std::fmt::Debug,
+{
+    value: T,
+}
+
+#[cfg(feature = "std")]
+impl<const KEY: &'static str, T> const Deref for ParseQuery<KEY, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: std::fmt::Debug,
+{
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+#[cfg(feature = "std")]
+impl<const KEY: &'static str, T> const DerefMut for ParseQuery<KEY, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: std::fmt::Debug,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
+    }
+}
+
+#[cfg(feature = "std")]
+impl<const KEY: &'static str, T> Extractor for ParseQuery<KEY, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: std::fmt::Debug,
+{
     type Error = Error;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
-        Ok(Self {
-            value: match &req.uri.query {
-                Some(query) => Clone::clone(query),
-                None => String::new(),
+        match get_value_err(req, KEY) {
+            Ok(value) => match T::from_str(value) {
+                Ok(value) => Ok(Self { value }),
+                Err(err) => Err(InternalError::BadRequest(std::format!(
+                    "HTTP request URL query with key `{}` could not be parsed: {:?}",
+                    KEY,
+                    err
+                ))),
             },
-        })
+            Err(err) => Err(err),
+        }
+    }
+}
+
+#[cfg(feature = "vfmt")]
+pub struct ParseQuery<const KEY: &'static str, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: vfmt::uDebug,
+{
+    value: T,
+}
+
+#[cfg(feature = "vfmt")]
+impl<const KEY: &'static str, T> const Deref for ParseQuery<KEY, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: vfmt::uDebug,
+{
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.value
+    }
+}
+
+#[cfg(feature = "vfmt")]
+impl<const KEY: &'static str, T> const DerefMut for ParseQuery<KEY, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: vfmt::uDebug,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.value
+    }
+}
+
+#[cfg(feature = "vfmt")]
+impl<const KEY: &'static str, T> Extractor for ParseQuery<KEY, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: vfmt::uDebug,
+{
+    type Error = HttpResponse;
+
+    fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
+        match get_value_err::<KEY>(req) {
+            Ok(value) => match T::from_str(value) {
+                Ok(value) => Ok(Self { value }),
+                Err(err) => Err(QueryRejection::<KEY, T> { err }.into_response()),
+            },
+            Err(err) => Err(err.into_response()),
+        }
+    }
+}
+
+pub struct QueryRejection<const KEY: &'static str, T>
+where
+    T: FromStr,
+{
+    err: <T as FromStr>::Err,
+}
+
+#[cfg(feature = "std")]
+impl<const KEY: &'static str, T> IntoResponse for QueryRejection<KEY, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: std::fmt::Debug,
+{
+    fn into_response(self) -> HttpResponse {
+        std::format!(
+            "HTTP request URL query with key `{}` could not be parsed: {:?}",
+            KEY,
+            self.err
+        )
+        .into_response()
+    }
+}
+
+#[cfg(feature = "vfmt")]
+impl<const KEY: &'static str, T> IntoResponse for QueryRejection<KEY, T>
+where
+    T: FromStr,
+    <T as FromStr>::Err: vfmt::uDebug,
+{
+    fn into_response(self) -> HttpResponse {
+        vfmt::format!(
+            "HTTP request URL query with key `{}` could not be parsed: {:?}",
+            KEY,
+            self.err
+        )
+        .into_response()
     }
 }

@@ -1,6 +1,10 @@
 use std::ops::{Deref, DerefMut};
 
-use crate::{extractor::Extractor, http::HttpRequest, Error};
+use crate::{
+    extractor::Extractor,
+    http::{HttpRequest, HttpResponse},
+    response::IntoResponse,
+};
 
 pub struct Body {
     value: Vec<u8>,
@@ -21,14 +25,22 @@ impl const DerefMut for Body {
 }
 
 impl Extractor for Body {
-    type Error = Error;
+    type Error = BodyRejection;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
-        Ok(Body {
-            value: match req.body.as_ref() {
-                Some(body) => body.as_vec(),
-                None => todo!(), // TODO: return error here
-            },
-        })
+        let value = match req.body.as_ref() {
+            Some(body) => body.as_vec(),
+            None => return Err(BodyRejection {}),
+        };
+
+        Ok(Body { value })
+    }
+}
+
+pub struct BodyRejection {}
+
+impl IntoResponse for BodyRejection {
+    fn into_response(self) -> HttpResponse {
+        todo!()
     }
 }

@@ -19,7 +19,6 @@ use crate::{
     route::{self, Route},
     service::Service,
     utils::{signal, thread_pool::ThreadPool, ArrayMap, PathTree},
-    Error,
 };
 
 #[derive(Debug)]
@@ -58,7 +57,7 @@ impl std::error::Error for RunError {
     }
 }
 
-type InnerRoute = BoxedService<HttpRequest, HttpResponse, Error>;
+type InnerRoute = BoxedService<HttpRequest, HttpResponse, HttpResponse>;
 type RouterTree = ArrayMap<HttpMethod, PathTree<Arc<InnerRoute>>, 9>;
 type Middleware = Vec<BoxedMiddleware<HttpRequest, HttpResponse>>;
 
@@ -198,17 +197,10 @@ impl Server<SocketAddr> {
 }
 
 enum ThreadError {
-    Enrgy(Error),
     Http(http::HttpError),
     Io(io::Error),
     ParseInt(std::num::ParseIntError),
     Utf8(std::string::FromUtf8Error),
-}
-
-impl const From<Error> for ThreadError {
-    fn from(v: Error) -> Self {
-        Self::Enrgy(v)
-    }
 }
 
 impl const From<http::HttpError> for ThreadError {
@@ -242,7 +234,6 @@ impl Server<SocketAddr> {
                 log::error!("unable to handle thread");
 
                 match err {
-                    ThreadError::Enrgy(err) => log::error!("route handler error: {:?}", err),
                     ThreadError::Http(err) => log::error!("invalid http: {:?}", err),
                     ThreadError::Io(err) => log::error!("{}", err),
                     ThreadError::ParseInt(err) => log::error!("{}", err),
@@ -286,7 +277,10 @@ impl Server<SocketAddr> {
             middleware.before(&mut request);
         }
 
-        let mut response = service.call(&mut request)?;
+        let mut response = match service.call(&mut request) {
+            Ok(res) => res,
+            Err(err) => err,
+        };
 
         for middleware in &*shared.middleware {
             response = middleware.after(&request, response);

@@ -133,14 +133,20 @@ pub enum HttpVersion {
     Http11,
 }
 
+impl HttpVersion {
+    pub const fn as_str(&self) -> &'static str {
+        match self {
+            Self::Http09 => "HTTP/0.9",
+            Self::Http10 => "HTTP/1.0",
+            Self::Http11 => "HTTP/1.1",
+        }
+    }
+}
+
 #[cfg(feature = "std")]
 impl fmt::Display for HttpVersion {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Http09 => write!(f, "HTTP/0.9"),
-            Self::Http10 => write!(f, "HTTP/1.0"),
-            Self::Http11 => write!(f, "HTTP/1.1"),
-        }
+        f.write_str(self.as_str())
     }
 }
 
@@ -150,11 +156,7 @@ impl vfmt::uDisplay for HttpVersion {
     where
         W: vfmt::uWrite + ?Sized,
     {
-        match self {
-            Self::Http09 => vfmt::uwrite!(f, "HTTP/0.9"),
-            Self::Http10 => vfmt::uwrite!(f, "HTTP/1.0"),
-            Self::Http11 => vfmt::uwrite!(f, "HTTP/1.1"),
-        }
+        f.write_str(self.as_str())
     }
 }
 
@@ -234,7 +236,7 @@ impl HttpRequest {
 
         let raw_method = Ascii::read_until(&buffer, &mut offset, b' ')
             .ok_or(HttpError::ParseMetaMissingMethod)?;
-        let method = HttpMethod::from_str(&*raw_method)?;
+        let method = HttpMethod::from_str(&raw_method)?;
 
         offset += 1;
 
@@ -247,7 +249,7 @@ impl HttpRequest {
         let mut raw_version = Ascii::read_until(&buffer, &mut offset, b'\n')
             .ok_or(HttpError::ParseMetaMissingVersion)?;
         raw_version.trim();
-        let version = HttpVersion::from_str(&*raw_version)?;
+        let version = HttpVersion::from_str(&raw_version)?;
 
         Ok((method, uri, version))
     }
@@ -456,16 +458,18 @@ pub fn write_response(
     compress: bool,
     stream: &mut TcpStream,
 ) -> std::io::Result<()> {
-    crate::wrapper::write!(
-        stream,
-        "{} {} {}\r\n",
-        res.version,
-        res.status.0,
-        res.status.phrase()
-    )?;
+    stream.write_all(res.version.as_str().as_bytes())?;
+    stream.write_all(b" ")?;
+    stream.write_all(itoa::Buffer::new().format(res.status.0).as_bytes())?;
+    stream.write_all(b" ")?;
+    stream.write_all(res.status.phrase().as_bytes())?;
+    stream.write_all(b"\r\n")?;
 
     for (key, value) in &res.headers {
-        write!(stream, "{}: {}\r\n", key, value.as_str())?;
+        stream.write_all(key.0.as_bytes())?;
+        stream.write_all(b": ")?;
+        stream.write_all(value.as_str().as_bytes())?;
+        stream.write_all(b"\r\n")?;
     }
 
     fn write_bytes(
@@ -482,19 +486,23 @@ pub fn write_response(
         };
 
         if compress && !pre_compressed {
-            write!(stream, "Content-Encoding: deflate\r\n")?;
+            stream.write_all(b"Content-Encoding: deflate\r\n")?;
 
             let compressed = miniz_oxide::deflate::compress_to_vec(bytes, 8);
 
-            write!(stream, "Content-Length: {}\r\n", compressed.len())?;
+            stream.write_all(b"Content-Length: ")?;
+            stream.write_all(itoa::Buffer::new().format(compressed.len()).as_bytes())?;
+            stream.write_all(b"\r\n")?;
 
-            write!(stream, "\r\n")?;
+            stream.write_all(b"\r\n")?;
 
             stream.write_all(&compressed)?;
         } else {
-            write!(stream, "Content-Length: {}\r\n", bytes.len())?;
+            stream.write_all(b"Content-Length: ")?;
+            stream.write_all(itoa::Buffer::new().format(bytes.len()).as_bytes())?;
+            stream.write_all(b"\r\n")?;
 
-            write!(stream, "\r\n")?;
+            stream.write_all(b"\r\n")?;
 
             stream.write_all(bytes)?;
         }
@@ -510,7 +518,7 @@ pub fn write_response(
             write_bytes(&res.headers, bytes.as_slice(), compress, stream)?;
         }
         None => {
-            write!(stream, "Content-Length: 0\r\n")?;
+            stream.write_all(b"Content-Length: 0\r\n")?;
         }
     }
 

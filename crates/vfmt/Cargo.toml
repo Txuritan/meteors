@@ -13,5 +13,5 @@ default = [ "std" ]
 std = []
 
 [dependencies]
-libc = "0.2.123"
+libc.workspace = true
 vfmt-macros = { path = "../vfmt-macros" }

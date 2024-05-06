@@ -13,5 +13,5 @@ readme = "README.md"
 workspace = "../.."
 
 [dependencies]
-pest = "2.1"
-pest_derive = "2.1"
+pest.workspace = true
+pest_derive.workspace = true

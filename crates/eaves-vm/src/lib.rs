@@ -81,12 +81,12 @@ pub enum Instruction {
         register: RegisterAddress,
     },
     Move {
-        src: Location,
-        dst: Location,
+        src: MemoryAddress,
+        dst: MemoryAddress,
     },
     Copy {
-        src: Location,
-        dst: Location,
+        src: MemoryAddress,
+        dst: MemoryAddress,
     },
     Jump {
         offset: usize,
@@ -154,6 +154,26 @@ impl Vm {
 
             pointer: 0,
         }
+    }
+
+    pub fn run(mut self) {
+        while let Some(stop) = self.execute() {
+            if stop {
+                break;
+            }
+        }
+    }
+
+    fn take_u8(&mut self) -> Option<u8> {
+        if self.pointer + 1 > self.byte_code.len() {
+            return None;
+        }
+
+        let byte = unsafe { *self.byte_code.get_unchecked(self.pointer + 1) };
+
+        self.pointer += 1;
+
+        Some(byte)
     }
 
     fn take_u16(&mut self) -> Option<u16> {
@@ -234,8 +254,34 @@ impl Vm {
 
                 Some(true)
             }
-            Opcode::Move => todo!(),
-            Opcode::Copy => todo!(),
+            Opcode::Move => {
+                let src = match self.take_u8()? {
+                    0x00 => {}
+                    0x01 => {}
+                    _ => todo!(),
+                };
+                let dst = match self.take_u8()? {
+                    0x00 => {}
+                    0x01 => {}
+                    _ => todo!(),
+                };
+
+                Some(true)
+            }
+            Opcode::Copy => {
+                let src = match self.take_u8()? {
+                    0x00 => {}
+                    0x01 => {}
+                    _ => todo!(),
+                };
+                let dst = match self.take_u8()? {
+                    0x00 => {}
+                    0x01 => {}
+                    _ => todo!(),
+                };
+
+                Some(true)
+            }
             Opcode::Jump => {
                 let value = self.take_u32()? as usize;
 

@@ -43,7 +43,7 @@ pub fn search_v2<'s>(
         (left, right)
     }
 
-    fn fn_map<'q, 'i>((key, value): &'i (Cow<'q, str>, Cow<'q, str>)) -> (Cow<'q, str>, Id) {
+    fn fn_map<'q>((key, value): &(Cow<'q, str>, Cow<'q, str>)) -> (Cow<'q, str>, Id) {
         (key.clone(), Id::from(value.to_string()))
     }
 
@@ -196,7 +196,7 @@ struct Group {
     generals: Option<Vec<Id>>,
 }
 
-impl<'i> Group {
+impl Group {
     #[inline]
     fn match_include(text: &str) -> bool {
         matches!(text, "ir" | "iw" | "ict" | "io" | "ich" | "ip" | "ig")
@@ -403,7 +403,7 @@ where
     } else {
         let mut ids = ids.map(|(id, _)| id);
 
-        for id in database.index().stories.iter().map(|(id, _)| id) {
+        for id in database.index().stories.keys() {
             if !ids.any(|i| i == id) {
                 stories.push(id.clone());
             }
@@ -419,7 +419,7 @@ fn any_by_text(full: &HashMap<Id, Entity>, refs: &[Id], text: &str) -> bool {
 }
 
 #[allow(clippy::while_let_on_iterator)]
-pub(self) fn parse(text: &str) -> Vec<Bound> {
+fn parse(text: &str) -> Vec<Bound> {
     let cleaned = text.trim();
     let mut parts = cleaned.split(',').map(str::trim);
 

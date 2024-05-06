@@ -5,32 +5,25 @@ use crate::{
     http::{HttpRequest, HttpResponse},
     response::IntoResponse,
     service::Service,
-    Error,
 };
 
-pub trait Handler<T, R>
-where
-    T: Extractor<Error = Error>,
-    R: IntoResponse,
-{
-    fn call(&self, param: T) -> R;
+pub trait Handler<T> {
+    fn call(&self, req: &mut HttpRequest) -> HttpResponse;
+
+    fn empty(&self, _params: T) {}
 }
 
-pub struct HandlerService<F, T, R>
+pub struct HandlerService<F, T>
 where
-    F: Handler<T, R>,
-    T: Extractor<Error = Error>,
-    R: IntoResponse,
+    F: Handler<T>,
 {
     inner: F,
-    _phantom: PhantomData<(T, R)>,
+    _phantom: PhantomData<T>,
 }
 
-impl<F, T, R> HandlerService<F, T, R>
+impl<F, T> HandlerService<F, T>
 where
-    F: Handler<T, R>,
-    T: Extractor<Error = Error>,
-    R: IntoResponse,
+    F: Handler<T>,
 {
     pub(crate) const fn new(fun: F) -> Self {
         Self {
@@ -40,47 +33,49 @@ where
     }
 }
 
-impl<F, T, R> Service<HttpRequest> for HandlerService<F, T, R>
+impl<F, T> Service<HttpRequest> for HandlerService<F, T>
 where
-    F: Handler<T, R>,
-    T: Extractor<Error = Error>,
-    R: IntoResponse,
+    F: Handler<T>,
 {
     type Response = HttpResponse;
 
-    type Error = Error;
+    type Error = HttpResponse;
 
     fn call(&self, req: &mut HttpRequest) -> Result<Self::Response, Self::Error> {
-        let param = T::extract(req)?;
-
-        let res = self.inner.call(param);
+        let res = self.inner.call(req);
 
         Ok(res.into_response())
     }
 }
 
-impl<FUN, R> Handler<(), R> for FUN
+impl<FUN, R> Handler<()> for FUN
 where
     FUN: Fn() -> R,
     R: IntoResponse,
 {
     #[allow(non_snake_case)]
-    fn call(&self, _param: ()) -> R {
-        (self)()
+    fn call(&self, _req: &mut HttpRequest) -> HttpResponse {
+        (self)().into_response()
     }
 }
 
 macro_rules! tuple (
     { $($param:ident)* } => {
-        impl<FUN, $($param,)* R> Handler<($($param,)*), R> for FUN
+        impl<FUN, R, $($param,)*> Handler<($($param,)*)> for FUN
         where
             FUN: Fn($($param),*) -> R,
-            $($param: Extractor<Error = Error>,)*
             R: IntoResponse,
+            $($param: Extractor,)*
         {
             #[allow(non_snake_case)]
-            fn call(&self, ($($param,)*): ($($param,)*)) -> R {
-                (self)($($param,)*)
+            fn call(&self, req: &mut HttpRequest) -> HttpResponse {
+                $(
+                    let $param = match $param::extract(req) {
+                        Ok(v) => v,
+                        Err(err) => return err.into_response(),
+                    };
+                )*
+                (self)($($param),*).into_response()
             }
         }
     }

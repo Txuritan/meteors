@@ -13,7 +13,7 @@ impl<Req, Res> BoxedMiddleware<Req, Res> {
         T: Middleware<Req, Res> + Send + Sync + 'static,
     {
         Self {
-            inner: box middleware,
+            inner: Box::new(middleware),
         }
     }
 }

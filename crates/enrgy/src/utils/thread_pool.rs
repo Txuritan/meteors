@@ -1,12 +1,13 @@
 use std::{
     marker::PhantomData,
+    mem::MaybeUninit,
     sync::{
         atomic::{AtomicBool, Ordering},
         mpsc::{self, Receiver, RecvTimeoutError, Sender},
         Arc, Mutex,
     },
     thread::{self, JoinHandle},
-    time::Duration, mem::MaybeUninit,
+    time::Duration,
 };
 
 pub struct ThreadPool<Data, const SIZE: usize>
@@ -28,7 +29,8 @@ where
 
         let receiver = Arc::new(Mutex::new(receiver));
 
-        let mut workers: [MaybeUninit<Worker<Data>>; SIZE] = unsafe { MaybeUninit::uninit().assume_init() };
+        let mut workers: [MaybeUninit<Worker<Data>>; SIZE] =
+            unsafe { MaybeUninit::uninit().assume_init() };
 
         for (i, worker) in workers.iter_mut().enumerate().take(SIZE) {
             *worker = MaybeUninit::new(Worker::new(

@@ -5,9 +5,7 @@
 #![warn(nonstandard_style, rust_2018_idioms, future_incompatible)]
 #![feature(
     adt_const_params,
-    box_syntax,
     const_btree_new,
-    const_maybe_uninit_assume_init,
     const_mut_refs,
     const_slice_from_raw_parts,
     const_trait_impl,
@@ -38,8 +36,8 @@ pub mod route;
 
 pub use crate::server::Server;
 
-#[doc(inline)]
-pub use crate::error::Error;
+// #[doc(inline)]
+// pub use crate::error::Error;
 
 pub mod dev {
     pub use crate::{
@@ -50,14 +48,6 @@ pub mod dev {
 
 #[cfg(all(feature = "std", feature = "vfmt"))]
 compile_error!("feature clash, only enable `std` OR `vfmt`");
-
-pub(crate) mod wrapper {
-    #[cfg(feature = "std")]
-    pub use std::{fmt::Debug, format, write};
-
-    #[cfg(feature = "vfmt")]
-    pub use vfmt::{format, uDebug as Debug, uwrite as write};
-}
 
 // A module for testing different route handlers.
 // Mostly making sure they compile.

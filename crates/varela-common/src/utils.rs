@@ -15,9 +15,9 @@ pub fn command(arg: &str) -> Command {
     let mut cmd = Command::new(shell);
 
     if cfg!(target_os = "windows") {
-        cmd.args(&["/C", arg]);
+        cmd.args(["/C", arg]);
     } else {
-        cmd.args(&[arg]);
+        cmd.args([arg]);
     }
 
     cmd
@@ -84,7 +84,7 @@ pub fn new_id() -> Id {
         let mut bytes = [0_u8; STEP];
 
         for elt in &mut bytes[..] {
-            *elt = fastrand::u8(0..=(std::u8::MAX));
+            *elt = fastrand::u8(0..=(u8::MAX));
         }
 
         for &byte in &bytes {

@@ -1,3 +1,7 @@
+#![warn(rust_2018_idioms)]
+
+mod parser;
+
 use std::convert::TryFrom;
 
 pub use html_parser::{Attributes, Dom, DomVariant, Element, ElementVariant, Node, NodeData, Span};
@@ -55,7 +59,7 @@ pub trait Selector {
 }
 
 pub trait Matcher {
-    fn matches<'input>(&self, name: &str, attrs: &Attributes<'input>) -> bool;
+    fn matches(&self, name: &str, attrs: &Attributes<'_>) -> bool;
 }
 
 pub mod runtime {
@@ -244,7 +248,7 @@ pub mod runtime {
     }
 
     impl Matcher for DynamicMatcher {
-        fn matches<'input>(&self, name: &str, attrs: &Attributes<'input>) -> bool {
+        fn matches(&self, name: &str, attrs: &Attributes<'_>) -> bool {
             let mut id_match = self.id.is_empty();
             if let Some(el_id) = attrs.get("id").copied().flatten() {
                 let el_ids: Vec<_> = el_id.split_whitespace().collect();
@@ -333,7 +337,7 @@ pub mod compile_time {
     impl<const TAGS: usize, const CLASSES: usize, const IDS: usize, const ATTRIBUTES: usize> Matcher
         for StaticMatcher<TAGS, CLASSES, IDS, ATTRIBUTES>
     {
-        fn matches<'input>(&self, name: &str, attrs: &Attributes<'input>) -> bool {
+        fn matches(&self, name: &str, attrs: &Attributes<'_>) -> bool {
             let mut id_match = self.id.is_empty();
             if let Some(el_id) = attrs.get("id").copied().flatten() {
                 let el_ids: Vec<_> = el_id.split_whitespace().collect();

@@ -4,14 +4,13 @@ use crate::{
     http::{HttpMethod, HttpRequest, HttpResponse},
     response::IntoResponse,
     service::BoxedService,
-    Error,
 };
 
-pub fn to<F, T, R>(handler: F) -> Route<'static>
+pub fn to<F, T, E>(handler: F) -> Route<'static>
 where
-    F: Handler<T, R> + Send + Sync + 'static,
-    T: Extractor<Error = Error> + Send + Sync + 'static,
-    R: IntoResponse + Send + Sync + 'static,
+    F: Handler<T> + Send + Sync + 'static,
+    T: Extractor<Error = E> + Send + Sync + 'static,
+    E: IntoResponse + Send + Sync + 'static,
 {
     Route {
         method: HttpMethod::Get,
@@ -49,7 +48,7 @@ pub(crate) fn not_found() -> HttpResponse {
 pub struct Route<'s> {
     pub(crate) method: HttpMethod,
     pub(crate) path: &'s str,
-    pub(crate) service: BoxedService<HttpRequest, HttpResponse, Error>,
+    pub(crate) service: BoxedService<HttpRequest, HttpResponse, HttpResponse>,
 }
 
 impl<'s> Route<'s> {
@@ -62,11 +61,11 @@ impl<'s> Route<'s> {
         }
     }
 
-    pub fn to<F, T, R>(mut self, handler: F) -> Self
+    pub fn to<F, T, E>(mut self, handler: F) -> Self
     where
-        F: Handler<T, R> + Send + Sync + 'static,
-        T: Extractor<Error = Error> + Send + Sync + 'static,
-        R: IntoResponse + Send + Sync + 'static,
+        F: Handler<T> + Send + Sync + 'static,
+        T: Extractor<Error = E> + Send + Sync + 'static,
+        E: IntoResponse + Send + Sync + 'static,
     {
         self.service = BoxedService::new(HandlerService::new(handler));
 

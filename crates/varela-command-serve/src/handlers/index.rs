@@ -17,7 +17,7 @@ pub fn index(db: extractor::Data<Database>) -> Result<impl IntoResponse, pages::
         .stories
         .keys()
         .map(|id| {
-            utils::get_story_full(&*db, id)
+            utils::get_story_full(&db, id)
                 .and_then(|story| partials::StoryPartial::new(id.clone(), story, None))
         })
         .collect::<Result<Vec<partials::StoryPartial>>>()?;

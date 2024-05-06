@@ -192,7 +192,7 @@ fn write(input: TokenStream, newline: bool) -> TokenStream {
         Ordering::Less => {
             return parse::Error::new(
                 literal.span(),
-                &format!(
+                format!(
                     "format string requires {} arguments but {} {} supplied",
                     required_args,
                     supplied_args,

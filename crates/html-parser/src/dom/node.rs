@@ -65,7 +65,7 @@ impl<'input> Node<'input> {
     }
 
     pub fn get_text(&self) -> Option<&'input str> {
-        self.children.get(0).and_then(|n| match n.data {
+        self.children.first().and_then(|n| match n.data {
             NodeData::Text { contains } => Some(contains),
             _ => None,
         })
@@ -127,9 +127,9 @@ impl<'a, 'input> Iterator for NodeIntoIterator<'a, 'input> {
 
     fn next(&mut self) -> Option<Self::Item> {
         // Get first child
-        let child = self.node.children.get(0);
+        let child = self.node.children.first();
 
-        let result = match child {
+        match child {
             // If element has child, return child
             Some(child) => {
                 self.index.push((0, self.node));
@@ -175,8 +175,6 @@ impl<'a, 'input> Iterator for NodeIntoIterator<'a, 'input> {
                 next_node
             }
             _ => None,
-        };
-
-        result
+        }
     }
 }

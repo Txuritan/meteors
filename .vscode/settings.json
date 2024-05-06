@@ -1,3 +1,9 @@
 {
-    "rust-analyzer.cargo.allFeatures": false
+    "rust-analyzer.cargo.allFeatures": false,
+    "files.associations": {
+        "*.json": "jsonc",
+        "*.sql": "sql",
+        "stdlib.h": "c",
+        "stdint.h": "c"
+    }
 }

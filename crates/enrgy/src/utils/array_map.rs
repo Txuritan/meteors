@@ -76,9 +76,9 @@ impl<K, V, const SIZE: usize> ArrayMap<K, V, SIZE> {
     }
 
     #[must_use]
-    pub fn get<Q: ?Sized>(&self, key: &Q) -> Option<&V>
+    pub fn get<Q>(&self, key: &Q) -> Option<&V>
     where
-        Q: PartialEq,
+        Q: PartialEq + ?Sized,
         K: Borrow<Q>,
     {
         for item in &self.map[0..self.len] {
@@ -109,9 +109,9 @@ impl<K, V, const SIZE: usize> ArrayMap<K, V, SIZE> {
         None
     }
 
-    pub fn contains<Q: ?Sized>(&self, key: &Q) -> bool
+    pub fn contains<Q>(&self, key: &Q) -> bool
     where
-        Q: PartialEq,
+        Q: PartialEq + ?Sized,
         K: Borrow<Q>,
     {
         self.get(key).is_some()

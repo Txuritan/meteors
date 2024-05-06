@@ -6,17 +6,22 @@ use parser::Stage4;
 
 #[proc_macro_derive(Template, attributes(template))]
 pub fn template_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let decl = venial::parse_declaration(proc_macro2::TokenStream::from(input));
+    let decl = match venial::parse_item(proc_macro2::TokenStream::from(input)) {
+        Ok(decl) => decl,
+        Err(err) => {
+            return proc_macro::TokenStream::from(err.to_compile_error());
+        }
+    };
 
     let (name, generic_params, where_clause, inline_generic_args, attributes) = match &decl {
-        venial::Declaration::Struct(decl) => (
+        venial::Item::Struct(decl) => (
             &decl.name,
             &decl.generic_params,
             &decl.where_clause,
             decl.get_inline_generic_args(),
             &decl.attributes,
         ),
-        venial::Declaration::Enum(decl) => (
+        venial::Item::Enum(decl) => (
             &decl.name,
             &decl.generic_params,
             &decl.where_clause,
@@ -56,10 +61,11 @@ pub fn template_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
                 })
                 .unwrap_or(false)
         })
-        .and_then(|attr| {
-            attr.value
-                .as_ref()
-                .map(|value| Pair::parse_stream(attr.tk_group.as_ref().unwrap().span, value))
+        .and_then(|attr| match &attr.value {
+            venial::AttributeValue::Group(span, stream) => {
+                Some(Pair::parse_stream(span.span, stream))
+            }
+            _ => None,
         })
         .transpose();
 
@@ -81,7 +87,7 @@ pub fn template_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStrea
         }
     };
 
-    let temp_template_path = root_dir.join("templates").join(&path.value);
+    let temp_template_path = root_dir.join("templates").join(path.value);
 
     let template_path = match temp_template_path.canonicalize() {
         Ok(path) => path,

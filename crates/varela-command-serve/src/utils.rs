@@ -24,7 +24,7 @@ pub mod http {
 
         let temp_path = temp_path.as_ref();
 
-        fs::create_dir_all(&temp_path)?;
+        fs::create_dir_all(temp_path)?;
 
         let temp_file_path = temp_path.join(&url);
 

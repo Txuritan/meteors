@@ -71,7 +71,7 @@ where
 {
     if INITIALIZED
         .compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst)
-        .map_or_else(|e| e, |a| a)
+        .unwrap_or_else(|e| e)
     {
         return Err(Error::MultipleHandlers);
     }

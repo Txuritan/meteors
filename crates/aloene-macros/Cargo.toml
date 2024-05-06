@@ -12,6 +12,6 @@ workspace = "../.."
 proc-macro = true
 
 [dependencies]
-proc-macro2 = "1.0"
-quote = "1.0"
-venial = "0.3.0"
+proc-macro2.workspace = true
+quote.workspace = true
+venial.workspace = true

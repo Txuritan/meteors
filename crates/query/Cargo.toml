@@ -9,6 +9,6 @@ license = "MIT"
 workspace = "../.."
 
 [dependencies]
-anyhow = "1.0"
+anyhow.workspace = true
 html_parser = { path = "../html-parser" }
 query-macros = { path = "../query-macros" }

@@ -110,7 +110,7 @@ fn handle_entry(db: &mut Database, known_ids: &mut Vec<Id>, entry: DirEntry) -> 
                 html: r#"Posted originally on the <a href="http://archiveofourown.org/">Archive of Our Own</a>"#,
             };
 
-            let temp_file_path = db.temp_path.join(&name.trim_end_matches(".epub"));
+            let temp_file_path = db.temp_path.join(name.trim_end_matches(".epub"));
 
             let site = match kind {
                 FileKind::Epub => {
@@ -123,7 +123,7 @@ fn handle_entry(db: &mut Database, known_ids: &mut Vec<Id>, entry: DirEntry) -> 
                     match output.status.code() {
                         Some(0) | Some(1) => {
                             let content_opf = temp_file_path.join("content.opf");
-                            let text = fs::read_to_string(&content_opf)?;
+                            let text = fs::read_to_string(content_opf)?;
 
                             if text.contains(DETECTOR_AO3.content) {
                                 Site::ArchiveOfOurOwn

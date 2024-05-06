@@ -13,7 +13,7 @@ common = { path = "../varela-common", package = "varela-common" }
 
 format-ao3 = { path = "../varela-format-ao3", package = "varela-format-ao3" }
 
-crc32fast = "1.2"
-humantime = "2.1"
+crc32fast.workspace = true
+humantime.workspace = true
 vfmt = { path = "../vfmt" }
-zip = { version = "0.6.2", default-features = false, features = [ "deflate" ] }
+zip.workspace = true

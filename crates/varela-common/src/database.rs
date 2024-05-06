@@ -262,7 +262,7 @@ impl Database {
 
         let compressed = miniz_oxide::deflate::compress_to_vec(&buf, 10);
 
-        fs::write(&self.index_path, &compressed)?;
+        fs::write(&self.index_path, compressed)?;
 
         Ok(())
     }

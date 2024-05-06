@@ -10,7 +10,7 @@ pub fn derive(decl: venial::Struct) -> proc_macro2::TokenStream {
     } = &decl;
 
     let field_iter = match &fields {
-        venial::StructFields::Named(named) => named
+        venial::Fields::Named(named) => named
             .fields
             .iter()
             .map(|field| {
@@ -23,11 +23,11 @@ pub fn derive(decl: venial::Struct) -> proc_macro2::TokenStream {
     };
 
     let de_iter = match &fields {
-        venial::StructFields::Named(named) => named.fields.iter().map(|(field, _)| de_field(field)),
+        venial::Fields::Named(named) => named.fields.iter().map(|(field, _)| de_field(field)),
         _ => return err!(fields, "aloene does not support unit or tuple structs."),
     };
     let se_iter = match &fields {
-        venial::StructFields::Named(named) => named.fields.iter().map(|(field, _)| se_field(field)),
+        venial::Fields::Named(named) => named.fields.iter().map(|(field, _)| se_field(field)),
         _ => return err!(fields, "aloene does not support unit or tuple structs."),
     };
 

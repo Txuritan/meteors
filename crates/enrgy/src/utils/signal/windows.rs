@@ -76,9 +76,15 @@ pub unsafe fn block_ctrl_c() -> Result<(), Error> {
     match WaitForSingleObject(SEMAPHORE, INFINITE) {
         WAIT_OBJECT_0 => Ok(()),
         WAIT_FAILED => Err(io::Error::last_os_error()),
+        #[cfg(feature = "std")]
         ret => Err(io::Error::new(
             io::ErrorKind::Other,
-            crate::wrapper::format!("WaitForSingleObject(), unexpected return value \"{}\"", ret),
+            format!("WaitForSingleObject(), unexpected return value \"{}\"", ret),
+        )),
+        #[cfg(feature = "vfmt")]
+        ret => Err(io::Error::new(
+            io::ErrorKind::Other,
+            vfmt::format!("WaitForSingleObject(), unexpected return value \"{}\"", ret),
         )),
     }
 }

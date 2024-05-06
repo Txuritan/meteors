@@ -4,7 +4,12 @@ pub mod header;
 pub mod param;
 pub mod query;
 
-use crate::{http::HttpRequest, Error};
+use core::convert::Infallible;
+
+use crate::{
+    http::{HttpRequest, HttpResponse},
+    response::IntoResponse,
+};
 
 #[doc(inline)]
 pub use self::{
@@ -16,13 +21,13 @@ pub use self::{
 };
 
 pub trait Extractor: Sized {
-    type Error;
+    type Error: IntoResponse;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error>;
 }
 
 impl Extractor for () {
-    type Error = Error;
+    type Error = Infallible;
 
     fn extract(_req: &mut HttpRequest) -> Result<Self, Self::Error> {
         Ok(())
@@ -32,12 +37,20 @@ impl Extractor for () {
 macro_rules! tuple ({ $($param:ident)* } => {
     impl<$( $param ),*> Extractor for ($( $param, )*)
     where
-        $( $param: Extractor<Error = Error>, )*
+        $( $param: Extractor, )*
     {
-        type Error = Error;
+        type Error = HttpResponse;
 
+        #[allow(non_snake_case)]
         fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
-            Ok(($( $param::extract(req)?, )*))
+            $(
+                let $param = match $param::extract(req) {
+                    Ok(param) => param,
+                    Err(err) => return Err(err.into_response()),
+                };
+            )*
+
+            Ok(($( $param, )*))
         }
     }
 });

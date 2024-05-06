@@ -16,7 +16,7 @@ tasks:
     env:
       CARGO_NET_GIT_FETCH_WITH_CLI: false
     cmds:
-      - cargo +nightly build -Z build-std=panic_abort,std --release --target x86_64-pc-windows-msvc
+      - cargo build -Z build-std=panic_abort,std --release --target x86_64-pc-windows-msvc
 
   build-tailwind:
     env:

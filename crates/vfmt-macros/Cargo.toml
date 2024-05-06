@@ -12,6 +12,6 @@ workspace = "../.."
 proc-macro = true
 
 [dependencies]
-proc-macro2 = "1.0"
-quote = "1.0"
-syn = { version = "1.0", features = [ "full" ] } # TODO: remove this
+proc-macro2.workspace = true
+quote.workspace = true
+syn.workspace = true

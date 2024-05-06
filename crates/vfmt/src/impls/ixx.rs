@@ -9,7 +9,7 @@ macro_rules! ixx {
         let mut n = if negative {
             match n.checked_abs() {
                 Some(n) => n as $uxx,
-                None => <$uxx>::max_value() / 2 + 1,
+                None => <$uxx>::MAX / 2 + 1,
             }
         } else {
             n as $uxx

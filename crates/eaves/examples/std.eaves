@@ -1,0 +1,12 @@
+enum (Option t) =
+    | (Some t)
+    | None
+
+fn (Option.is-some t) opt (Option t) bool =
+    match opt =
+    | (Some _) -> true
+    | None -> false
+
+enum (Result t e) =
+    | (Ok t)
+    | (Err e)

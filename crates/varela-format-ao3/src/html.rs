@@ -87,7 +87,7 @@ pub fn parse_meta(doc: &Document<'_>) -> ParsedMeta {
     let mut characters = Vec::new();
     let mut generals = Vec::new();
 
-    let nodes = detail_names.into_iter().zip(detail_definitions.into_iter());
+    let nodes = detail_names.into_iter().zip(detail_definitions);
 
     for (detail_names, detail_definition) in nodes {
         let text = match detail_names.get_text().map(|text| text.trim()) {
@@ -99,7 +99,7 @@ pub fn parse_meta(doc: &Document<'_>) -> ParsedMeta {
             "Rating:" => {
                 let text = detail_definition
                     .children
-                    .get(0)
+                    .first()
                     .and_then(|node| node.get_text().map(|text| text.trim()));
 
                 match text {

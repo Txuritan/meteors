@@ -50,7 +50,7 @@ impl Ascii {
         if i == 0 {
             None
         } else {
-            let text = String::from_utf8((&buf[(*offset)..i]).to_vec()).ok()?;
+            let text = String::from_utf8(buf[(*offset)..i].to_vec()).ok()?;
 
             *offset = i;
 

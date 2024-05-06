@@ -20,7 +20,7 @@ impl Extensions {
         }
 
         self.inner
-            .insert(TypeId::of::<T>(), box val)
+            .insert(TypeId::of::<T>(), Box::new(val))
             .and_then(downcast_owned)
     }
 

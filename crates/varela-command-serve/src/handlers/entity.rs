@@ -16,7 +16,7 @@ pub fn entity(
     id: extractor::ParseParam<"id", Id>,
 ) -> Result<impl IntoResponse, pages::Error> {
     let kind = db
-        .get_entity_from_id(&*id)
+        .get_entity_from_id(&id)
         .ok_or(pages::Error::not_found())?;
 
     let entity = {
@@ -46,7 +46,7 @@ pub fn entity(
                 EntityKind::General => &story.meta.generals,
             };
 
-            entities.contains(&*id)
+            entities.contains(&id)
         })
         .map(|(id, _)| {
             utils::get_story_full(&db, id)
