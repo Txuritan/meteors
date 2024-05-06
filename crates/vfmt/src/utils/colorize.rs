@@ -1,9 +1,8 @@
-//! [owo-colors](https://github.com/jam1garner/owo-colors) stripped down to only ANSI color and converted over to [`vfmt::uDebug`] and [`vfmt::uDisplay`].
+//! [owo-colors](https://github.com/jam1garner/owo-colors) stripped down to only ANSI color and converted over to [`uDebug`](crate::uDebug) and [`uDisplay`](crate::uDisplay).
 
 use core::{marker::PhantomData, ops::Deref};
 
-/// A trait for describing a type which can be used with [`FgColorDisplay`](FgColorDisplay) or
-/// [`BgCBgColorDisplay`](BgColorDisplay)
+/// A trait for describing a type which can be used with [`FgColorDisplay`].
 pub trait Color {
     /// The ANSI format code for setting this color as the foreground
     const ANSI_FG: &'static str;
@@ -29,8 +28,8 @@ pub trait Color {
     fn into_dyncolors() -> dyn_colors::DynColors;
 }
 
-/// A trait describing a runtime-configurable color which can displayed using [`FgDynColorDisplay`](FgDynColorDisplay)
-/// or [`BgDynColorDisplay`](BgDynColorDisplay). If your color will be known at compile time it
+/// A trait describing a runtime-configurable color which can displayed using [`FgDynColorDisplay`]
+/// or [`BgDynColorDisplay`]. If your color will be known at compile time it
 /// is recommended you avoid this.
 pub trait DynColor {
     /// A function to output a ANSI code to a formatter to set the foreground to this color
@@ -66,7 +65,7 @@ pub trait DynColor {
 
 /// Transparent wrapper around a type which implements all the formatters the wrapped type does,
 /// with the addition of changing the foreground color. Recommended to be constructed using
-/// [`Colorize`](Colorize).
+/// [`Colorize`].
 #[repr(transparent)]
 pub struct FgColorDisplay<'a, C: Color, T>(&'a T, PhantomData<C>);
 
@@ -80,7 +79,7 @@ impl<'a, C: Color, T> Deref for FgColorDisplay<'a, C, T> {
 
 /// Transparent wrapper around a type which implements all the formatters the wrapped type does,
 /// with the addition of changing the background color. Recommended to be constructed using
-/// [`Colorize`](Colorize).
+/// [`Colorize`].
 #[repr(transparent)]
 pub struct BgColorDisplay<'a, C: Color, T>(&'a T, PhantomData<C>);
 
@@ -130,7 +129,7 @@ macro_rules! color_methods {
 }
 
 /// Extension trait for colorizing a type which implements any std formatter
-/// ([`Display`](core::vfmt::uDisplay), [`Debug`](core::vfmt::uDebug), [`UpperHex`](core::fmt::UpperHex),
+/// ([`uDisplay`](crate::uDisplay), [`uDebug`](crate::uDebug),
 /// etc.)
 ///
 /// ## Example
@@ -157,8 +156,7 @@ macro_rules! color_methods {
 ///
 /// **Do you need to pick a color at runtime?**
 ///
-/// Use the [`color`](Colorize::color), [`on_color`](Colorize::on_color),
-/// [`truecolor`](Colorize::truecolor) or [`on_truecolor`](Colorize::on_truecolor).
+/// Use the [`color`](Colorize::color), [`on_color`](Colorize::on_color).
 ///
 /// **Do you need some other text modifier?**
 ///
@@ -175,11 +173,6 @@ macro_rules! color_methods {
 /// **Do you want it to only display colors if it's a terminal?**
 ///
 /// 1. Enable the `supports-colors` feature
-/// 2. Colorize inside [`if_supports_color`](Colorize::if_supports_color)
-///
-/// **Do you need to store a set of colors/effects to apply to multiple things?**
-///
-/// Use [`style`](Colorize::style) to apply a [`Style`]
 ///
 pub trait Colorize: Sized {
     /// Set the foreground color generically
@@ -292,8 +285,8 @@ pub trait Colorize: Sized {
     }
 
     /// Set the foreground color at runtime. Only use if you do not know which color will be used at
-    /// compile-time. If the color is constant, use either [`Colorize::fg`](Colorize::fg) or
-    /// a color-specific method, such as [`Colorize::green`](Colorize::green),
+    /// compile-time. If the color is constant, use either [`Colorize::fg`] or
+    /// a color-specific method, such as [`Colorize::green`],
     ///
     /// ```rust
     /// use owo_colors::{Colorize, AnsiColors};
@@ -307,8 +300,8 @@ pub trait Colorize: Sized {
     }
 
     /// Set the background color at runtime. Only use if you do not know what color to use at
-    /// compile-time. If the color is constant, use either [`Colorize::bg`](Colorize::bg) or
-    /// a color-specific method, such as [`Colorize::on_yellow`](Colorize::on_yellow),
+    /// compile-time. If the color is constant, use either [`Colorize::bg`] or
+    /// a color-specific method, such as [`Colorize::on_yellow`],
     ///
     /// ```rust
     /// use owo_colors::{Colorize, AnsiColors};
@@ -404,7 +397,7 @@ pub mod colors {
             }
 
             $(
-                /// A color for use with [`Colorize`](crate::colorize::Colorize)'s `fg` and `bg` methods.
+                /// A color for use with [`Colorize`](crate::utils::colorize::Colorize)'s `fg` and `bg` methods.
                 pub struct $color;
 
                 impl super::Color for $color {

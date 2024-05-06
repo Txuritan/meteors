@@ -9,6 +9,7 @@ impl<K, V, const SIZE: usize> ArrayMap<K, V, SIZE> {
     const ELEMENT: MaybeUninit<(K, V)> = MaybeUninit::uninit();
 
     #[inline]
+    #[allow(clippy::new_without_default)]
     pub const fn new() -> Self {
         Self {
             map: [Self::ELEMENT; SIZE],

@@ -5,6 +5,7 @@ use {
     std::ops::Range,
 };
 
+#[inline(never)]
 pub fn parse_info(doc: &Document<'_>) -> ParsedInfo {
     #[query::selector]
     static META_TITLE: &str = "html > body > #preface > .meta > h1";
@@ -66,6 +67,7 @@ pub fn parse_info(doc: &Document<'_>) -> ParsedInfo {
     }
 }
 
+#[inline(never)]
 pub fn parse_meta(doc: &Document<'_>) -> ParsedMeta {
     #[query::selector]
     static META_TAGS_DT: &str = "html > body > #preface > .meta > .tags > dt";
@@ -142,6 +144,7 @@ pub fn parse_meta(doc: &Document<'_>) -> ParsedMeta {
     }
 }
 
+#[inline]
 pub fn parse_chapters(doc: &Document<'_>) -> Result<ParsedChapters> {
     /// Selects the `toc-heading` that is present on single chapter stories
     #[query::selector]
@@ -160,7 +163,7 @@ pub fn parse_chapters(doc: &Document<'_>) -> Result<ParsedChapters> {
     Ok(ParsedChapters { chapters })
 }
 
-#[inline]
+#[inline(never)]
 fn parse_chapter_single<'input>(
     doc: &Document<'input>,
     title_node: &Node<'input>,
@@ -225,7 +228,7 @@ impl MultiState {
     }
 }
 
-#[inline]
+#[inline(never)]
 fn parse_chapters_multi<'input>(
     doc: &Document<'input>,
     chapter_node: Node<'input>,

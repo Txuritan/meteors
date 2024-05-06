@@ -8,6 +8,7 @@ pub struct HttpHeaderMap {
 
 impl HttpHeaderMap {
     #[inline]
+    #[allow(clippy::new_without_default)]
     pub const fn new() -> Self {
         Self {
             inner: ArrayMap::new(),

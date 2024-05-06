@@ -53,6 +53,7 @@ pub fn parse_epub(path: &Path) -> Result<(ParsedInfo, ParsedMeta, ParsedChapters
     todo!()
 }
 
+#[inline]
 pub fn parse_html(text: &str) -> Result<(ParsedInfo, ParsedMeta, ParsedChapters)> {
     let doc = Document::try_from(text)?;
 
