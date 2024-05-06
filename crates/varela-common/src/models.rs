@@ -1,8 +1,13 @@
-use std::{borrow::Cow, collections::HashMap, ops::Range};
+use core::{
+    ops::{Deref, DerefMut, Range},
+    str::FromStr,
+};
+use std::{borrow::Cow, collections::HashMap};
 
 use aloene::Aloene;
 
-#[derive(Debug, Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Hash, PartialEq, Eq, PartialOrd, Ord)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct Id(Cow<'static, str>);
 
 impl Id {
@@ -21,20 +26,22 @@ impl From<String> for Id {
     }
 }
 
-impl std::str::FromStr for Id {
-    type Err = <String as std::str::FromStr>::Err;
+impl FromStr for Id {
+    type Err = <String as FromStr>::Err;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        <String as std::str::FromStr>::from_str(s).map(Id::from)
+        <String as FromStr>::from_str(s).map(Id::from)
     }
 }
 
+#[cfg(feature = "std")]
 impl std::fmt::Display for Id {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.0.fmt(f)
     }
 }
 
+#[cfg(feature = "nostd")]
 impl vfmt::uDisplay for Id {
     fn fmt<W>(&self, f: &mut vfmt::Formatter<'_, W>) -> Result<(), W::Error>
     where
@@ -54,7 +61,8 @@ impl Aloene for Id {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct Existing<T> {
     pub id: Id,
 
@@ -67,7 +75,7 @@ impl<T> Existing<T> {
     }
 }
 
-impl<T> std::ops::Deref for Existing<T> {
+impl<T> Deref for Existing<T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -75,7 +83,7 @@ impl<T> std::ops::Deref for Existing<T> {
     }
 }
 
-impl<T> std::ops::DerefMut for Existing<T> {
+impl<T> DerefMut for Existing<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.inner
     }
@@ -92,30 +100,35 @@ impl<T> Aloene for Existing<T> {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Aloene)]
+#[derive(Clone, Copy, PartialEq, Aloene)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub enum FileKind {
     Epub,
     Html,
 }
 
-#[derive(Debug, Clone, PartialEq, Aloene)]
+#[derive(Clone, PartialEq, Aloene)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct Entity {
     pub text: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Aloene)]
+#[derive(Clone, PartialEq, Aloene)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct Config {
     pub version: Version,
     pub settings: Settings,
     pub index: Index,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Aloene)]
+#[derive(Clone, Copy, PartialEq, Aloene)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub enum Version {
     V1,
 }
 
-#[derive(Debug, Clone, PartialEq, Aloene)]
+#[derive(Clone, PartialEq, Aloene)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct Settings {
     /// the theme of the website (default `LIGHT`)
     pub theme: Theme,
@@ -130,7 +143,8 @@ pub struct Settings {
 }
 
 /// Nested message and enum types in `Settings`.
-#[derive(Debug, Clone, PartialEq, Aloene)]
+#[derive(Clone, PartialEq, Aloene)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct Node {
     /// the name of an instance node, used to allow the user to identify which node is what
     pub name: String,
@@ -142,7 +156,8 @@ pub struct Node {
     pub port: u16,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Aloene)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Aloene)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub enum Theme {
     Light,
     Dark,
@@ -157,7 +172,8 @@ impl Theme {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Aloene)]
+#[derive(Clone, PartialEq, Aloene)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct Index {
     pub stories: HashMap<Id, Story>,
     pub categories: HashMap<Id, Entity>,
@@ -172,7 +188,8 @@ pub struct Index {
 pub type Story = CoreStory<StoryMeta>;
 pub type ResolvedStory = CoreStory<ResolvedStoryMeta>;
 
-#[derive(Debug, Clone, PartialEq, Aloene)]
+#[derive(Clone, PartialEq, Aloene)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct CoreStory<Meta>
 where
     Meta: Aloene,
@@ -184,7 +201,8 @@ where
 }
 
 /// Nested message and enum types in `Story`.
-#[derive(Debug, Clone, PartialEq, Aloene)]
+#[derive(Clone, PartialEq, Aloene)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct StoryInfo {
     pub file_name: String,
     pub file_hash: u64,
@@ -198,7 +216,8 @@ pub struct StoryInfo {
 pub type StoryMeta = StoryMetaCore<Id>;
 pub type ResolvedStoryMeta = StoryMetaCore<Existing<Entity>>;
 
-#[derive(Debug, Clone, PartialEq, Aloene)]
+#[derive(Clone, PartialEq, Aloene)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct StoryMetaCore<Entity>
 where
     Entity: Aloene,
@@ -214,7 +233,8 @@ where
 }
 
 /// Nested message and enum types in `Meta`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Aloene)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Aloene)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub enum Rating {
     Explicit,
     Mature,
@@ -259,13 +279,15 @@ impl Rating {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Aloene)]
+#[derive(Clone, Copy, PartialEq, Aloene)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub enum Site {
     ArchiveOfOurOwn,
     Unknown,
 }
 
-#[derive(Debug, Clone, PartialEq, Aloene)]
+#[derive(Clone, PartialEq, Aloene)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct Chapter {
     pub title: String,
     pub content: Range<usize>,

@@ -201,8 +201,8 @@
 //! This crate is guaranteed to compile on stable Rust 1.34 and up. It *might* compile on older
 //! versions but that may change in any new patch release.
 
-#![deny(missing_docs)]
-#![deny(warnings)]
+#![deny(missing_docs, warnings)]
+#![feature(const_trait_impl)]
 
 // this lets us use `uwrite!` in the test suite
 #[allow(unused_extern_crates)]
@@ -210,6 +210,8 @@
 extern crate self as ufmt;
 
 use core::str;
+
+pub mod utils;
 
 pub mod stdio;
 pub mod write;

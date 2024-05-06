@@ -200,7 +200,8 @@ fn parse_chapter_single<'input>(
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Default)]
+#[cfg_attr(feature = "std", derive(Debug))]
 struct MultiState {
     title: Option<String>,
     summary: Option<String>,

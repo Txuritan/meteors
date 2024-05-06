@@ -1,6 +1,6 @@
-#![feature(const_trait_impl)]
+//! A minimal port of [log](https://github.com/rust-lang/log) to vfmt.
 
-use std::{
+use core::{
     cmp,
     sync::atomic::{AtomicUsize, Ordering},
 };
@@ -62,6 +62,19 @@ pub fn max_level() -> LevelFilter {
     unsafe { std::mem::transmute(MAX_LOG_LEVEL_FILTER.load(Ordering::Relaxed)) }
 }
 
+/// Sets the global logger to a `Box<Log>`.
+///
+/// This is a simple convenience wrapper over `set_logger`, which takes a
+/// `Box<Log>` rather than a `&'static Log`. See the documentation for
+/// [`set_logger`] for more details.
+///
+/// Requires the `std` feature.
+///
+/// # Errors
+///
+/// An error is returned if a logger has already been set.
+///
+/// [`set_logger`]: fn.set_logger.html
 pub fn set_boxed_logger(logger: Box<dyn Log>) -> Result<(), SetLoggerError> {
     set_logger_inner(|| Box::leak(logger))
 }
@@ -130,12 +143,36 @@ pub trait Log: Sync + Send {
     fn flush(&self);
 }
 
+/// An enum representing the available verbosity levels of the logger.
+///
+/// Typical usage includes: checking if a certain `Level` is enabled with
+/// [`log_enabled!`](macro.log_enabled.html), specifying the `Level` of
+/// [`log!`](macro.log.html), and comparing a `Level` directly to a
+/// [`LevelFilter`](enum.LevelFilter.html).
 #[derive(Copy, Eq)]
 pub enum Level {
+    /// The "error" level.
+    ///
+    /// Designates very serious errors.
+    // This way these line up with the discriminants for LevelFilter below
+    // This works because Rust treats field-less enums the same way as C does:
+    // https://doc.rust-lang.org/reference/items/enumerations.html#custom-discriminant-values-for-field-less-enumerations
     Error = 1,
+    /// The "warn" level.
+    ///
+    /// Designates hazardous situations.
     Warn,
+    /// The "info" level.
+    ///
+    /// Designates useful information.
     Info,
+    /// The "debug" level.
+    ///
+    /// Designates lower priority information.
     Debug,
+    /// The "trace" level.
+    ///
+    /// Designates very low priority, often extremely verbose, information.
     Trace,
 }
 
@@ -160,14 +197,28 @@ impl PartialEq<LevelFilter> for Level {
     }
 }
 
+/// An enum representing the available verbosity level filters of the logger.
+///
+/// A `LevelFilter` may be compared directly to a [`Level`]. Use this type
+/// to get and set the maximum log level with [`max_level()`] and [`set_max_level`].
+///
+/// [`Level`]: enum.Level.html
+/// [`max_level()`]: fn.max_level.html
+/// [`set_max_level`]: fn.set_max_level.html
 #[repr(usize)]
 #[derive(Copy, Eq)]
 pub enum LevelFilter {
+    /// A level lower than all log levels.
     Off,
+    /// Corresponds to the `Error` log level.
     Error,
+    /// Corresponds to the `Warn` log level.
     Warn,
+    /// Corresponds to the `Info` log level.
     Info,
+    /// Corresponds to the `Debug` log level.
     Debug,
+    /// Corresponds to the `Trace` log level.
     Trace,
 }
 
@@ -219,6 +270,21 @@ impl PartialOrd<LevelFilter> for Level {
     }
 }
 
+/// Metadata about a log message.
+///
+/// # Use
+///
+/// `Metadata` structs are created when users of the library use
+/// logging macros.
+///
+/// They are consumed by implementations of the `Log` trait in the
+/// `enabled` method.
+///
+/// `Record`s use `Metadata` to determine the log message's severity
+/// and target.
+///
+/// Users should use the `log_enabled!` macro in their code to avoid
+/// constructing expensive log messages.
 #[derive(Clone, Eq, PartialEq)]
 pub struct Metadata<'a> {
     level: Level,
@@ -310,6 +376,18 @@ impl Default for MetadataBuilder<'_> {
     }
 }
 
+/// The "payload" of a log message.
+///
+/// # Use
+///
+/// `Record` structures are passed as parameters to the [`log`][method.log]
+/// method of the [`Log`] trait. Logger implementors manipulate these
+/// structures in order to display log messages. `Record`s are automatically
+/// created by the [`log!`] macro and so are not seen by log users.
+///
+/// Note that the [`level()`] and [`target()`] accessors are equivalent to
+/// `self.metadata().level()` and `self.metadata().target()` respectively.
+/// These methods are provided as a convenience for users of this structure.
 #[derive(Clone)]
 pub struct Record<'a> {
     metadata: Metadata<'a>,
@@ -516,12 +594,18 @@ impl Log for NopLogger {
     fn flush(&self) {}
 }
 
-#[derive(Debug)]
+/// The type returned by [`set_logger`] if [`set_logger`] has already been called.
+///
+/// [`set_logger`]: fn.set_logger.html
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct SetLoggerError(());
 
-impl std::fmt::Display for SetLoggerError {
-    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
-        fmt.write_str(SET_LOGGER_ERROR)
+impl crate::uDisplay for SetLoggerError {
+    fn fmt<W>(&self, f: &mut crate::Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: crate::uWrite + ?Sized,
+    {
+        f.write_str(SET_LOGGER_ERROR)
     }
 }
 
@@ -549,8 +633,8 @@ macro_rules! log {
     // log!(target: "my_target", Level::Info; "a {} event", "log");
     (target: $target:expr, $lvl:expr, $($arg:tt)+) => ({
         let lvl = $lvl;
-        if lvl <= $crate::STATIC_MAX_LEVEL && lvl <= $crate::max_level() {
-            $crate::__private_api_log(
+        if lvl <= $crate::utils::log::STATIC_MAX_LEVEL && lvl <= $crate::utils::log::max_level() {
+            $crate::utils::log::__private_api_log(
                 lvl,
                 &($target, __log_module_path!(), __log_file!(), __log_line!()),
                 __log_format_args!($($arg)+),
@@ -580,10 +664,10 @@ macro_rules! log {
 macro_rules! error {
     // error!(target: "my_target", key1 = 42, key2 = true; "a {} event", "log")
     // error!(target: "my_target", "a {} event", "log")
-    (target: $target:expr, $($arg:tt)+) => (log!(target: $target, $crate::Level::Error, $($arg)+));
+    (target: $target:expr, $($arg:tt)+) => (log!(target: $target, $crate::utils::log::Level::Error, $($arg)+));
 
     // error!("a {} event", "log")
-    ($($arg:tt)+) => (log!($crate::Level::Error, $($arg)+))
+    ($($arg:tt)+) => (log!($crate::utils::log::Level::Error, $($arg)+))
 }
 
 /// Logs a message at the warn level.
@@ -604,10 +688,10 @@ macro_rules! error {
 macro_rules! warn {
     // warn!(target: "my_target", key1 = 42, key2 = true; "a {} event", "log")
     // warn!(target: "my_target", "a {} event", "log")
-    (target: $target:expr, $($arg:tt)+) => (log!(target: $target, $crate::Level::Warn, $($arg)+));
+    (target: $target:expr, $($arg:tt)+) => (log!(target: $target, $crate::utils::log::Level::Warn, $($arg)+));
 
     // warn!("a {} event", "log")
-    ($($arg:tt)+) => (log!($crate::Level::Warn, $($arg)+))
+    ($($arg:tt)+) => (log!($crate::utils::log::Level::Warn, $($arg)+))
 }
 
 /// Logs a message at the info level.
@@ -630,10 +714,10 @@ macro_rules! warn {
 macro_rules! info {
     // info!(target: "my_target", key1 = 42, key2 = true; "a {} event", "log")
     // info!(target: "my_target", "a {} event", "log")
-    (target: $target:expr, $($arg:tt)+) => (log!(target: $target, $crate::Level::Info, $($arg)+));
+    (target: $target:expr, $($arg:tt)+) => (log!(target: $target, $crate::utils::log::Level::Info, $($arg)+));
 
     // info!("a {} event", "log")
-    ($($arg:tt)+) => (log!($crate::Level::Info, $($arg)+))
+    ($($arg:tt)+) => (log!($crate::utils::log::Level::Info, $($arg)+))
 }
 
 /// Logs a message at the debug level.
@@ -658,7 +742,7 @@ macro_rules! debug {
     (target: $target:expr, $($arg:tt)+) => (log!(target: $target, $crate::Level::Debug, $($arg)+));
 
     // debug!("a {} event", "log")
-    ($($arg:tt)+) => (log!($crate::Level::Debug, $($arg)+))
+    ($($arg:tt)+) => (log!($crate::utils::log::Level::Debug, $($arg)+))
 }
 
 /// Logs a message at the trace level.
@@ -682,10 +766,10 @@ macro_rules! debug {
 macro_rules! trace {
     // trace!(target: "my_target", key1 = 42, key2 = true; "a {} event", "log")
     // trace!(target: "my_target", "a {} event", "log")
-    (target: $target:expr, $($arg:tt)+) => (log!(target: $target, $crate::Level::Trace, $($arg)+));
+    (target: $target:expr, $($arg:tt)+) => (log!(target: $target, $crate::utils::log::Level::Trace, $($arg)+));
 
     // trace!("a {} event", "log")
-    ($($arg:tt)+) => (log!($crate::Level::Trace, $($arg)+))
+    ($($arg:tt)+) => (log!($crate::utils::log::Level::Trace, $($arg)+))
 }
 
 /// Determines if a message logged at the specified level in that module will
@@ -718,9 +802,9 @@ macro_rules! trace {
 macro_rules! log_enabled {
     (target: $target:expr, $lvl:expr) => {{
         let lvl = $lvl;
-        lvl <= $crate::STATIC_MAX_LEVEL
+        lvl <= $crate::utils::log::STATIC_MAX_LEVEL
             && lvl <= $crate::max_level()
-            && $crate::__private_api_enabled(lvl, $target)
+            && $crate::utils::log::__private_api_enabled(lvl, $target)
     }};
     ($lvl:expr) => {
         log_enabled!(target: __log_module_path!(), $lvl)
@@ -732,7 +816,7 @@ macro_rules! log_enabled {
 macro_rules! __log_format_args {
     ($($args:tt)*) => {
         |fmt| {
-            use $crate::__private_api::vfmt::{self, write};
+            use $crate::utils::log::__private_api::vfmt::{self, write};
 
             let _ = write!(fmt, $( $args )*);
         }
@@ -766,8 +850,8 @@ macro_rules! __log_line {
 // WARNING: this is not part of the crate's public API and is subject to change at any time
 #[doc(hidden)]
 pub mod __private_api {
+    pub use crate as vfmt;
     pub use std::option::Option;
-    pub use vfmt;
 }
 
 // WARNING: this is not part of the crate's public API and is subject to change at any time

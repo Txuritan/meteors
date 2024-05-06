@@ -17,7 +17,7 @@ use crate::{
     utils::FileIter,
 };
 
-#[derive(Debug)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct Database {
     inner: Config,
 
@@ -268,7 +268,7 @@ impl Database {
     }
 }
 
-#[derive(Debug)]
+#[cfg_attr(feature = "std", derive(Debug))]
 struct MappedFile {
     name: String,
     file: File,

@@ -1,6 +1,6 @@
 //! [owo-colors](https://github.com/jam1garner/owo-colors) stripped down to only ANSI color and converted over to [`vfmt::uDebug`] and [`vfmt::uDisplay`].
 
-use std::marker::PhantomData;
+use core::{marker::PhantomData, ops::Deref};
 
 /// A trait for describing a type which can be used with [`FgColorDisplay`](FgColorDisplay) or
 /// [`BgCBgColorDisplay`](BgColorDisplay)
@@ -26,7 +26,7 @@ pub trait Color {
     const DYN_EQUIVELANT: Self::DynEquivelant;
 
     #[doc(hidden)]
-    fn into_dyncolors() -> crate::colorize::dyn_colors::DynColors;
+    fn into_dyncolors() -> dyn_colors::DynColors;
 }
 
 /// A trait describing a runtime-configurable color which can displayed using [`FgDynColorDisplay`](FgDynColorDisplay)
@@ -34,34 +34,34 @@ pub trait Color {
 /// is recommended you avoid this.
 pub trait DynColor {
     /// A function to output a ANSI code to a formatter to set the foreground to this color
-    fn fmt_ansi_fg<W: vfmt::uWrite + ?Sized>(
+    fn fmt_ansi_fg<W: crate::uWrite + ?Sized>(
         &self,
-        f: &mut vfmt::Formatter<'_, W>,
+        f: &mut crate::Formatter<'_, W>,
     ) -> Result<(), W::Error>;
     /// A function to output a ANSI code to a formatter to set the background to this color
-    fn fmt_ansi_bg<W: vfmt::uWrite + ?Sized>(
+    fn fmt_ansi_bg<W: crate::uWrite + ?Sized>(
         &self,
-        f: &mut vfmt::Formatter<'_, W>,
+        f: &mut crate::Formatter<'_, W>,
     ) -> Result<(), W::Error>;
 
     /// A function to output a raw ANSI code to a formatter to set the foreground to this color,
     /// but without including the ANSI delimiters.
-    fn fmt_raw_ansi_fg<W: vfmt::uWrite + ?Sized>(
+    fn fmt_raw_ansi_fg<W: crate::uWrite + ?Sized>(
         &self,
-        f: &mut vfmt::Formatter<'_, W>,
+        f: &mut crate::Formatter<'_, W>,
     ) -> Result<(), W::Error>;
 
     /// A function to output a raw ANSI code to a formatter to set the background to this color,
     /// but without including the ANSI delimiters.
-    fn fmt_raw_ansi_bg<W: vfmt::uWrite + ?Sized>(
+    fn fmt_raw_ansi_bg<W: crate::uWrite + ?Sized>(
         &self,
-        f: &mut vfmt::Formatter<'_, W>,
+        f: &mut crate::Formatter<'_, W>,
     ) -> Result<(), W::Error>;
 
     #[doc(hidden)]
-    fn get_dyncolors_fg(&self) -> crate::colorize::dyn_colors::DynColors;
+    fn get_dyncolors_fg(&self) -> dyn_colors::DynColors;
     #[doc(hidden)]
-    fn get_dyncolors_bg(&self) -> crate::colorize::dyn_colors::DynColors;
+    fn get_dyncolors_bg(&self) -> dyn_colors::DynColors;
 }
 
 /// Transparent wrapper around a type which implements all the formatters the wrapped type does,
@@ -70,7 +70,7 @@ pub trait DynColor {
 #[repr(transparent)]
 pub struct FgColorDisplay<'a, C: Color, T>(&'a T, PhantomData<C>);
 
-impl<'a, C: Color, T> std::ops::Deref for FgColorDisplay<'a, C, T> {
+impl<'a, C: Color, T> Deref for FgColorDisplay<'a, C, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -327,7 +327,7 @@ impl<D: Sized> Colorize for D {}
 pub mod colors {
     //! Color types for used for being generic over the color
 
-    use crate::colorize::{BgColorDisplay, BgDynColorDisplay, FgColorDisplay, FgDynColorDisplay};
+    use super::{BgColorDisplay, BgDynColorDisplay, FgColorDisplay, FgDynColorDisplay};
 
     macro_rules! colors {
         ($(
@@ -336,7 +336,7 @@ pub mod colors {
 
             pub(crate) mod ansi_colors {
                 #[allow(unused_imports)]
-                use crate::colorize::Colorize;
+                use super::super::Colorize;
 
                 /// Available standard ANSI colors for use with [`Colorize::color`](Colorize::color)
                 /// or [`Colorize::on_color`](Colorize::on_color)
@@ -348,8 +348,8 @@ pub mod colors {
                     )*
                 }
 
-                impl crate::colorize::DynColor for AnsiColors {
-                    fn fmt_ansi_fg<W: vfmt::uWrite + ?Sized>(&self, f: &mut vfmt::Formatter<'_, W>) -> Result<(), W::Error> {
+                impl super::super::DynColor for AnsiColors {
+                    fn fmt_ansi_fg<W: crate::uWrite + ?Sized>(&self, f: &mut crate::Formatter<'_, W>) -> Result<(), W::Error> {
                         let color = match self {
                             $(
                                 AnsiColors::$color => concat!("\x1b[", stringify!($fg), "m"),
@@ -360,7 +360,7 @@ pub mod colors {
                         f.write_str(color)
                     }
 
-                    fn fmt_ansi_bg<W: vfmt::uWrite + ?Sized>(&self, f: &mut vfmt::Formatter<'_, W>) -> Result<(), W::Error> {
+                    fn fmt_ansi_bg<W: crate::uWrite + ?Sized>(&self, f: &mut crate::Formatter<'_, W>) -> Result<(), W::Error> {
                         let color = match self {
                             $(
                                 AnsiColors::$color => concat!("\x1b[", stringify!($bg), "m"),
@@ -371,7 +371,7 @@ pub mod colors {
                         f.write_str(color)
                     }
 
-                    fn fmt_raw_ansi_fg<W: vfmt::uWrite + ?Sized>(&self, f: &mut vfmt::Formatter<'_, W>) -> Result<(), W::Error> {
+                    fn fmt_raw_ansi_fg<W: crate::uWrite + ?Sized>(&self, f: &mut crate::Formatter<'_, W>) -> Result<(), W::Error> {
                         let color = match self {
                             $(
                                 AnsiColors::$color => stringify!($fg),
@@ -381,7 +381,7 @@ pub mod colors {
                         f.write_str(color)
                     }
 
-                    fn fmt_raw_ansi_bg<W: vfmt::uWrite + ?Sized>(&self, f: &mut vfmt::Formatter<'_, W>) -> Result<(), W::Error> {
+                    fn fmt_raw_ansi_bg<W: crate::uWrite + ?Sized>(&self, f: &mut crate::Formatter<'_, W>) -> Result<(), W::Error> {
                         let color = match self {
                             $(
                                 AnsiColors::$color => stringify!($bg),
@@ -392,13 +392,13 @@ pub mod colors {
                     }
 
                     #[doc(hidden)]
-                    fn get_dyncolors_fg(&self) -> crate::colorize::dyn_colors::DynColors {
-                        crate::colorize::dyn_colors::DynColors::Ansi(*self)
+                    fn get_dyncolors_fg(&self) -> super::super::dyn_colors::DynColors {
+                        super::super::dyn_colors::DynColors::Ansi(*self)
                     }
 
                     #[doc(hidden)]
-                    fn get_dyncolors_bg(&self) -> crate::colorize::dyn_colors::DynColors {
-                        crate::colorize::dyn_colors::DynColors::Ansi(*self)
+                    fn get_dyncolors_bg(&self) -> super::super::dyn_colors::DynColors {
+                        super::super::dyn_colors::DynColors::Ansi(*self)
                     }
                 }
             }
@@ -407,7 +407,7 @@ pub mod colors {
                 /// A color for use with [`Colorize`](crate::colorize::Colorize)'s `fg` and `bg` methods.
                 pub struct $color;
 
-                impl crate::colorize::Color for $color {
+                impl super::Color for $color {
                     const ANSI_FG: &'static str = concat!("\x1b[", stringify!($fg), "m");
                     const ANSI_BG: &'static str = concat!("\x1b[", stringify!($bg), "m");
 
@@ -421,8 +421,8 @@ pub mod colors {
                     const DYN_EQUIVELANT: Self::DynEquivelant = ansi_colors::AnsiColors::$color;
 
                     #[doc(hidden)]
-                    fn into_dyncolors() -> crate::colorize::dyn_colors::DynColors {
-                        crate::colorize::dyn_colors::DynColors::Ansi(ansi_colors::AnsiColors::$color)
+                    fn into_dyncolors() -> super::dyn_colors::DynColors {
+                        super::dyn_colors::DynColors::Ansi(ansi_colors::AnsiColors::$color)
                     }
                 }
             )*
@@ -454,18 +454,18 @@ pub mod colors {
     macro_rules! impl_fmt_for {
         ($($trait:path),* $(,)?) => {
             $(
-                impl<'a, Color: crate::colorize::Color, T: $trait> $trait for FgColorDisplay<'a, Color, T> {
+                impl<'a, Color: super::Color, T: $trait> $trait for FgColorDisplay<'a, Color, T> {
                     #[inline(always)]
-                    fn fmt<W: vfmt::uWrite + ?Sized>(&self, f: &mut vfmt::Formatter<'_, W>) -> Result<(), W::Error> {
+                    fn fmt<W: crate::uWrite + ?Sized>(&self, f: &mut crate::Formatter<'_, W>) -> Result<(), W::Error> {
                         f.write_str(Color::ANSI_FG)?;
                         <T as $trait>::fmt(&self.0, f)?;
                         f.write_str("\x1b[39m")
                     }
                 }
 
-                impl<'a, Color: crate::colorize::Color, T: $trait> $trait for BgColorDisplay<'a, Color, T> {
+                impl<'a, Color: super::Color, T: $trait> $trait for BgColorDisplay<'a, Color, T> {
                     #[inline(always)]
-                    fn fmt<W: vfmt::uWrite + ?Sized>(&self, f: &mut vfmt::Formatter<'_, W>) -> Result<(), W::Error> {
+                    fn fmt<W: crate::uWrite + ?Sized>(&self, f: &mut crate::Formatter<'_, W>) -> Result<(), W::Error> {
                         f.write_str(Color::ANSI_BG)?;
                         <T as $trait>::fmt(&self.0, f)?;
                         f.write_str("\x1b[49m")
@@ -476,25 +476,25 @@ pub mod colors {
     }
 
     impl_fmt_for! {
-        vfmt::uDisplay,
-        vfmt::uDebug,
+        crate::uDisplay,
+        crate::uDebug,
     }
 
     macro_rules! impl_fmt_for_dyn {
         ($($trait:path),* $(,)?) => {
             $(
-                impl<'a, Color: crate::colorize::DynColor, T: $trait> $trait for FgDynColorDisplay<'a, Color, T> {
+                impl<'a, Color: super::DynColor, T: $trait> $trait for FgDynColorDisplay<'a, Color, T> {
                     #[inline(always)]
-                    fn fmt<W: vfmt::uWrite + ?Sized>(&self, f: &mut vfmt::Formatter<'_, W>) -> Result<(), W::Error> {
+                    fn fmt<W: crate::uWrite + ?Sized>(&self, f: &mut crate::Formatter<'_, W>) -> Result<(), W::Error> {
                         (self.1).fmt_ansi_fg(f)?;
                         <T as $trait>::fmt(&self.0, f)?;
                         f.write_str("\x1b[39m")
                     }
                 }
 
-                impl<'a, Color: crate::colorize::DynColor, T: $trait> $trait for BgDynColorDisplay<'a, Color, T> {
+                impl<'a, Color: super::DynColor, T: $trait> $trait for BgDynColorDisplay<'a, Color, T> {
                     #[inline(always)]
-                    fn fmt<W: vfmt::uWrite + ?Sized>(&self, f: &mut vfmt::Formatter<'_, W>) -> Result<(), W::Error> {
+                    fn fmt<W: crate::uWrite + ?Sized>(&self, f: &mut crate::Formatter<'_, W>) -> Result<(), W::Error> {
                         (self.1).fmt_ansi_bg(f)?;
                         <T as $trait>::fmt(&self.0, f)?;
                         f.write_str("\x1b[49m")
@@ -505,13 +505,13 @@ pub mod colors {
     }
 
     impl_fmt_for_dyn! {
-        vfmt::uDisplay,
-        vfmt::uDebug,
+        crate::uDisplay,
+        crate::uDebug,
     }
 }
 
 mod dyn_colors {
-    use crate::colorize::{colors::ansi_colors::AnsiColors, DynColor};
+    use super::{colors::ansi_colors::AnsiColors, DynColor};
 
     #[allow(missing_docs)]
     #[derive(Copy, Clone, PartialEq, Debug)]
@@ -520,36 +520,36 @@ mod dyn_colors {
     }
 
     impl DynColor for DynColors {
-        fn fmt_ansi_fg<W: vfmt::uWrite + ?Sized>(
+        fn fmt_ansi_fg<W: crate::uWrite + ?Sized>(
             &self,
-            f: &mut vfmt::Formatter<'_, W>,
+            f: &mut crate::Formatter<'_, W>,
         ) -> Result<(), W::Error> {
             match self {
                 DynColors::Ansi(ansi) => ansi.fmt_ansi_fg(f),
             }
         }
 
-        fn fmt_ansi_bg<W: vfmt::uWrite + ?Sized>(
+        fn fmt_ansi_bg<W: crate::uWrite + ?Sized>(
             &self,
-            f: &mut vfmt::Formatter<'_, W>,
+            f: &mut crate::Formatter<'_, W>,
         ) -> Result<(), W::Error> {
             match self {
                 DynColors::Ansi(ansi) => ansi.fmt_ansi_bg(f),
             }
         }
 
-        fn fmt_raw_ansi_fg<W: vfmt::uWrite + ?Sized>(
+        fn fmt_raw_ansi_fg<W: crate::uWrite + ?Sized>(
             &self,
-            f: &mut vfmt::Formatter<'_, W>,
+            f: &mut crate::Formatter<'_, W>,
         ) -> Result<(), W::Error> {
             match self {
                 DynColors::Ansi(ansi) => ansi.fmt_raw_ansi_fg(f),
             }
         }
 
-        fn fmt_raw_ansi_bg<W: vfmt::uWrite + ?Sized>(
+        fn fmt_raw_ansi_bg<W: crate::uWrite + ?Sized>(
             &self,
-            f: &mut vfmt::Formatter<'_, W>,
+            f: &mut crate::Formatter<'_, W>,
         ) -> Result<(), W::Error> {
             match self {
                 DynColors::Ansi(ansi) => ansi.fmt_raw_ansi_bg(f),
@@ -557,18 +557,18 @@ mod dyn_colors {
         }
 
         #[doc(hidden)]
-        fn get_dyncolors_fg(&self) -> crate::colorize::dyn_colors::DynColors {
+        fn get_dyncolors_fg(&self) -> super::dyn_colors::DynColors {
             *self
         }
 
         #[doc(hidden)]
-        fn get_dyncolors_bg(&self) -> crate::colorize::dyn_colors::DynColors {
+        fn get_dyncolors_bg(&self) -> super::dyn_colors::DynColors {
             *self
         }
     }
 
     /// An error for when the color can not be parsed from a string at runtime
-    #[derive(Debug)]
+    #[cfg_attr(feature = "std", derive(Debug))]
     pub struct ParseColorError;
 
     impl core::str::FromStr for DynColors {
@@ -605,13 +605,13 @@ pub mod styles {
     //! Different display styles (strikethrough, bold, etc.)
 
     #[allow(unused_imports)]
-    use crate::colorize::Colorize;
+    use super::Colorize;
 
     macro_rules! impl_fmt_for_style {
     ($(($ty:ident, $trait:path, $ansi:literal)),* $(,)?) => {
         $(
             impl<'a, T: $trait> $trait for $ty<'a, T> {
-                fn fmt<W: vfmt::uWrite + ?Sized>(&self, f: &mut vfmt::Formatter<'_, W>) -> Result<(), W::Error> {
+                fn fmt<W: crate::uWrite + ?Sized>(&self, f: &mut crate::Formatter<'_, W>) -> Result<(), W::Error> {
                     f.write_str($ansi)?;
                     <_ as $trait>::fmt(&self.0, f)?;
                     f.write_str("\x1b[0m")
@@ -677,39 +677,39 @@ pub mod styles {
 
     impl_fmt_for_style! {
         // Bold
-        (BoldDisplay, vfmt::uDisplay,  "\x1b[1m"),
-        (BoldDisplay, vfmt::uDebug,    "\x1b[1m"),
+        (BoldDisplay, crate::uDisplay,  "\x1b[1m"),
+        (BoldDisplay, crate::uDebug,    "\x1b[1m"),
 
         // Dim
-        (DimDisplay, vfmt::uDisplay,  "\x1b[2m"),
-        (DimDisplay, vfmt::uDebug,    "\x1b[2m"),
+        (DimDisplay, crate::uDisplay,  "\x1b[2m"),
+        (DimDisplay, crate::uDebug,    "\x1b[2m"),
 
         // Italic
-        (ItalicDisplay, vfmt::uDisplay,  "\x1b[3m"),
-        (ItalicDisplay, vfmt::uDebug,    "\x1b[3m"),
+        (ItalicDisplay, crate::uDisplay,  "\x1b[3m"),
+        (ItalicDisplay, crate::uDebug,    "\x1b[3m"),
 
         // Underline
-        (UnderlineDisplay, vfmt::uDisplay,  "\x1b[4m"),
-        (UnderlineDisplay, vfmt::uDebug,    "\x1b[4m"),
+        (UnderlineDisplay, crate::uDisplay,  "\x1b[4m"),
+        (UnderlineDisplay, crate::uDebug,    "\x1b[4m"),
 
         // Blink
-        (BlinkDisplay, vfmt::uDisplay,  "\x1b[5m"),
-        (BlinkDisplay, vfmt::uDebug,    "\x1b[5m"),
+        (BlinkDisplay, crate::uDisplay,  "\x1b[5m"),
+        (BlinkDisplay, crate::uDebug,    "\x1b[5m"),
 
         // Blink fast
-        (BlinkFastDisplay, vfmt::uDisplay,  "\x1b[6m"),
-        (BlinkFastDisplay, vfmt::uDebug,    "\x1b[6m"),
+        (BlinkFastDisplay, crate::uDisplay,  "\x1b[6m"),
+        (BlinkFastDisplay, crate::uDebug,    "\x1b[6m"),
 
         // Reverse video
-        (ReversedDisplay, vfmt::uDisplay,  "\x1b[7m"),
-        (ReversedDisplay, vfmt::uDebug,    "\x1b[7m"),
+        (ReversedDisplay, crate::uDisplay,  "\x1b[7m"),
+        (ReversedDisplay, crate::uDebug,    "\x1b[7m"),
 
         // Hide the text
-        (HiddenDisplay, vfmt::uDisplay,  "\x1b[8m"),
-        (HiddenDisplay, vfmt::uDebug,    "\x1b[8m"),
+        (HiddenDisplay, crate::uDisplay,  "\x1b[8m"),
+        (HiddenDisplay, crate::uDebug,    "\x1b[8m"),
 
         // StrikeThrough
-        (StrikeThroughDisplay, vfmt::uDisplay,  "\x1b[9m"),
-        (StrikeThroughDisplay, vfmt::uDebug,    "\x1b[9m"),
+        (StrikeThroughDisplay, crate::uDisplay,  "\x1b[9m"),
+        (StrikeThroughDisplay, crate::uDebug,    "\x1b[9m"),
     }
 }

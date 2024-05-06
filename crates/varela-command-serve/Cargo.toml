@@ -8,6 +8,11 @@ license = "MIT"
 
 workspace = "../.."
 
+[features]
+default = ["std", "nostd"]
+std = []
+nostd = []
+
 [dependencies]
 common = { path = "../varela-common", package = "varela-common" }
 opal = { path = "../opal" }

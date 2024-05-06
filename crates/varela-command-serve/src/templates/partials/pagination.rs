@@ -88,7 +88,8 @@ impl Pagination {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
+#[cfg_attr(feature = "std", derive(Debug))]
 enum Pager {
     Num(bool, u32),
     Ellipse,
@@ -102,7 +103,8 @@ struct Link {
     text: String,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
+#[cfg_attr(feature = "std", derive(Debug))]
 enum LinkState {
     Normal,
     Active,

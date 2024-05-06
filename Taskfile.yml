@@ -26,4 +26,4 @@ tasks:
 
   viz-deps:
     cmds:
-      - cargo depgraph | dot -Tpng > deps.png
+      - cargo depgraph --all-deps --dedup-transitive-deps | dot -Tpng > deps.png

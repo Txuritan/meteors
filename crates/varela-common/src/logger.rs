@@ -1,9 +1,15 @@
 use std::env;
 
-use vfmt::{stdio::Stdout, uwrite, uwriteln};
-use vfmt_log::{Level, LevelFilter, Log, Metadata, Record};
+use vfmt::{
+    stdio::Stdout,
+    utils::{
+        colorize::Colorize as _,
+        log::{Level, LevelFilter, Log, Metadata, Record},
+    },
+    uwrite, uwriteln,
+};
 
-use crate::{colorize::Colorize as _, prelude::*};
+use crate::prelude::*;
 
 pub fn init() -> Result<()> {
     let bypass = env::var("VARELA_LOG_ALL").is_ok();
@@ -13,9 +19,9 @@ pub fn init() -> Result<()> {
         LevelFilter::Info
     };
 
-    vfmt_log::set_boxed_logger(Box::new(Logger { bypass, level }))
+    vfmt::utils::log::set_boxed_logger(Box::new(Logger { bypass, level }))
         .map_err(|_| anyhow!("unable to set logger"))?;
-    vfmt_log::set_max_level(level);
+    vfmt::utils::log::set_max_level(level);
 
     Ok(())
 }

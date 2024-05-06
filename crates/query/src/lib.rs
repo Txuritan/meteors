@@ -38,7 +38,7 @@ impl<'input> Document<'input> {
 }
 
 impl<'input> TryFrom<&'input str> for Document<'input> {
-    type Error = anyhow::Error;
+    type Error = html_parser::Error;
 
     fn try_from(input: &'input str) -> Result<Self, Self::Error> {
         let dom = Dom::parse(input)?;

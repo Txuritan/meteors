@@ -82,7 +82,7 @@ el_void_name = @{ el_void_name_html | el_void_name_svg }
 el_void = _{ chevron_left_normal ~ el_void_name ~ attr* ~ (chevron_right_normal | chevron_right_closed) }
 el_void_xml = _{ chevron_left_normal ~ el_name ~ attr* ~ chevron_right_closed }
 
-// Open elements are default element that can take children 
+// Open elements are default element that can take children
 // and have both a start tag and an end tag
 // Ex: <html lang="en"></html>
 el_normal = _{ el_normal_start ~ (!el_normal_end ~ node)* ~ el_normal_end }

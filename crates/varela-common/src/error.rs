@@ -22,7 +22,7 @@ where
 {
     fn from(err: E) -> Self {
         Error {
-            inner: box err,
+            inner: Box::new(err),
         }
     }
 }
@@ -55,7 +55,7 @@ impl<T, E, C> Context<C> for Result<T, E> {
     }
 }
 
-#[derive(Debug)]
+#[cfg_attr(feature = "std", derive(Debug))]
 pub struct ErrorContext<E, C> {
     error: E,
     context: C,

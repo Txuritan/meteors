@@ -9,8 +9,9 @@ license = "MIT"
 workspace = "../.."
 
 [features]
-default = [ "std" ]
+default = ["std", "nostd"]
 std = []
+nostd = []
 
 [dependencies]
 libc.workspace = true
