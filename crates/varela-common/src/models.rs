@@ -234,6 +234,7 @@ where
 
 /// Nested message and enum types in `Meta`.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord, Aloene)]
+#[cfg_attr(feature = "nostd", derive(vfmt::derive::uDebug))]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub enum Rating {
     Explicit,

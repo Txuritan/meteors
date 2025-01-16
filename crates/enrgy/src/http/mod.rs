@@ -43,13 +43,13 @@ pub enum HttpError {
     ParseInt(std::num::ParseIntError),
 }
 
-impl const From<std::io::Error> for HttpError {
+impl From<std::io::Error> for HttpError {
     fn from(v: std::io::Error) -> Self {
         Self::Io(v)
     }
 }
 
-impl const From<std::num::ParseIntError> for HttpError {
+impl From<std::num::ParseIntError> for HttpError {
     fn from(v: std::num::ParseIntError) -> Self {
         Self::ParseInt(v)
     }
@@ -70,13 +70,13 @@ impl HttpBody {
     }
 }
 
-impl const From<&'static str> for HttpBody {
+impl From<&'static str> for HttpBody {
     fn from(s: &'static str) -> Self {
         Self::Bytes(s.as_bytes())
     }
 }
 
-impl const From<&'static [u8]> for HttpBody {
+impl From<&'static [u8]> for HttpBody {
     fn from(s: &'static [u8]) -> Self {
         Self::Bytes(s)
     }
@@ -88,7 +88,7 @@ impl From<String> for HttpBody {
     }
 }
 
-impl const From<Vec<u8>> for HttpBody {
+impl From<Vec<u8>> for HttpBody {
     fn from(s: Vec<u8>) -> Self {
         Self::Vector(s)
     }

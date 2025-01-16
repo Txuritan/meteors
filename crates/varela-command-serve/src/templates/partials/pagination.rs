@@ -24,7 +24,11 @@ impl Pagination {
             } else {
                 LinkState::Normal
             },
-            href: vfmt::format!("{}/{}", url, page),
+            href: if page == 1 {
+                vfmt::format!("{}/{}", url, page)
+            } else {
+                vfmt::format!("{}/{}", url, page.checked_sub(1).unwrap_or(page))
+            },
             text: "previous".into(),
         };
 
@@ -60,7 +64,11 @@ impl Pagination {
             } else {
                 LinkState::Normal
             },
-            href: vfmt::format!("{}/{}", url, page),
+            href: if page == 1 {
+                vfmt::format!("{}/{}", url, page)
+            } else {
+                vfmt::format!("{}/{}", url, page.checked_add(1).unwrap_or(page))
+            },
             text: "next".into(),
         };
 

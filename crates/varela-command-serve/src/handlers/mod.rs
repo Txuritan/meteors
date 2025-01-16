@@ -37,7 +37,13 @@ where
     }
 }
 
-pub fn style(header: extractor::OptionalHeader<"If-None-Match">) -> HttpResponse {
+pub struct IfNoneMatchKey;
+
+impl enrgy::extractor::header::HeaderKey for IfNoneMatchKey {
+    const KEY: &'static str = "If-None-Match";
+}
+
+pub fn style(header: extractor::OptionalHeader<IfNoneMatchKey>) -> HttpResponse {
     static CSS: &str = include_str!("../../assets/dist/index.css");
     // RELEASE: change anytime theres a release and the style gets updated
     static CSS_TAG: &str = "\"C0017857370FA4EDD51C10B2276FEE04C76BDCA4879B415E510F958E4C3FF091\"";

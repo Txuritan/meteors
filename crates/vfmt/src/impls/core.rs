@@ -1,6 +1,6 @@
 use crate::{uDebug, uDisplay, uWrite, Formatter};
 
-use core::convert::Infallible;
+use core::{convert::Infallible, ops::Range};
 
 impl uDebug for bool {
     fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
@@ -192,5 +192,17 @@ impl uDebug for Infallible {
         W: uWrite + ?Sized,
     {
         unsafe { core::hint::unreachable_unchecked() }
+    }
+}
+
+impl<Idx: uDebug> uDebug for Range<Idx> {
+    fn fmt<W>(&self, f: &mut Formatter<'_, W>) -> Result<(), W::Error>
+    where
+        W: uWrite + ?Sized,
+    {
+        self.start.fmt(f)?;
+        f.write_str("..")?;
+        self.end.fmt(f)?;
+        Ok(())
     }
 }

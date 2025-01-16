@@ -84,7 +84,13 @@ mod test_compile {
 
     #[test]
     fn test_string_param() {
-        fn index(name: extractor::Param<"name">) -> String {
+        struct Name;
+
+        impl extractor::param::ParamKey for Name {
+            const KEY: &'static str = "name";
+        }
+
+        fn index(name: extractor::Param<Name>) -> String {
             format!("Hello {}!", *name)
         }
 

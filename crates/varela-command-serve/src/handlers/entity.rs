@@ -11,9 +11,15 @@ use crate::{
     utils,
 };
 
+pub struct IdParam;
+
+impl enrgy::extractor::param::ParamKey for IdParam {
+    const KEY: &'static str = "id";
+}
+
 pub fn entity(
     db: extractor::Data<Database>,
-    id: extractor::ParseParam<"id", Id>,
+    id: extractor::ParseParam<IdParam, Id>,
 ) -> Result<impl IntoResponse, pages::Error> {
     let kind = db
         .get_entity_from_id(&id)

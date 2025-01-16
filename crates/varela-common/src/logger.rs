@@ -13,7 +13,7 @@ use crate::prelude::*;
 
 pub fn init() -> Result<()> {
     let bypass = env::var("VARELA_LOG_ALL").is_ok();
-    let level = if bypass {
+    let level = if true {
         LevelFilter::Trace
     } else {
         LevelFilter::Info

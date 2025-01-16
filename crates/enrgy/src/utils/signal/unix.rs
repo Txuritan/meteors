@@ -7,7 +7,14 @@
 // notice may not be copied, modified, or distributed except
 // according to those terms.
 
-use std::{mem, os::unix::io::RawFd};
+use std::{
+    ffi::{c_int, c_void},
+    mem,
+    os::unix::io::RawFd,
+};
+
+use libc::size_t;
+use nix::errno::Errno;
 
 use super::Error as CtrlcError;
 

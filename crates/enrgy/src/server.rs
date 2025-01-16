@@ -27,13 +27,13 @@ pub enum RunError {
     Signal(signal::Error),
 }
 
-impl const From<std::io::Error> for RunError {
+impl From<std::io::Error> for RunError {
     fn from(err: std::io::Error) -> Self {
         Self::Io(err)
     }
 }
 
-impl const From<signal::Error> for RunError {
+impl From<signal::Error> for RunError {
     fn from(err: signal::Error) -> Self {
         Self::Signal(err)
     }
@@ -203,25 +203,25 @@ enum ThreadError {
     Utf8(std::string::FromUtf8Error),
 }
 
-impl const From<http::HttpError> for ThreadError {
+impl From<http::HttpError> for ThreadError {
     fn from(v: http::HttpError) -> Self {
         Self::Http(v)
     }
 }
 
-impl const From<io::Error> for ThreadError {
+impl From<io::Error> for ThreadError {
     fn from(v: io::Error) -> Self {
         Self::Io(v)
     }
 }
 
-impl const From<std::num::ParseIntError> for ThreadError {
+impl From<std::num::ParseIntError> for ThreadError {
     fn from(v: std::num::ParseIntError) -> Self {
         Self::ParseInt(v)
     }
 }
 
-impl const From<std::string::FromUtf8Error> for ThreadError {
+impl From<std::string::FromUtf8Error> for ThreadError {
     fn from(v: std::string::FromUtf8Error) -> Self {
         Self::Utf8(v)
     }

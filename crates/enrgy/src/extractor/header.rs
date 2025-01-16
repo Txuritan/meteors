@@ -1,4 +1,5 @@
 use std::{
+    marker::PhantomData,
     ops::{Deref, DerefMut},
     str::FromStr,
 };
@@ -9,6 +10,10 @@ use crate::{
     response::IntoResponse,
 };
 
+pub trait HeaderKey {
+    const KEY: &'static str;
+}
+
 fn get_value<'req>(req: &'req HttpRequest, key: &'static str) -> Option<&'req String> {
     req.headers
         .iter()
@@ -16,20 +21,21 @@ fn get_value<'req>(req: &'req HttpRequest, key: &'static str) -> Option<&'req St
         .map(|(_, value)| value)
 }
 
-fn get_value_err<'req, const KEY: &'static str>(
+fn get_value_err<'req, KEY: HeaderKey>(
     req: &'req HttpRequest,
 ) -> Result<&'req String, HeaderMissingRejection<KEY>> {
-    match get_value(req, KEY) {
+    match get_value(req, KEY::KEY) {
         Some(v) => Ok(v),
-        None => Err(HeaderMissingRejection {}),
+        None => Err(HeaderMissingRejection { _k: PhantomData }),
     }
 }
 
-pub struct Header<const KEY: &'static str> {
+pub struct Header<KEY: HeaderKey> {
     value: String,
+    _k: PhantomData<KEY>,
 }
 
-impl<const KEY: &'static str> const Deref for Header<KEY> {
+impl<KEY: HeaderKey> const Deref for Header<KEY> {
     type Target = String;
 
     fn deref(&self) -> &Self::Target {
@@ -37,30 +43,32 @@ impl<const KEY: &'static str> const Deref for Header<KEY> {
     }
 }
 
-impl<const KEY: &'static str> const DerefMut for Header<KEY> {
+impl<KEY: HeaderKey> const DerefMut for Header<KEY> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }
 }
 
-impl<const KEY: &'static str> Extractor for Header<KEY> {
+impl<KEY: HeaderKey> Extractor for Header<KEY> {
     type Error = HeaderMissingRejection<KEY>;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         match get_value_err::<KEY>(&*req) {
             Ok(value) => Ok(Self {
                 value: value.clone(),
+                _k: PhantomData,
             }),
             Err(err) => Err(err),
         }
     }
 }
 
-pub struct OptionalHeader<const KEY: &'static str> {
+pub struct OptionalHeader<KEY: HeaderKey> {
     value: Option<String>,
+    _k: PhantomData<KEY>,
 }
 
-impl<const KEY: &'static str> const Deref for OptionalHeader<KEY> {
+impl<KEY: HeaderKey> const Deref for OptionalHeader<KEY> {
     type Target = Option<String>;
 
     fn deref(&self) -> &Self::Target {
@@ -68,46 +76,57 @@ impl<const KEY: &'static str> const Deref for OptionalHeader<KEY> {
     }
 }
 
-impl<const KEY: &'static str> const DerefMut for OptionalHeader<KEY> {
+impl<KEY: HeaderKey> const DerefMut for OptionalHeader<KEY> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }
 }
 
-impl<const KEY: &'static str> Extractor for OptionalHeader<KEY> {
+impl<KEY: HeaderKey> Extractor for OptionalHeader<KEY> {
     type Error = HeaderMissingRejection<KEY>;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         Ok(Self {
-            value: get_value(&*req, KEY).cloned(),
+            value: get_value(&*req, KEY::KEY).cloned(),
+            _k: PhantomData,
         })
     }
 }
 
-pub struct HeaderMissingRejection<const KEY: &'static str> {}
+pub struct HeaderMissingRejection<KEY: HeaderKey> {
+    _k: PhantomData<KEY>,
+}
 
 #[cfg(feature = "std")]
-impl<const KEY: &'static str> IntoResponse for HeaderMissingRejection<KEY> {
+impl<KEY: HeaderKey> IntoResponse for HeaderMissingRejection<KEY> {
     fn into_response(self) -> HttpResponse {
-        std::format!("HTTP request header with key `{}` could not be found", KEY,).into_response()
+        std::format!(
+            "HTTP request header with key `{}` could not be found",
+            KEY::KEY,
+        )
+        .into_response()
     }
 }
 
 #[cfg(feature = "vfmt")]
-impl<const KEY: &'static str> IntoResponse for HeaderMissingRejection<KEY> {
+impl<KEY: HeaderKey> IntoResponse for HeaderMissingRejection<KEY> {
     fn into_response(self) -> HttpResponse {
-        vfmt::format!("HTTP request header with key `{}` could not be found", KEY,).into_response()
+        vfmt::format!(
+            "HTTP request header with key `{}` could not be found",
+            KEY::KEY,
+        )
+        .into_response()
     }
 }
 
 #[cfg(feature = "std")]
-pub struct ParseHeader<const KEY: &'static str, T>(pub T)
+pub struct ParseHeader<KEY: HeaderKey, T>(pub T)
 where
     T: FromStr,
     <T as FromStr>::Err: std::fmt::Debug;
 
 #[cfg(feature = "std")]
-impl<const KEY: &'static str, T> Extractor for ParseHeader<KEY, T>
+impl<KEY: HeaderKey, T> Extractor for ParseHeader<KEY, T>
 where
     T: FromStr,
     <T as FromStr>::Err: std::fmt::Debug,
@@ -120,7 +139,7 @@ where
                 Ok(value) => Ok(Self(value)),
                 Err(err) => Err(InternalError::BadRequest(std::format!(
                     "HTTP request header with key `{}` could not be parsed: {:?}",
-                    KEY,
+                    KEY::KEY,
                     err
                 ))),
             },
@@ -130,13 +149,17 @@ where
 }
 
 #[cfg(feature = "vfmt")]
-pub struct ParseHeader<const KEY: &'static str, T>(pub T)
+pub struct ParseHeader<KEY: HeaderKey, T>
 where
     T: FromStr,
-    <T as FromStr>::Err: vfmt::uDebug;
+    <T as FromStr>::Err: vfmt::uDebug,
+{
+    value: T,
+    _k: PhantomData<KEY>,
+}
 
 #[cfg(feature = "vfmt")]
-impl<const KEY: &'static str, T> Extractor for ParseHeader<KEY, T>
+impl<KEY: HeaderKey, T> Extractor for ParseHeader<KEY, T>
 where
     T: FromStr,
     <T as FromStr>::Err: vfmt::uDebug,
@@ -146,20 +169,28 @@ where
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         match get_value_err::<KEY>(&*req) {
             Ok(value) => match T::from_str(value) {
-                Ok(value) => Ok(Self(value)),
-                Err(err) => Err(HeaderRejection::<KEY, T> { err }.into_response()),
+                Ok(value) => Ok(Self {
+                    value,
+                    _k: PhantomData,
+                }),
+                Err(err) => Err(HeaderRejection::<KEY, T> {
+                    err,
+                    _k: PhantomData,
+                }
+                .into_response()),
             },
             Err(err) => Err(err.into_response()),
         }
     }
 }
 
-pub struct HeaderRejection<const KEY: &'static str, T: FromStr> {
+pub struct HeaderRejection<KEY: HeaderKey, T: FromStr> {
     err: <T as FromStr>::Err,
+    _k: PhantomData<KEY>,
 }
 
 #[cfg(feature = "std")]
-impl<const KEY: &'static str, T> IntoResponse for HeaderRejection<KEY, T>
+impl<KEY: HeaderKey, T> IntoResponse for HeaderRejection<KEY, T>
 where
     T: FromStr,
     <T as FromStr>::Err: std::fmt::Debug,
@@ -167,7 +198,7 @@ where
     fn into_response(self) -> HttpResponse {
         std::format!(
             "HTTP request header with key `{}` could not be parsed: {:?}",
-            KEY,
+            KEY::KEY,
             self.err
         )
         .into_response()
@@ -175,7 +206,7 @@ where
 }
 
 #[cfg(feature = "vfmt")]
-impl<const KEY: &'static str, T> IntoResponse for HeaderRejection<KEY, T>
+impl<KEY: HeaderKey, T> IntoResponse for HeaderRejection<KEY, T>
 where
     T: FromStr,
     <T as FromStr>::Err: vfmt::uDebug,
@@ -183,7 +214,7 @@ where
     fn into_response(self) -> HttpResponse {
         vfmt::format!(
             "HTTP request header with key `{}` could not be parsed: {:?}",
-            KEY,
+            KEY::KEY,
             self.err
         )
         .into_response()

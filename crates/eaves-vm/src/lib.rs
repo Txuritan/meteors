@@ -1,5 +1,3 @@
-#![feature(const_trait_impl)]
-
 pub type MemoryAddress = u64;
 pub type RegisterAddress = u8;
 
@@ -23,7 +21,7 @@ pub enum Opcode {
     Illegal,
 }
 
-impl const From<u8> for Opcode {
+impl From<u8> for Opcode {
     fn from(byte: u8) -> Self {
         match byte {
             0 => Opcode::Stop,

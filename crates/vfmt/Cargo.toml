@@ -12,6 +12,7 @@ workspace = "../.."
 default = ["std", "nostd"]
 std = []
 nostd = []
+kv_unstable = []
 
 [dependencies]
 libc.workspace = true

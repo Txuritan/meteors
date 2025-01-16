@@ -75,7 +75,6 @@ pub mod runtime {
 
     impl DynamicSelector {
         fn find_nodes<'input>(
-            &self,
             matcher: &DynamicMatcher,
             elements: &[Node<'input>],
             direct_match: bool,
@@ -84,7 +83,7 @@ pub mod runtime {
 
             for el in elements.iter() {
                 if !direct_match {
-                    acc.append(&mut self.find_nodes(matcher, &el.children, false));
+                    acc.append(&mut Self::find_nodes(matcher, &el.children, false));
                 }
 
                 match el.data {
@@ -117,7 +116,7 @@ pub mod runtime {
                     continue;
                 }
 
-                elements = self.find_nodes(matcher, &elements, direct_match);
+                elements = Self::find_nodes(matcher, &elements, direct_match);
                 direct_match = false;
             }
 

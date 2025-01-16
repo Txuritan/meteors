@@ -7,10 +7,22 @@ use crate::{
     utils,
 };
 
+pub struct IdParam;
+
+impl enrgy::extractor::param::ParamKey for IdParam {
+    const KEY: &'static str = "id";
+}
+
+pub struct ChapterParam;
+
+impl enrgy::extractor::param::ParamKey for ChapterParam {
+    const KEY: &'static str = "chapter";
+}
+
 pub fn story(
     db: extractor::Data<Database>,
-    id: extractor::ParseParam<"id", Id>,
-    index: extractor::Param<"chapter">,
+    id: extractor::ParseParam<IdParam, Id>,
+    index: extractor::Param<ChapterParam>,
 ) -> Result<impl IntoResponse, pages::Error> {
     let index: usize = index.parse().map_err(anyhow::Error::from)?;
 

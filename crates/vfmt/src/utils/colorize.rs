@@ -69,7 +69,7 @@ pub trait DynColor {
 #[repr(transparent)]
 pub struct FgColorDisplay<'a, C: Color, T>(&'a T, PhantomData<C>);
 
-impl<'a, C: Color, T> Deref for FgColorDisplay<'a, C, T> {
+impl<C: Color, T> Deref for FgColorDisplay<'_, C, T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {

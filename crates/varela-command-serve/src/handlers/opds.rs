@@ -44,10 +44,15 @@ impl vfmt::uDebug for CatalogFormatError {
         f.write_str(&self.0)
     }
 }
+pub struct ExtParam;
+
+impl enrgy::extractor::param::ParamKey for ExtParam {
+    const KEY: &'static str = "ext";
+}
 
 pub fn catalog(
     db: extractor::Data<Database>,
-    _ext: extractor::ParseParam<"ext", CatalogFormat>,
+    _ext: extractor::ParseParam<ExtParam, CatalogFormat>,
 ) -> Result<impl IntoResponse, pages::Error> {
     let mut stories = db
         .index()

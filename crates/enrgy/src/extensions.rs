@@ -33,7 +33,7 @@ impl Extensions {
     }
 }
 
-impl const Default for Extensions {
+impl Default for Extensions {
     fn default() -> Self {
         Self::new()
     }

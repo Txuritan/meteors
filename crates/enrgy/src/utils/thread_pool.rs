@@ -97,7 +97,7 @@ where
 
             match received {
                 Ok(data) => {
-                    log::trace!("worker {} received a request", id);
+                    vfmt::trace!("worker {} received a request", id);
 
                     handle(data)
                 }
@@ -114,6 +114,6 @@ where
     fn join(self) {
         self.thread.join().unwrap();
 
-        log::trace!("shutdown worker {}", self.id);
+        vfmt::trace!("shutdown worker {}", self.id);
     }
 }

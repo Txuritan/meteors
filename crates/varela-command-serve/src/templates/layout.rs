@@ -1,7 +1,11 @@
 use common::models::Theme;
 use opal::Template;
 
-use crate::templates::{pages, partials::nav, Width};
+use crate::templates::{
+    pages,
+    partials::{nav::NAV, Nav},
+    Width,
+};
 
 #[derive(opal::Template)]
 #[template(path = "layout.hbs")]
@@ -12,7 +16,7 @@ where
     width: Width,
     theme: Theme,
     title: String,
-    nav: nav::Nav,
+    nav: Nav,
     query: Option<String>,
     body: B,
 }
@@ -31,7 +35,7 @@ where
             theme,
             title: title.to_string(),
             query,
-            nav: nav::NAV,
+            nav: NAV,
             body,
         }
     }
@@ -43,7 +47,7 @@ impl Layout<pages::Error> {
             width: Width::Slim,
             theme: Theme::Dark,
             title,
-            nav: nav::NAV,
+            nav: NAV,
             query: None,
             body,
         }

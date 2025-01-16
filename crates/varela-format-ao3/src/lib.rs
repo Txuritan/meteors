@@ -14,6 +14,7 @@ use {
 };
 
 #[derive(PartialEq)]
+#[cfg_attr(feature = "nostd", derive(vfmt::derive::uDebug))]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct ParsedInfo {
     pub title: String,
@@ -22,6 +23,7 @@ pub struct ParsedInfo {
 }
 
 #[derive(PartialEq)]
+#[cfg_attr(feature = "nostd", derive(vfmt::derive::uDebug))]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct ParsedMeta {
     pub rating: Rating,
@@ -34,12 +36,14 @@ pub struct ParsedMeta {
 }
 
 #[derive(PartialEq)]
+#[cfg_attr(feature = "nostd", derive(vfmt::derive::uDebug))]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct ParsedChapters {
     pub chapters: Vec<ParsedChapter>,
 }
 
 #[derive(PartialEq)]
+#[cfg_attr(feature = "nostd", derive(vfmt::derive::uDebug))]
 #[cfg_attr(feature = "std", derive(Debug))]
 pub struct ParsedChapter {
     pub title: String,

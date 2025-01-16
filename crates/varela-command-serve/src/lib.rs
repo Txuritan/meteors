@@ -92,7 +92,7 @@ pub fn run(mut args: common::Args) -> Result<()> {
 
     server.run()?;
 
-    if let Ok(mut database) = Arc::try_unwrap(database) {
+    if let Some(mut database) = Arc::into_inner(database) {
         database.unlock_data()?;
     } else {
         error!("unable to unwrap database, not unlocking data");

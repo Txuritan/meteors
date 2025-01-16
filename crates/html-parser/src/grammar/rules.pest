@@ -39,11 +39,11 @@ comment_if_end = _{ chevron_left_bang ~ "[" ~ ^"endif" ~ "]" ~ comment_tag_end }
 //
 // ATTRIBUTES
 //
-attr = { attr_key ~ (equal ~ (attr_non_quoted | attr_quoted ))? }
-attr_quoted =  _{PUSH(quote) ~ attr_value ~ POP }
+attr_quoted =  _{ PUSH(quote) ~ attr_value ~ POP }
 attr_non_quoted = @{ !quote ~ (!(WHITESPACE | chevron_right) ~ ANY)* }
 attr_key = { ASCII_ALPHA ~ text_chars* }
 attr_value = { (!PEEK ~ ANY)* }
+attr = { attr_key ~ (equal ~ (attr_non_quoted | attr_quoted ))? }
 
 //
 // ELEMENTS

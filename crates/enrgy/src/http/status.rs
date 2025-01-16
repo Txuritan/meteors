@@ -91,7 +91,7 @@ impl_status! {
 macro_rules! impl_status_from {
     ($( $num:ident )*) => {
         $(
-            impl const From<$num> for StatusCode {
+            impl From<$num> for StatusCode {
                 fn from(code: $num) -> Self {
                     StatusCode(code as u16)
                 }

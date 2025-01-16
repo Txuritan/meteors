@@ -8,9 +8,15 @@ use crate::{
     utils,
 };
 
+pub struct SearchParam;
+
+impl enrgy::extractor::query::QueryKey for SearchParam {
+    const KEY: &'static str = "search";
+}
+
 pub fn search(
     db: extractor::Data<Database>,
-    search: extractor::Query<"search">,
+    search: extractor::Query<SearchParam>,
     query: extractor::RawQuery,
 ) -> Result<impl IntoResponse, pages::Error> {
     let ids = search::search(&db, &search);
@@ -43,7 +49,7 @@ pub fn search(
 
 pub fn search_v2(
     db: extractor::Data<Database>,
-    query: extractor::Query<"search">,
+    query: extractor::Query<SearchParam>,
 ) -> Result<impl IntoResponse, pages::Error> {
     let mut stories = db.index().stories.iter().collect::<Vec<_>>();
 

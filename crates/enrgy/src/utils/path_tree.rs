@@ -23,7 +23,7 @@ pub struct Node<T> {
     params: Option<Vec<String>>,
 }
 
-impl<T> const Default for Node<T> {
+impl<T> Default for Node<T> {
     #[inline]
     fn default() -> Self {
         Self::new(NodeKind::Static(String::new()))

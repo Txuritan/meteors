@@ -1,4 +1,5 @@
 use std::{
+    marker::PhantomData,
     ops::{Deref, DerefMut},
     str::FromStr,
 };
@@ -9,6 +10,10 @@ use crate::{
     response::IntoResponse,
     utils::ArrayMap,
 };
+
+pub trait QueryKey {
+    const KEY: &'static str;
+}
 
 struct ParsedQuery(ArrayMap<String, Option<String>, 32>);
 
@@ -108,20 +113,21 @@ fn get_value<'req>(req: &'req mut HttpRequest, key: &'static str) -> Option<&'re
         .and_then(|parsed| parsed.0.get(key).and_then(Option::as_ref))
 }
 
-fn get_value_err<'req, const KEY: &'static str>(
+fn get_value_err<'req, KEY: QueryKey>(
     req: &'req mut HttpRequest,
 ) -> Result<&'req String, QueryMissingRejection<KEY>> {
-    match get_value(req, KEY) {
+    match get_value(req, KEY::KEY) {
         Some(v) => Ok(v),
-        None => Err(QueryMissingRejection {}),
+        None => Err(QueryMissingRejection::<KEY> { _k: PhantomData }),
     }
 }
 
-pub struct Query<const KEY: &'static str> {
+pub struct Query<KEY: QueryKey> {
     value: String,
+    _k: PhantomData<KEY>,
 }
 
-impl<const KEY: &'static str> Deref for Query<KEY> {
+impl<KEY: QueryKey> Deref for Query<KEY> {
     type Target = String;
 
     fn deref(&self) -> &Self::Target {
@@ -129,30 +135,32 @@ impl<const KEY: &'static str> Deref for Query<KEY> {
     }
 }
 
-impl<const KEY: &'static str> DerefMut for Query<KEY> {
+impl<KEY: QueryKey> DerefMut for Query<KEY> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }
 }
 
-impl<const KEY: &'static str> Extractor for Query<KEY> {
+impl<KEY: QueryKey> Extractor for Query<KEY> {
     type Error = QueryMissingRejection<KEY>;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         match get_value_err::<KEY>(req) {
             Ok(value) => Ok(Self {
                 value: value.clone(),
+                _k: PhantomData,
             }),
             Err(err) => Err(err),
         }
     }
 }
 
-pub struct OptionalQuery<const KEY: &'static str> {
+pub struct OptionalQuery<KEY: QueryKey> {
     value: Option<String>,
+    _k: PhantomData<KEY>,
 }
 
-impl<const KEY: &'static str> Deref for OptionalQuery<KEY> {
+impl<KEY: QueryKey> Deref for OptionalQuery<KEY> {
     type Target = Option<String>;
 
     fn deref(&self) -> &Self::Target {
@@ -160,26 +168,29 @@ impl<const KEY: &'static str> Deref for OptionalQuery<KEY> {
     }
 }
 
-impl<const KEY: &'static str> DerefMut for OptionalQuery<KEY> {
+impl<KEY: QueryKey> DerefMut for OptionalQuery<KEY> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.value
     }
 }
 
-impl<const KEY: &'static str> Extractor for OptionalQuery<KEY> {
+impl<KEY: QueryKey> Extractor for OptionalQuery<KEY> {
     type Error = QueryMissingRejection<KEY>;
 
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         Ok(Self {
-            value: get_value(req, KEY).cloned(),
+            value: get_value(req, KEY::KEY).cloned(),
+            _k: PhantomData,
         })
     }
 }
 
-pub struct QueryMissingRejection<const KEY: &'static str> {}
+pub struct QueryMissingRejection<KEY: QueryKey> {
+    _k: PhantomData<KEY>,
+}
 
 #[cfg(feature = "std")]
-impl<const KEY: &'static str> IntoResponse for QueryMissingRejection<KEY> {
+impl<KEY: QueryKey> IntoResponse for QueryMissingRejection<KEY> {
     fn into_response(self) -> HttpResponse {
         std::format!(
             "HTTP request URL query did not contain a value with the key `{}`",
@@ -190,11 +201,11 @@ impl<const KEY: &'static str> IntoResponse for QueryMissingRejection<KEY> {
 }
 
 #[cfg(feature = "vfmt")]
-impl<const KEY: &'static str> IntoResponse for QueryMissingRejection<KEY> {
+impl<KEY: QueryKey> IntoResponse for QueryMissingRejection<KEY> {
     fn into_response(self) -> HttpResponse {
         vfmt::format!(
             "HTTP request URL query did not contain a value with the key `{}`",
-            KEY,
+            KEY::KEY,
         )
         .into_response()
     }
@@ -248,7 +259,7 @@ impl IntoResponse for RawQueryMissingRejection {
 }
 
 #[cfg(feature = "std")]
-pub struct ParseQuery<const KEY: &'static str, T>
+pub struct ParseQuery<KEY: QueryKey, T>
 where
     T: FromStr,
     <T as FromStr>::Err: std::fmt::Debug,
@@ -257,7 +268,7 @@ where
 }
 
 #[cfg(feature = "std")]
-impl<const KEY: &'static str, T> const Deref for ParseQuery<KEY, T>
+impl<KEY: QueryKey, T> const Deref for ParseQuery<KEY, T>
 where
     T: FromStr,
     <T as FromStr>::Err: std::fmt::Debug,
@@ -270,7 +281,7 @@ where
 }
 
 #[cfg(feature = "std")]
-impl<const KEY: &'static str, T> const DerefMut for ParseQuery<KEY, T>
+impl<KEY: QueryKey, T> const DerefMut for ParseQuery<KEY, T>
 where
     T: FromStr,
     <T as FromStr>::Err: std::fmt::Debug,
@@ -281,7 +292,7 @@ where
 }
 
 #[cfg(feature = "std")]
-impl<const KEY: &'static str, T> Extractor for ParseQuery<KEY, T>
+impl<KEY: QueryKey, T> Extractor for ParseQuery<KEY, T>
 where
     T: FromStr,
     <T as FromStr>::Err: std::fmt::Debug,
@@ -304,16 +315,17 @@ where
 }
 
 #[cfg(feature = "vfmt")]
-pub struct ParseQuery<const KEY: &'static str, T>
+pub struct ParseQuery<KEY: QueryKey, T>
 where
     T: FromStr,
     <T as FromStr>::Err: vfmt::uDebug,
 {
     value: T,
+    _k: PhantomData<KEY>,
 }
 
 #[cfg(feature = "vfmt")]
-impl<const KEY: &'static str, T> const Deref for ParseQuery<KEY, T>
+impl<KEY: QueryKey, T> const Deref for ParseQuery<KEY, T>
 where
     T: FromStr,
     <T as FromStr>::Err: vfmt::uDebug,
@@ -326,7 +338,7 @@ where
 }
 
 #[cfg(feature = "vfmt")]
-impl<const KEY: &'static str, T> const DerefMut for ParseQuery<KEY, T>
+impl<KEY: QueryKey, T> const DerefMut for ParseQuery<KEY, T>
 where
     T: FromStr,
     <T as FromStr>::Err: vfmt::uDebug,
@@ -337,7 +349,7 @@ where
 }
 
 #[cfg(feature = "vfmt")]
-impl<const KEY: &'static str, T> Extractor for ParseQuery<KEY, T>
+impl<KEY: QueryKey, T> Extractor for ParseQuery<KEY, T>
 where
     T: FromStr,
     <T as FromStr>::Err: vfmt::uDebug,
@@ -347,23 +359,31 @@ where
     fn extract(req: &mut HttpRequest) -> Result<Self, Self::Error> {
         match get_value_err::<KEY>(req) {
             Ok(value) => match T::from_str(value) {
-                Ok(value) => Ok(Self { value }),
-                Err(err) => Err(QueryRejection::<KEY, T> { err }.into_response()),
+                Ok(value) => Ok(Self {
+                    value,
+                    _k: PhantomData,
+                }),
+                Err(err) => Err(QueryRejection::<KEY, T> {
+                    err,
+                    _k: PhantomData,
+                }
+                .into_response()),
             },
             Err(err) => Err(err.into_response()),
         }
     }
 }
 
-pub struct QueryRejection<const KEY: &'static str, T>
+pub struct QueryRejection<KEY: QueryKey, T>
 where
     T: FromStr,
 {
     err: <T as FromStr>::Err,
+    _k: PhantomData<KEY>,
 }
 
 #[cfg(feature = "std")]
-impl<const KEY: &'static str, T> IntoResponse for QueryRejection<KEY, T>
+impl<KEY: QueryKey, T> IntoResponse for QueryRejection<KEY, T>
 where
     T: FromStr,
     <T as FromStr>::Err: std::fmt::Debug,
@@ -379,7 +399,7 @@ where
 }
 
 #[cfg(feature = "vfmt")]
-impl<const KEY: &'static str, T> IntoResponse for QueryRejection<KEY, T>
+impl<KEY: QueryKey, T> IntoResponse for QueryRejection<KEY, T>
 where
     T: FromStr,
     <T as FromStr>::Err: vfmt::uDebug,
@@ -387,7 +407,7 @@ where
     fn into_response(self) -> HttpResponse {
         vfmt::format!(
             "HTTP request URL query with key `{}` could not be parsed: {:?}",
-            KEY,
+            KEY::KEY,
             self.err
         )
         .into_response()
